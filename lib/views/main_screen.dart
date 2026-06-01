@@ -8,6 +8,7 @@ import 'cafe_view.dart';
 import 'funcionarios_view.dart';
 import 'financeiro_view.dart';
 import 'armazem_view.dart';
+import 'talhao_view.dart';
 
 class MainScreen extends StatelessWidget {
   const MainScreen({super.key});
@@ -17,11 +18,12 @@ class MainScreen extends StatelessWidget {
     final vm = context.watch<NavegacaoViewModel>();
 
     final telas = [
-      const FinanceiroView(),
-      const CafeView(),
       const HomeView(),
+      const CafeView(),
+      const TalhaoView(),
       const ArmazemView(),
-      const FuncionariosView(),
+      //const FuncionariosView(), tirado
+      const FinanceiroView(),
     ];
 
     return Scaffold(
@@ -82,21 +84,21 @@ class MainScreen extends StatelessWidget {
 
               destinations: const [
                 NavigationDestination(
-                  icon: Icon(Icons.attach_money_outlined),
-                  selectedIcon: Icon(Icons.attach_money),
-                  label: 'Financeiro',
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home),
+                  label: 'Home',
                 ),
 
                 NavigationDestination(
                   icon: Icon(Icons.coffee_outlined),
                   selectedIcon: Icon(Icons.coffee),
-                  label: 'Café',
+                  label: 'Atividades',
                 ),
 
                 NavigationDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home),
-                  label: 'Home',
+                  icon: Icon(Icons.agriculture_outlined),
+                  selectedIcon: Icon(Icons.agriculture),
+                  label: 'Talhões',
                 ),
 
                 NavigationDestination(
@@ -106,10 +108,16 @@ class MainScreen extends StatelessWidget {
                 ),
 
                 NavigationDestination(
+                  icon: Icon(Icons.attach_money_outlined),
+                  selectedIcon: Icon(Icons.attach_money),
+                  label: 'Financeiro',
+                ),
+
+                /*NavigationDestination(
                   icon: Icon(Icons.people_outline),
                   selectedIcon: Icon(Icons.people),
                   label: 'Funcionários',
-                ),
+                ),*/
               ],
             ),
           ),
