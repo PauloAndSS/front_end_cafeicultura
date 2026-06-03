@@ -5,7 +5,6 @@ import '../viewmodels/navegacao_viewmodel.dart';
 
 import 'home_view.dart';
 import 'cafe_view.dart';
-import 'funcionarios_view.dart';
 import 'financeiro_view.dart';
 import 'armazem_view.dart';
 import 'talhao_view.dart';
