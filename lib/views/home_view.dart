@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'first_acess.dart'; // Importe o caminho correto da sua tela inicial
+import 'login/first_acess.dart';
 
 class HomeView extends StatelessWidget {
   const HomeView({super.key});
@@ -18,13 +18,11 @@ class HomeView extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 32), // Espaçamento entre o texto e o botão
-            
-            //botão de sair (Voltar para a tela de acesso)
-
+            const SizedBox(height: 32), 
+        
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color.fromARGB(255, 230, 55, 55), // vermelho do botão
+                backgroundColor: const Color.fromARGB(255, 230, 55, 55),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),

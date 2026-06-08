@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'login/entrar_view.dart';
-import 'login/cadastrar_view.dart';
+import 'entrar_view.dart';
+import 'cadastrar_view.dart';
 
 class FirstAcess extends StatelessWidget {
   const FirstAcess({super.key});
@@ -19,24 +19,23 @@ class FirstAcess extends StatelessWidget {
             top: 0,
             left: 0,
             right: 0,
-            height: screenHeight * 0.45, // Ocupa 45% da altura da tela
+            height: screenHeight * 0.45,
             child: Image.asset(
-              'assets/images/banner_cafe.png', // Substitua pelo seu caminho de asset
+              'assets/images/banner_cafe.png',
               fit: BoxFit.cover,
             ),
           ),
 
-          // 2. Container Verde (Fundo dos botões) na metade inferior
           Positioned(
             bottom: 0,
             left: 0,
             right: 0,
-            height: screenHeight * 0.58, // Sobrepõe levemente o topo para o efeito da logo
+            height: screenHeight * 0.60,
             child: Container(
               decoration: const BoxDecoration(
-                color: Color(0xFF9FB896), // Cor verde clara do protótipo
+                color: Color(0xFF9FB896), 
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(32),  // Bordas levemente arredondadas se desejar, ou remova
+                  topLeft: Radius.circular(32), 
                   topRight: Radius.circular(32),
                 ),
               ),
@@ -44,15 +43,13 @@ class FirstAcess extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 40), // Espaço para não cobrir a logo
-                  
-                  // Botão "Já tenho uma conta"
+                  const SizedBox(height: 40), 
                   SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF67835C), // Verde escuro do botão
+                        backgroundColor: const Color(0xFF67835C),
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -75,9 +72,8 @@ class FirstAcess extends StatelessWidget {
                     ),
                   ),
                   
-                  const SizedBox(height: 24), // Espaço entre os botões
+                  const SizedBox(height: 24), 
                   
-                  // Botão "Criar uma conta"
                   SizedBox(
                     width: double.infinity,
                     height: 56,
@@ -128,7 +124,7 @@ class FirstAcess extends StatelessWidget {
                   ),
                 ],
                 image: const DecorationImage(
-                  image: AssetImage('assets/images/logo_cafe.png'), // Substitua pelo seu asset da logo
+                  image: AssetImage('assets/images/logo_cafe.png'),
                   fit: BoxFit.contain,
                 ),
               ),

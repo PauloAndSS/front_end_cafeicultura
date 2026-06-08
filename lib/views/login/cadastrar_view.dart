@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/session_viewmodel.dart'; // Ajuste o caminho se necessário
+import '../../viewmodels/session_viewmodel.dart'; 
 import 'entrar_view.dart';
 
 class CadastrarView extends StatefulWidget {

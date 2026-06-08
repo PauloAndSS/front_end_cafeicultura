@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/validators.dart';
 import 'package:provider/provider.dart';
-import '../../viewmodels/session_viewmodel.dart'; // Ajuste o caminho se necessário
+import '../../viewmodels/session_viewmodel.dart';
 import 'cadastrar_view.dart';
 
 class EntrarView extends StatefulWidget {
@@ -33,7 +34,6 @@ class _EntrarViewState extends State<EntrarView> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // 1. Logo Circular Centralizada
                 Container(
                   width: 140,
                   height: 140,
@@ -56,7 +56,6 @@ class _EntrarViewState extends State<EntrarView> {
                 
                 const SizedBox(height: 32),
 
-                // 2. Card Branco do Formulário
                 Container(
                   padding: const EdgeInsets.all(24.0),
                   decoration: BoxDecoration(
@@ -75,9 +74,8 @@ class _EntrarViewState extends State<EntrarView> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Campo de Usuário
                         const Text(
-                          'Usuário',
+                          'E-mail ou CPF',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w600,
@@ -88,13 +86,16 @@ class _EntrarViewState extends State<EntrarView> {
                         TextFormField(
                           controller: _usuarioController,
                           validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Por favor, digite seu usuário';
+                            if (value == null || value.isEmpty){
+                              return 'Por favor, digite seu E-mail ou CPF';
+                            } 
+                            if (!cpfValidator(value) && !emailValidator(value)){
+                              return 'E-mail ou CPF inválido';
                             }
                             return null;
                           },
                           decoration: InputDecoration(
-                            hintText: 'Digite seu usuário',
+                            hintText: 'Digite seu E-mail ou CPF',
                             hintStyle: const TextStyle(color: Colors.black26),
                             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                             border: OutlineInputBorder(
@@ -183,7 +184,6 @@ class _EntrarViewState extends State<EntrarView> {
 
                         const SizedBox(height: 20),
 
-                        // Links Inferiores: "Esqueceu a senha?" e "Criar conta"
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
