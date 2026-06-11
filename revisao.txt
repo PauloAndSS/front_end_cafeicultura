@@ -1,7 +1,5 @@
 - evite comentários desnecessários que explicam funções e procedimentos simples. Se a função for boa o suficiente, ela é compreensível;
 
-- movi first_acess para a pasta login;
-
 - sugiro criar a pasta widgets para reaproveitar personalizações caso seja usada mais de uma vez (como criar um widget para o botão de sair, ou um botão de voltar, botão padrão). Desse modo você consegue definir fonte, cores, tamanho padrão sem precisar criar linhas gigantescas toda vez q for reaproveitar. Ex: os botões de Criar conta e Já tenho uma conta são a mesma coisa, mas você precisou repetir o código;
 
 - adicione um título abaixo da logo em first_acess

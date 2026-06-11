@@ -1,27 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/funcionarios_view.dart';
 import 'package:provider/provider.dart';
-
 import '../viewmodels/navegacao_viewmodel.dart';
-
-import 'home_view.dart';
-import 'cafe_view.dart';
 import 'financeiro_view.dart';
-import 'armazem_view.dart';
-import 'talhao_view.dart';
+import 'eventos/talhao_view.dart';
 
-class MainScreen extends StatelessWidget {
-  const MainScreen({super.key});
+class MainScreenView extends StatelessWidget {
+  const MainScreenView({super.key});
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<NavegacaoViewModel>();
 
     final telas = [
-      const HomeView(),
-      const CafeView(),
       const TalhaoView(),
-      const ArmazemView(),
-      //const FuncionariosView(), tirado
+      const FuncionariosView(),
       const FinanceiroView(),
     ];
 

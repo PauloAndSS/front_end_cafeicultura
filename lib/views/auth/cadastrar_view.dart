@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../viewmodels/session_viewmodel.dart'; 
+import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/text_button_widget.dart'; 
 import 'entrar_view.dart';
 
 class CadastrarView extends StatefulWidget {
@@ -25,6 +26,10 @@ class _CadastrarViewState extends State<CadastrarView> {
     _senhaController.dispose();
     _confirmarSenhaController.dispose();
     super.dispose();
+  }
+
+  void _cadastrar() async {
+
   }
 
   Widget _buildTextField(String label, TextEditingController controller, {bool isPassword = false, String? Function(String?)? validator}) {
@@ -74,26 +79,7 @@ class _CadastrarViewState extends State<CadastrarView> {
             padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
             child: Column(
               children: [
-                // 1. Logo Circular
-                Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    image: const DecorationImage(
-                      image: AssetImage('assets/images/logo_cafe.png'),
-                      fit: BoxFit.contain,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        blurRadius: 10,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                ),
+                LogoCircular(),
                 
                 const SizedBox(height: 24),
 
@@ -129,36 +115,13 @@ class _CadastrarViewState extends State<CadastrarView> {
                         const SizedBox(height: 10),
 
                         // Botão Cadastrar
-                        SizedBox(
-                          width: double.infinity,
-                          height: 48,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF67835C),
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            onPressed: () {
-                              if (_formKey.currentState!.validate()) {
-                                String nomeUsuario = _nomeController.text;
-
-                                // Ativa o login falso. O main.dart altera a visualização para a MainScreen imediatamente
-                                Provider.of<SessionViewModel>(context, listen: false)
-                                    .loginMock(nomeUsuario);
-
-                                // Limpa o histórico de telas empilhadas
-                                Navigator.of(context).popUntil((route) => route.isFirst);
-                              }
-                            },
-                            child: const Text(
-                              'Cadastrar',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                          ),
+                        CustomButton(
+                          text: "Cadastrar",
+                          onPressed: (){
+                            _cadastrar;
+                          }
                         ),
-
+                        
                         const SizedBox(height: 20),
 
                         // Link para voltar ao Login
@@ -166,22 +129,11 @@ class _CadastrarViewState extends State<CadastrarView> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             const Text("Já tem uma conta? "),
-                            GestureDetector(
-                              onTap: () {
-                                // Troca a tela atual de cadastro pela de entrada na pilha
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(builder: (context) => const EntrarView()),
-                                );
-                              },
-                              child: const Text(
-                                "Entrar",
-                                style: TextStyle(
-                                  color: Color(0xFF0091FF),
-                                  fontWeight: FontWeight.bold,
-                                ),
+                            CustomTextButton(
+                              text: "Entrar", 
+                              onPressed: () => Navigator.push(context,MaterialPageRoute(builder: (context) => const EntrarView()),
+                              )
                               ),
-                            ),
                           ],
                         ),
                       ],
