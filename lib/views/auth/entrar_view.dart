@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/validators.dart';
 import 'package:provider/provider.dart';
 import '../../viewmodels/session_viewmodel.dart';
-import 'cadastrar_view.dart';
+import 'cadastro/cadastrar_dados_basicos_view.dart';
 
 class EntrarView extends StatefulWidget {
   const EntrarView({super.key});
@@ -85,15 +84,7 @@ class _EntrarViewState extends State<EntrarView> {
                         const SizedBox(height: 8),
                         TextFormField(
                           controller: _usuarioController,
-                          validator: (value) {
-                            if (value == null || value.isEmpty){
-                              return 'Por favor, digite seu E-mail ou CPF';
-                            } 
-                            if (!cpfValidator(value) && !emailValidator(value)){
-                              return 'E-mail ou CPF inválido';
-                            }
-                            return null;
-                          },
+                         
                           decoration: InputDecoration(
                             hintText: 'Digite seu E-mail ou CPF',
                             hintStyle: const TextStyle(color: Colors.black26),

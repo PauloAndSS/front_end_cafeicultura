@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'entrar_view.dart';
-import 'cadastrar_view.dart';
+import 'cadastro/cadastrar_dados_basicos_view.dart';
 
 class FirstAcess extends StatelessWidget {
   const FirstAcess({super.key});
@@ -68,7 +68,7 @@ class FirstAcess extends StatelessWidget {
                 Positioned(
                   top: bannerHeight - 65, // 65 é a metade do tamanho do logo (130/2)
                   left: (screenWidth / 2) - 65,
-                  child: const LogoCircular(), // <-- Aqui está o seu widget limpo!
+                  child: const LogoCircular(),
                 ),
         ],
       ),

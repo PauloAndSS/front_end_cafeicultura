@@ -1,11 +1,7 @@
-- evite comentários desnecessários que explicam funções e procedimentos simples. Se a função for boa o suficiente, ela é compreensível;
+- revisar view do cadastro de endereço;
+- revisar viewmodel de cadastro e implementar viewmodel de cadastro de endereço 
+- fazer a criação real no banco de dados;
 
-- sugiro criar a pasta widgets para reaproveitar personalizações caso seja usada mais de uma vez (como criar um widget para o botão de sair, ou um botão de voltar, botão padrão). Desse modo você consegue definir fonte, cores, tamanho padrão sem precisar criar linhas gigantescas toda vez q for reaproveitar. Ex: os botões de Criar conta e Já tenho uma conta são a mesma coisa, mas você precisou repetir o código;
+- partir para login;
 
-- adicione um título abaixo da logo em first_acess
-
-- adicionei validators corretos para cpf e e-mail
-
-- CRIE UM SERVIÇO QUE FAÇA A BUSCA DO USUÁRIO E O AUTENTIQUE!!! ISSO É O MAIS IMPORTANTE!!
-
-- cadastro da pessoa não está como no diagrama de classes. faça também um select se ela quer se cadastrar como pessoa física ou jurídica e adicionar os atributos de acordo com o que ela escolher 
+- fazer lógica de autenticação verdadeira.
