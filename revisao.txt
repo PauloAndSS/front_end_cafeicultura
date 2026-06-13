@@ -1,7 +1,0 @@
-- revisar view do cadastro de endereço;
-- revisar viewmodel de cadastro e implementar viewmodel de cadastro de endereço 
-- fazer a criação real no banco de dados;
-
-- partir para login;
-
-- fazer lógica de autenticação verdadeira.

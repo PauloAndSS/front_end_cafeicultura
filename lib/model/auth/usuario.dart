@@ -53,10 +53,6 @@ class Telefone {
       return false;
     }
 
-    if (numerosLimpos.length == 11 && numerosLimpos[2] != '9') {
-      return false;
-    }
-
     return true;
   }
 
@@ -75,7 +71,7 @@ class Telefone {
   }
 }
 abstract class Usuario {
-  final int id;
+  final int? id;
   final Email email;
   final Telefone telefone;
   final Pessoa pessoa;
@@ -83,7 +79,7 @@ abstract class Usuario {
     required this.email,
     required this.telefone,
     required this.pessoa,
-    required this.id,
+    this.id,
   });
 
   String get identificadorPrincipal {

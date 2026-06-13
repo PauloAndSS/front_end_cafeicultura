@@ -25,7 +25,7 @@ class CEP {
 }
 
 class Endereco {
-  final int id;
+  final int? id;
   final String cidade;
   final CEP cep;
   final UF uf;
@@ -34,7 +34,7 @@ class Endereco {
   final String logradouro;
 
   Endereco({
-    required this.id,
+    this.id,
     required this.cidade,
     required this.cep,
     required this.uf,

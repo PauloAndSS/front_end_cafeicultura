@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/http/services/services_proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/auth/proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
-import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
-import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/cadastro/cadastrar_endereco_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
@@ -13,7 +13,6 @@ class CadastrarEnderecoView extends StatefulWidget {
   final Proprietario proprietario;
   final String senha;
 
-  // Construtor exigindo os dados da tela anterior
   const CadastrarEnderecoView({
     super.key,
     required this.proprietario,
@@ -22,17 +21,18 @@ class CadastrarEnderecoView extends StatefulWidget {
 
   @override
   State<CadastrarEnderecoView> createState() => CadastrarEnderecoViewState();
-
 }
 
 class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
   final _formKey = GlobalKey<FormState>();
-
+  final _viewModel = CadastrarEnderecoViewmodel(
+    service: ServicesProprietario(),
+  );
   final _cepController = TextEditingController();
   final _logradouroController = TextEditingController();
   final _bairroController = TextEditingController();
   final _cidadeController = TextEditingController();
-  
+
   UF? _ufSelecionada;
 
   @override
@@ -44,21 +44,21 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
     super.dispose();
   }
 
-  void _finalizarCadastro(){
+  void _finalizarCadastro() async {
     if (_formKey.currentState!.validate() && _ufSelecionada != null) {
       FocusScope.of(context).unfocus();
-      try{
-        final cep = CEP.criar(_cepController.text);
-        
-        final novoEndereco = Endereco(
-          id: 0,
-          cidade: _cidadeController.text.trim(),
-          bairro: _bairroController.text.trim(),
-          cep: cep,
-          logradouro: _logradouroController.text.trim(),
-          uf: _ufSelecionada!
-        );
 
+      final proprietarioSalvo = await _viewModel.finalizarCadastroComEndereco(
+        proprietarioSemEndereco: widget.proprietario,
+        senha: widget.senha,
+        cepDigitado: _cepController.text,
+        logradouro: _logradouroController.text,
+        bairro: _bairroController.text,
+        cidade: _cidadeController.text,
+        uf: _ufSelecionada!,
+      );
+
+      if (proprietarioSalvo != null && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Conta cadastrada com sucesso!'),
@@ -66,16 +66,18 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
           ),
         );
 
-      } catch (e) {
-        // Se o CEP.criar() lançar erro (ex: tamanho inválido)
+        // TODO: Adicionar navegação para a Home do App
+        // Navigator.of(context).pushReplacement(...);
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Erro: ${e.toString()}'),
+            content: Text(
+              _viewModel.mensagemErro ?? 'Erro desconhecido ao cadastrar.',
+            ),
             backgroundColor: Colors.red,
           ),
         );
       }
-      
     } else if (_ufSelecionada == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -83,6 +85,34 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
           backgroundColor: Colors.red,
         ),
       );
+    }
+  }
+
+  void _finalizarCadastroSemEndereco() async {
+    FocusScope.of(context).unfocus();
+
+    final proprietarioSalvo = await _viewModel.finalizarCadastroSemEndereco(
+      proprietario: widget.proprietario,
+      senha: widget.senha,
+    );
+
+    if (proprietarioSalvo != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Conta cadastrada com sucesso!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } else if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _viewModel.mensagemErro ?? 'Erro ao finalizar cadastro.',
+          ),
+          backgroundColor: Colors.red,
+        ),
+      );
+      Navigator.pop(context);
     }
   }
 
@@ -125,29 +155,28 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Endereço da Propriedade',
+              'Seu Endereço',
               style: TextStyle(
-                fontSize: 18, 
-                fontWeight: FontWeight.bold, 
-                color: Color(0xFF67835C)
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF67835C),
               ),
             ),
             const SizedBox(height: 16),
-            
+
             CustomTextField(
               label: 'CEP',
               controller: _cepController,
               keyboardType: TextInputType.number,
-              validator: Validator.validarCEP, 
+              validator: Validator.validarCEP,
               inputFormatters: [AppMasks.cep],
               hintText: 'Digite o CEP (apenas números)',
             ),
 
-            // Logradouro ocupa a linha inteira agora
             CustomTextField(
               label: 'Logradouro',
               controller: _logradouroController,
-              validator: Validator.validarNome, 
+              validator: Validator.validarNome,
               hintText: 'Rua, Avenida, número, complemento...',
             ),
 
@@ -171,10 +200,7 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Expanded(
-                  flex: 1,
-                  child: _buildUFDropdown(),
-                ),
+                Expanded(flex: 1, child: _buildUFDropdown()),
               ],
             ),
 
@@ -184,6 +210,15 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
               text: "Finalizar Cadastro",
               onPressed: _finalizarCadastro,
             ),
+
+            const SizedBox(width: 12),
+
+            CustomButton(
+              text: "Adicionar endereço depois", 
+              onPressed: _finalizarCadastroSemEndereco,
+              backgroundColor: Colors.white,
+              foregroundColor: const Color(0xFF67835C),
+              )
           ],
         ),
       ),
@@ -196,14 +231,21 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
       children: [
         const Text(
           'UF',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: Colors.black87),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<UF>(
           value: _ufSelecionada,
           icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF67835C)),
           decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 12,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
@@ -214,10 +256,7 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
             ),
           ),
           items: UF.values.map((uf) {
-            return DropdownMenuItem(
-              value: uf,
-              child: Text(uf.name),
-            );
+            return DropdownMenuItem(value: uf, child: Text(uf.name));
           }).toList(),
           onChanged: (novoUf) {
             setState(() {
@@ -227,5 +266,5 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
         ),
       ],
     );
-  } 
+  }
 }

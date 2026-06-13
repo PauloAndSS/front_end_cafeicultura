@@ -69,7 +69,7 @@ class PessoaJuridica extends Pessoa {
   final String? inscricaoEstadual;
 
   PessoaJuridica({
-    required super.id,
+    super.id,
     required this.cnpj,
     required this.razaoSocial,
     this.inscricaoEstadual,

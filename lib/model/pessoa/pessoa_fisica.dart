@@ -70,7 +70,7 @@ class PessoaFisica extends Pessoa {
   final CPF cpf;
 
   PessoaFisica({
-    required super.id,
+    super.id,
     required this.nome,
     required this.cpf,
     super.endereco

@@ -1,0 +1,3 @@
+- KAIK -> A FAZER: LÓGICA DE VALIDAÇÃO DE ACORDO EXATO COM O BACKEND PARA NÃO FAZER REQUISIÇÕES DESNECESSÁRIAS. FAZER TESTES NOS INPUTS.
+
+- HEITOR -> preciso fazer a implementação agora de auth no login (autenticar, autorizar e mover as páginas cadastro -> tela inicial e login -> tela inicial);

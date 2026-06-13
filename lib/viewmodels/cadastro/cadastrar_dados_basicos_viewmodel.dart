@@ -12,6 +12,9 @@ class CadastrarViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
+  String? _mensagemErro;
+  String? get mensagemErro => _mensagemErro;
+
   TipoPessoa _tipoPessoaAtual = TipoPessoa.fisica;
   TipoPessoa get tipoPessoaAtual => _tipoPessoaAtual;
 
@@ -48,7 +51,6 @@ class CadastrarViewModel extends ChangeNotifier {
         final cpfVo = CPF.criar(cpf);
         
         pessoaCadastrada = PessoaFisica(
-          id: 0, 
           nome: nome.trim(),
           cpf: cpfVo,
         );
@@ -58,7 +60,6 @@ class CadastrarViewModel extends ChangeNotifier {
         final cnpjVo = CNPJ.criar(cnpj);
         
         pessoaCadastrada = PessoaJuridica(
-          id: 0, 
           razaoSocial: razaoSocial.trim(),
           cnpj: cnpjVo,
           inscricaoEstadual: inscEstadual,
@@ -66,7 +67,6 @@ class CadastrarViewModel extends ChangeNotifier {
       }
 
       final proprietario = Proprietario(
-        id: 0,
         email: emailVo,
         telefone: telefoneVo,
         pessoa: pessoaCadastrada,
@@ -77,15 +77,12 @@ class CadastrarViewModel extends ChangeNotifier {
       debugPrint('Erro de validação no Domínio: ${e.message}');
       return null;
     } catch (e) {
-      debugPrint('Erro interno ao cadastrar: $e');
+      _mensagemErro = 'Erro ao cadastrar. Tente novamente mais tarde.';
+      debugPrint('Erro interno: $e');
       return null;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
-  }
-
-  Future<bool>finalizarCadastroComEndereco(){
-    return Future.value(true);
   }
 }

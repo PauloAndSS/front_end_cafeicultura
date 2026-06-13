@@ -74,8 +74,8 @@ class _CadastrarViewState extends State<CadastrarView> {
         );
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Ops! Verifique se os documentos informados são válidos.'),
+           SnackBar(
+            content: Text(_viewModel.mensagemErro ?? 'Erro desconhecido.'),
             backgroundColor: Colors.red,
           ),
         );

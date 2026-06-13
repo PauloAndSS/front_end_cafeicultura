@@ -19,7 +19,7 @@ class Validator {
       return 'O telefone é obrigatório';
     }
     if (!Telefone.isValid(value)) {
-      return 'Telefone inválido (digite com o DDD)';
+      return 'Telefone inválido';
     }
     return null;
   }
@@ -93,7 +93,7 @@ class Validator {
     if (value.trim().length < 3) {
       return 'O nome deve conter pelo menos 3 caracteres';
     }
-    
+
     return null;
   }
 
