@@ -29,8 +29,14 @@ class MeuApp extends StatelessWidget {
       title: 'Cafeicultura',
       home: Consumer<SessionViewModel>(
         builder: (context, session, child) {
-          return session.isLoggedIn ? const MainScreenView() : const FirstAcess();
-        },
+          if (session.isInitializing) {
+          return const Scaffold(
+            backgroundColor: Color(0xFF9FB896),
+            body: Center(child: CircularProgressIndicator(color: Colors.white)),
+          );
+        }
+        return session.isLoggedIn ? const MainScreenView() : const FirstAcess();
+        }
       ),
     );
   }

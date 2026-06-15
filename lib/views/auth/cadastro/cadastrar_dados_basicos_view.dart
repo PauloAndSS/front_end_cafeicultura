@@ -132,7 +132,7 @@ class _CadastrarViewState extends State<CadastrarView> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<TipoPessoa>(
-                      value: _viewModel.tipoPessoaAtual,
+                      initialValue: _viewModel.tipoPessoaAtual,
                       icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF67835C)), // Cor do tema
                       decoration: InputDecoration(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),

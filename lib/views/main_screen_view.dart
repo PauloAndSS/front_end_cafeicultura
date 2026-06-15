@@ -35,7 +35,7 @@ class MainScreenView extends StatelessWidget {
             data: NavigationBarThemeData(
               backgroundColor: const Color(0xFF8FA67E),
 
-              indicatorColor: Colors.white.withOpacity(0.18),
+              indicatorColor: Colors.white.withValues(alpha: 0.18),
 
               labelTextStyle: WidgetStateProperty.all(
                 const TextStyle(

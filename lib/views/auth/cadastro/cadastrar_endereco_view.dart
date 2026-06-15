@@ -69,6 +69,8 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
             backgroundColor: Colors.green,
           ),
         );
+
+        Navigator.of(context).popUntil((route) => route.isFirst);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -256,7 +258,7 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<UF>(
-          value: _ufSelecionada,
+          initialValue: _ufSelecionada,
           icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF67835C)),
           decoration: InputDecoration(
             contentPadding: const EdgeInsets.symmetric(

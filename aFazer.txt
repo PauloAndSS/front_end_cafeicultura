@@ -1,3 +1,1 @@
--> por algum motivo do diabo, o redirecionamento de página não está funcionando (return session.isLoggedIn ? const MainScreenView() : const FirstAcess();)
-
--> POR ALGUM MOTIVO DO DIABO, o cookie não está chegando para o frontend
+-> KAIK -> Faça o teste no cadastro e no login. Identifique todas as mensagens de API e todas as falhas e faça as devidas alterações

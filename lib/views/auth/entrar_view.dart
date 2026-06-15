@@ -43,6 +43,9 @@ class _EntrarViewState extends State<EntrarView> {
         final session = Provider.of<SessionViewModel>(context, listen: false);
         
         await session.login(id, nome ?? 'Produtor'); 
+        if(mounted){
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
       }
     }else if(mounted){
         ScaffoldMessenger.of(context).showSnackBar(
@@ -81,7 +84,7 @@ class _EntrarViewState extends State<EntrarView> {
                     borderRadius: BorderRadius.circular(16),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
+                        color: Colors.black.withValues(alpha: 0.05),
                         blurRadius: 10,
                         offset: const Offset(0, 4),
                       ),

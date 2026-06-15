@@ -17,7 +17,6 @@ class ServicesAuth extends BaseService {
     );
 
     final rawCookie = response.headers['set-cookie'];
-    print(response.headers);
     if (rawCookie != null) {
       final cookieSession = rawCookie.split(';')[0];
       BaseService.sessionCookie = cookieSession; 
@@ -33,7 +32,6 @@ class ServicesAuth extends BaseService {
   }
 
   Future<void> sair() async {
-    print('Headers sendo enviados: $defaultHeaders');
     final response = await http.post(
       Uri.parse('$url/logout'),
       headers: defaultHeaders,
@@ -42,7 +40,6 @@ class ServicesAuth extends BaseService {
     BaseService.sessionCookie = null;
     
     if (response.statusCode != 200) {
-      print(response.statusCode);
       throw Exception('Erro ao encerrar sessão no servidor');
     }
   }
