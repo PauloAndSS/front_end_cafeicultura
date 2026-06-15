@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 class ServicesProprietario extends BaseService{
   late final Uri url = Uri.parse('$baseUrl/proprietarios');
   
-  Future<bool> cadastrarSemEndereco({
+  Future<CadastroProprietarioResponseDTO> cadastrarSemEndereco({
     required Proprietario proprietario,
     required String senha
   }) async{
@@ -20,7 +20,7 @@ class ServicesProprietario extends BaseService{
         );
 
         if (response.statusCode == 201 || response.statusCode == 200) {
-          return true; 
+          return CadastroProprietarioResponseDTO.fromJson(jsonDecode(response.body));
         } else {
           final corpoDecodificado = jsonDecode(response.body);
     
@@ -32,7 +32,7 @@ class ServicesProprietario extends BaseService{
             throw ApiValidationException(mensagensBrutas);
             
           } else {
-            final msg = corpoDecodificado['message'] ?? 'Erro desconhecido no servidor.';
+            final msg = corpoDecodificado['mensagem'] ?? 'Erro desconhecido no servidor.';
             throw ApiException(msg);
           }
         }

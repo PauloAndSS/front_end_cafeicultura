@@ -1,3 +1,3 @@
-- KAIK -> A FAZER: LÓGICA DE VALIDAÇÃO DE ACORDO EXATO COM O BACKEND PARA NÃO FAZER REQUISIÇÕES DESNECESSÁRIAS. FAZER TESTES NOS INPUTS.
+-> por algum motivo do diabo, o redirecionamento de página não está funcionando (return session.isLoggedIn ? const MainScreenView() : const FirstAcess();)
 
-- HEITOR -> preciso fazer a implementação agora de auth no login (autenticar, autorizar e mover as páginas cadastro -> tela inicial e login -> tela inicial);
+-> POR ALGUM MOTIVO DO DIABO, o cookie não está chegando para o frontend

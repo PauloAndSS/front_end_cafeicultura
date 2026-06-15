@@ -42,4 +42,15 @@ class CadastroProprietarioDTO {
       "senha": senha,
     };
   }
+
+
+}
+
+class CadastroProprietarioResponseDTO{
+  final String mensagem;
+  final int id; 
+
+  CadastroProprietarioResponseDTO.fromJson(Map<String, dynamic> json)
+      : mensagem = json['mensagem'],
+        id = json['id'];
 }

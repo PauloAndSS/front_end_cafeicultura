@@ -4,12 +4,20 @@ class CustomTextButton extends StatelessWidget {
   final String text;
   final VoidCallback onPressed;
   final Alignment alignment;
+  final Color? textColor;
+  final bool isUnderlined;
+  final bool isBold;
+  final double fontSize;
 
   const CustomTextButton({
     super.key,
     required this.text,
     required this.onPressed,
     this.alignment = Alignment.centerRight,
+    this.textColor,
+    this.isUnderlined = false,
+    this.isBold = true,        
+    this.fontSize = 14.0,      
   });
 
   @override
@@ -25,10 +33,12 @@ class CustomTextButton extends StatelessWidget {
         onPressed: onPressed,
         child: Text(
           text,
-          style: const TextStyle(
-            color: Color(0xFF0091FF),
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
+          style: TextStyle(
+            color: textColor ?? const Color(0xFF0091FF),
+            fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
+            fontSize: fontSize,
+            decoration: isUnderlined ? TextDecoration.underline : TextDecoration.none,
+            decorationColor: textColor ?? const Color(0xFF0091FF), 
           ),
         ),
       ),

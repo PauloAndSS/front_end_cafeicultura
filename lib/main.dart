@@ -24,12 +24,14 @@ class MeuApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final session = Provider.of<SessionViewModel>(context);
-
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Cafeicultura',
-      home: session.isLoggedIn ? const MainScreenView() : const FirstAcess(),
+      home: Consumer<SessionViewModel>(
+        builder: (context, session, child) {
+          return session.isLoggedIn ? const MainScreenView() : const FirstAcess();
+        },
+      ),
     );
   }
 }

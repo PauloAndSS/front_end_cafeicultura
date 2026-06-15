@@ -64,10 +64,9 @@ class CadastrarEnderecoViewmodel extends ChangeNotifier {
         telefone: proprietarioSemEndereco.telefone,
         pessoa: pessoaCompleta,
       );
-      //await repositorio cadastrar
-      _mensagemErro = "Cadastro de endereço ainda não implementado.";
-      return null;
       
+      await _service.cadastrarSemEndereco(proprietario: proprietario, senha: senha);
+      return proprietario;
     }on ArgumentError catch(e){
       _mensagemErro = "Verifique os dados: ${e.message}";
       debugPrint("Erro interno: $e");
@@ -91,8 +90,13 @@ class CadastrarEnderecoViewmodel extends ChangeNotifier {
     _mensagemErro = null;
 
     try{
-      await _service.cadastrarSemEndereco(proprietario: proprietario, senha: senha);
-      return proprietario;  
+      final dtoProprietario = await _service.cadastrarSemEndereco(proprietario: proprietario, senha: senha);
+      return Proprietario(
+        id: dtoProprietario.id,
+        email: proprietario.email,
+        telefone: proprietario.telefone,
+        pessoa: proprietario.pessoa,
+      );
     }on ApiValidationException catch (e) {
       _mensagemErro = e.mensagens.map((msg) => '• $msg').join('\n');
       return null;

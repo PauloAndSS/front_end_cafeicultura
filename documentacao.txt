@@ -17,4 +17,7 @@
 
 - widgets/
     - WIDGETS PARA SEREM REAPROVEITADOS E ESCREVERMOS MENOS CÓDIGOS.
-    
+
+- EXECUÇÃO:
+    - Para executar o flutter e testá-lo, temos que usar um emulador de telefones para a os cookies, já que não funciona da mesma forma mobile para web;
+    - Utilizo o android studio

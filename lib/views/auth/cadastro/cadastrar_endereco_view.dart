@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/auth/proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/cadastro/cadastrar_endereco_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
+import 'package:provider/provider.dart';
 
 class CadastrarEnderecoView extends StatefulWidget {
   final Proprietario proprietario;
@@ -65,9 +69,6 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
             backgroundColor: Colors.green,
           ),
         );
-
-        // TODO: Adicionar navegação para a Home do App
-        // Navigator.of(context).pushReplacement(...);
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -97,6 +98,22 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
     );
 
     if (proprietarioSalvo != null && mounted) {
+      final proprietario = proprietarioSalvo.pessoa;
+      String nomeParaLogar = 'Produtor';
+
+      if (proprietario is PessoaFisica) {
+        nomeParaLogar = proprietario.nome;
+      } 
+      else if (proprietario is PessoaJuridica) {
+        nomeParaLogar = proprietario.razaoSocial;
+      }
+      final session = Provider.of<SessionViewModel>(context, listen: false);
+      
+      await session.login(
+        proprietarioSalvo.id!, 
+        nomeParaLogar,
+      );
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Conta cadastrada com sucesso!'),

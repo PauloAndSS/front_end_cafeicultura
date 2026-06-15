@@ -58,18 +58,19 @@ class FirstAcess extends StatelessWidget {
                   
                   CustomButton(
                     text: "Criar uma conta", 
-                    onPressed: () => Navigator.push(context,MaterialPageRoute(builder: (context) => const CadastrarView()),
-                    )
+                    onPressed: () => Navigator.push(context,MaterialPageRoute(builder: (context) => const CadastrarView())),
+                    backgroundColor: Colors.white,
+                    foregroundColor: const Color(0xFF67835C)
                   ),
                 ],
               ),
             ),
           ),
-                Positioned(
-                  top: bannerHeight - 65, // 65 é a metade do tamanho do logo (130/2)
-                  left: (screenWidth / 2) - 65,
-                  child: const LogoCircular(),
-                ),
+          Positioned(
+            top: bannerHeight - 65, // 65 é a metade do tamanho do logo (130/2)
+            left: (screenWidth / 2) - 65,
+            child: const LogoCircular(),
+          ),
         ],
       ),
     );
