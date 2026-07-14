@@ -20,7 +20,7 @@ class CadastroProprietarioDTO {
    
   CadastroProprietarioDTO({required this.proprietario, required this.senha});
 
-  Map<String, dynamic> cadastrarSemEnderecoToJson() {
+  Map<String, dynamic> cadastrar() {
     final pessoa = proprietario.pessoa;
     final tipoPessoa = IdentificadorPessoa.identificar(pessoa);
     
@@ -46,11 +46,11 @@ class CadastroProprietarioDTO {
 
 }
 
-class CadastroProprietarioResponseDTO{
+class CadastroProprietarioResponseDTO {
   final String mensagem;
-  final int id; 
+  final int? id;
 
   CadastroProprietarioResponseDTO.fromJson(Map<String, dynamic> json)
-      : mensagem = json['mensagem'],
-        id = json['id'];
+      : mensagem = json['mensagem'] ?? '',
+        id = json['id'] as int?; // 2. Faz o mapeamento aceitando nulo
 }

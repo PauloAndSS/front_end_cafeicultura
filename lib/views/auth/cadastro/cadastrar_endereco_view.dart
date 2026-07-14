@@ -11,6 +11,7 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/session_viewmodel.dart'
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/uf_dropdown.dart';
 import 'package:provider/provider.dart';
 
 class CadastrarEnderecoView extends StatefulWidget {
@@ -48,9 +49,10 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
     super.dispose();
   }
 
-  void _finalizarCadastro() async {
+  void _finalizarCadastroComEndereco() async {
     if (_formKey.currentState!.validate() && _ufSelecionada != null) {
       FocusScope.of(context).unfocus();
+    final session = Provider.of<SessionViewModel>(context, listen: false);
 
       final proprietarioSalvo = await _viewModel.finalizarCadastroComEndereco(
         proprietarioSemEndereco: widget.proprietario,
@@ -60,6 +62,7 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
         bairro: _bairroController.text,
         cidade: _cidadeController.text,
         uf: _ufSelecionada!,
+        session: session,
       );
 
       if (proprietarioSalvo != null && mounted) {
@@ -80,6 +83,10 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
             backgroundColor: Colors.red,
           ),
         );
+
+        if(_viewModel.erroDaPagAnterior == true){
+        Navigator.pop(context);
+      }
       }
     } else if (_ufSelecionada == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -97,6 +104,7 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
     final proprietarioSalvo = await _viewModel.finalizarCadastroSemEndereco(
       proprietario: widget.proprietario,
       senha: widget.senha,
+      session: Provider.of<SessionViewModel>(context, listen: false),
     );
 
     if (proprietarioSalvo != null && mounted) {
@@ -112,7 +120,7 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
       final session = Provider.of<SessionViewModel>(context, listen: false);
       
       await session.login(
-        proprietarioSalvo.id!, 
+        proprietarioSalvo.id ?? 0, 
         nomeParaLogar,
       );
 
@@ -122,6 +130,10 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
           backgroundColor: Colors.green,
         ),
       );
+
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      }
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -131,7 +143,9 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
           backgroundColor: Colors.red,
         ),
       );
-      Navigator.pop(context);
+      if(_viewModel.erroDaPagAnterior == true){
+        Navigator.pop(context);
+      }
     }
   }
 
@@ -206,7 +220,7 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
               hintText: 'Digite o bairro ou distrito',
             ),
 
-            Row(
+Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
@@ -219,71 +233,56 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
                   ),
                 ),
                 const SizedBox(width: 12),
-                Expanded(flex: 1, child: _buildUFDropdown()),
+                Expanded(flex: 1, child: UfDropdown(
+                  value: _ufSelecionada,
+                  onChanged: (UF? newValue) {
+                    setState(() {
+                      _ufSelecionada = newValue;
+                    });
+                  },
+                )),
               ],
             ),
 
             const SizedBox(height: 24),
 
-            CustomButton(
-              text: "Finalizar Cadastro",
-              onPressed: _finalizarCadastro,
+            // 👇 TRECHO CORRIGIDO 👇
+            ListenableBuilder(
+              listenable: _viewModel,
+              builder: (context, _) {
+                // 1. Retorna o loading centralizado
+                if (_viewModel.isLoading) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: Color(0xFF67835C)),
+                  );
+                }
+                
+                // 2. Retorna TODOS os botões agrupados dentro de uma Column
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    CustomButton(
+                      text: "Finalizar Cadastro",
+                      onPressed: _finalizarCadastroComEndereco,
+                    ),
+                    
+                    const SizedBox(height: 12), // Ajustado para height e usando vírgula
+                    
+                    CustomButton(
+                      text: "Adicionar endereço depois", 
+                      onPressed: _finalizarCadastroSemEndereco,
+                      backgroundColor: Colors.white,
+                      foregroundColor: const Color(0xFF67835C),
+                    ),
+                  ],
+                );
+              },
             ),
-
-            const SizedBox(width: 12),
-
-            CustomButton(
-              text: "Adicionar endereço depois", 
-              onPressed: _finalizarCadastroSemEndereco,
-              backgroundColor: Colors.white,
-              foregroundColor: const Color(0xFF67835C),
-              )
+            // 👆 FIM DO TRECHO CORRIGIDO 👆
+            
           ],
         ),
       ),
-    );
-  }
-
-  Widget _buildUFDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'UF',
-          style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 8),
-        DropdownButtonFormField<UF>(
-          initialValue: _ufSelecionada,
-          icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF67835C)),
-          decoration: InputDecoration(
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 12,
-              vertical: 12,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
-            ),
-          ),
-          items: UF.values.map((uf) {
-            return DropdownMenuItem(value: uf, child: Text(uf.name));
-          }).toList(),
-          onChanged: (novoUf) {
-            setState(() {
-              _ufSelecionada = novoUf;
-            });
-          },
-        ),
-      ],
     );
   }
 }

@@ -3,6 +3,7 @@ import 'package:frond_end_cafeicultura_mobile/http/dtos/auth_dto.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_auth.dart';
 import 'package:frond_end_cafeicultura_mobile/model/auth/credencial.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/session_viewmodel.dart';
 
 class EntrarViewmodel extends ChangeNotifier{
   bool _isLoading = false;
@@ -11,17 +12,11 @@ class EntrarViewmodel extends ChangeNotifier{
   String? _mensagemErro;
   String? get mensagemErro => _mensagemErro;
 
-  int? _idUsuarioRecuperado;
-  int? get idUsuarioRecuperado => _idUsuarioRecuperado;
-
-  String? _nomeUsuarioRecuperado;
-  String? get nomeUsuarioRecuperado => _nomeUsuarioRecuperado;
-
   final ServicesAuth _service;
 
   EntrarViewmodel({required ServicesAuth service}) : _service = service;
 
-  Future<bool> fazerLogin(String entradaBruta, String senha) async {
+  Future<bool> fazerLogin(String entradaBruta, String senha, SessionViewModel session) async {
     _isLoading = true;
     _mensagemErro = null;
     notifyListeners();
@@ -32,8 +27,14 @@ class EntrarViewmodel extends ChangeNotifier{
 
       final resposta = await _service.autenticar(dto);
       
-      _idUsuarioRecuperado = resposta.sessaoAtiva?['idUsuario'];
-      _nomeUsuarioRecuperado = resposta.sessaoAtiva?['nome'];
+      final id = resposta.sessaoAtiva?.idUsuario;
+      final nome = resposta.sessaoAtiva?.nome ?? 'Produtor';
+
+      if (id == null) {
+        throw Exception("ID do usuário não retornado pelo servidor.");
+      }
+
+      await session.login(id, nome);
 
       return true;
 

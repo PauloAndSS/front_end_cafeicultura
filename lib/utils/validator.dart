@@ -70,8 +70,8 @@ class Validator {
     if (value == null || value.isEmpty) {
       return 'A senha é obrigatória';
     }
-    if (value.length < 6) {
-      return 'A senha deve ter no mínimo 6 caracteres';
+    if (value.length < 8) {
+      return 'A senha deve ter no mínimo 8 caracteres';
     }
     return null;
   }

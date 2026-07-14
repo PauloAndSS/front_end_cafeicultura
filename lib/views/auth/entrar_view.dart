@@ -33,26 +33,21 @@ class _EntrarViewState extends State<EntrarView> {
   Future<void> _entrar() async {
     if (_formKey.currentState!.validate()) {
       FocusScope.of(context).unfocus();
-      final sucesso = await _viewModel.fazerLogin(_usuarioController.text, _senhaController.text);
-      
-      if (sucesso && mounted){
-        final id = _viewModel.idUsuarioRecuperado;
-        final nome = _viewModel.nomeUsuarioRecuperado;
 
-        if (id != null) {
-        final session = Provider.of<SessionViewModel>(context, listen: false);
-        
-        await session.login(id, nome ?? 'Produtor'); 
-        if(mounted){
-          Navigator.of(context).popUntil((route) => route.isFirst);
-        }
-      }
-    }else if(mounted){
+      final session = Provider.of<SessionViewModel>(context, listen: false);
+
+      final sucesso = await _viewModel.fazerLogin(
+        _usuarioController.text,
+        _senhaController.text,
+        session,
+      );
+
+      if (sucesso && mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              _viewModel.mensagemErro ?? 'Erro ao fazer login.',
-            ),
+            content: Text(_viewModel.mensagemErro ?? 'Erro ao fazer login.'),
             backgroundColor: Colors.red,
           ),
         );
@@ -63,7 +58,7 @@ class _EntrarViewState extends State<EntrarView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF9FB896), 
+      backgroundColor: const Color(0xFF9FB896),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -71,10 +66,8 @@ class _EntrarViewState extends State<EntrarView> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const LogoCircular(
-                  size: 140,
-                ),
-                
+                const LogoCircular(size: 140),
+
                 const SizedBox(height: 32),
 
                 Container(
@@ -96,34 +89,38 @@ class _EntrarViewState extends State<EntrarView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CustomTextField(
-                          label: "E-mail, CPF ou CNPJ", 
+                          label: "E-mail, CPF ou CNPJ",
                           controller: _usuarioController,
                           validator: (value) {
                             if (value == null || value.trim().isEmpty) {
-                            return 'O preenchimento é obrigatório';
-                          }
+                              return 'O preenchimento é obrigatório';
+                            }
 
-                          final textoDigitado = value.trim();
-                          
-                          if (textoDigitado.contains('@') || RegExp(r'[a-zA-Z]').hasMatch(textoDigitado)) {
-                            return Validator.validarEmail(textoDigitado);
-                          }
+                            final textoDigitado = value.trim();
 
-                          final apenasNumeros = textoDigitado.replaceAll(RegExp(r'[^0-9]'), '');
+                            if (textoDigitado.contains('@') ||
+                                RegExp(r'[a-zA-Z]').hasMatch(textoDigitado)) {
+                              return Validator.validarEmail(textoDigitado);
+                            }
 
-                          if (apenasNumeros.length <= 11) {
-                            return Validator.validarCPF(textoDigitado);
-                          } else {
-                            return Validator.validarCNPJ(textoDigitado);
-                          }
+                            final apenasNumeros = textoDigitado.replaceAll(
+                              RegExp(r'[^0-9]'),
+                              '',
+                            );
+
+                            if (apenasNumeros.length <= 11) {
+                              return Validator.validarCPF(textoDigitado);
+                            } else {
+                              return Validator.validarCNPJ(textoDigitado);
+                            }
                           },
                           hintText: "Digite seu E-mail, CPF ou CNPJ",
-                          ),
-                        
+                        ),
+
                         const SizedBox(height: 20),
 
                         CustomTextField(
-                          label: "Senha", 
+                          label: "Senha",
                           controller: _senhaController,
                           isPassword: true,
                           validator: Validator.validarSenha,
@@ -132,10 +129,7 @@ class _EntrarViewState extends State<EntrarView> {
 
                         const SizedBox(height: 24),
 
-                        CustomButton(
-                          text: "Entrar", 
-                          onPressed: _entrar,
-                        ),
+                        CustomButton(text: "Entrar", onPressed: _entrar),
 
                         const SizedBox(height: 20),
 
@@ -146,9 +140,10 @@ class _EntrarViewState extends State<EntrarView> {
                               text: 'Esqueceu a senha?',
                               alignment: Alignment.centerLeft,
                               textColor: Colors.black87,
-                              isBold: false,        
-                              isUnderlined: true,   
-                              onPressed: _entrar, // mudar ao implementar esqueci a senha
+                              isBold: false,
+                              isUnderlined: true,
+                              onPressed:
+                                  _entrar, // mudar ao implementar esqueci a senha
                             ),
                             CustomTextButton(
                               text: 'Criar conta',
@@ -156,7 +151,9 @@ class _EntrarViewState extends State<EntrarView> {
                               onPressed: () {
                                 Navigator.pushReplacement(
                                   context,
-                                  MaterialPageRoute(builder: (context) => const CadastrarView()),
+                                  MaterialPageRoute(
+                                    builder: (context) => const CadastrarView(),
+                                  ),
                                 );
                               },
                             ),
