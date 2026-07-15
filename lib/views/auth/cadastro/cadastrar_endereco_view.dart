@@ -6,7 +6,7 @@ import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/cadastro/cadastrar_endereco_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/cadastro/cadastrar_endereco_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';

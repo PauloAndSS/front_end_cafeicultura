@@ -5,11 +5,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionViewModel extends ChangeNotifier {
   bool _isLoggedIn = false;
-  String _ownerName = '';
+  String _nomeUsuario = '';
   bool _isInitializing = true; 
 
   bool get isLoggedIn => _isLoggedIn;
-  String get ownerName => _ownerName;
+  String get nomeUsuario => _nomeUsuario;
   bool get isInitializing => _isInitializing;
 
   SessionViewModel() {
@@ -23,7 +23,7 @@ class SessionViewModel extends ChangeNotifier {
 
     if (idSalvo != null && cookieSalvo != null) {
       _isLoggedIn = true;
-      _ownerName = prefs.getString('nome_usuario') ?? '';
+      _nomeUsuario = prefs.getString('nome_usuario') ?? 'Produtor';
       
       BaseService.sessionCookie = cookieSalvo; 
     }
@@ -42,7 +42,7 @@ class SessionViewModel extends ChangeNotifier {
     await prefs.setString('cookie_sessao', cookie);
 
     _isLoggedIn = true;
-    _ownerName = nome;
+    _nomeUsuario = nome;
     notifyListeners();
   }
 
@@ -60,7 +60,7 @@ class SessionViewModel extends ChangeNotifier {
       await prefs.remove('cookie_sessao'); 
 
       _isLoggedIn = false;
-      _ownerName = '';
+      _nomeUsuario = '';
       
       notifyListeners(); 
     }

@@ -1,1 +1,3 @@
--> KAIK -> Faça o teste no cadastro e no login. Identifique todas as mensagens de API e todas as falhas e faça as devidas alterações
+->Pagina de atualizar dados
+    -> lembrar de atualizar os dados de sessao
+    -> Lembrar de deixar a UF selecionada a que o usuario tem

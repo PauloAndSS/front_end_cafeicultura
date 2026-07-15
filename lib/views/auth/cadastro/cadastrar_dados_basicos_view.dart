@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/cadastro/cadastrar_dados_basicos_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/cadastro/cadastrar_dados_basicos_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/auth/cadastro/cadastrar_endereco_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
