@@ -49,11 +49,7 @@ class SessionViewModel extends ChangeNotifier {
   Future<void> logout() async {
     try {
       await ServicesAuth().sair();
-    } catch (e) {
-      debugPrint('Logout no servidor falhou: $e');
-    } finally {
-      BaseService.sessionCookie = null;
-
+      
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('id_usuario');
       await prefs.remove('nome_usuario');
@@ -63,6 +59,10 @@ class SessionViewModel extends ChangeNotifier {
       _nomeUsuario = '';
       
       notifyListeners(); 
-    }
+    
+    } catch (e) {
+      debugPrint('Logout no servidor falhou: $e');
+    } 
+      BaseService.sessionCookie = null;
   }
 }
