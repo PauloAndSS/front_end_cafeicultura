@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/cadastro/cadastrar_dados_basicos_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/auth/cadastro/cadastrar_endereco_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_button_widget.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart'; 
+import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
+import 'package:provider/provider.dart'; 
 import '../entrar_view.dart';
 
 class CadastrarView extends StatefulWidget {
@@ -46,12 +48,13 @@ class _CadastrarViewState extends State<CadastrarView> {
     super.dispose();
   }
 
-  void _cadastrarDadosBasicos() {
+void _cadastrarDadosBasicos() async {
     if (_formKey.currentState!.validate()) {
-      
       FocusScope.of(context).unfocus();
 
-      final resultado = _viewModel.cadastroDadosBasicos(
+      final session = Provider.of<SessionViewModel>(context, listen: false);
+
+      final resultado = await _viewModel.cadastrarDadosBasicos(
         email: _emailController.text,
         senha: _senhaController.text,
         telefone: _telefoneController.text,
@@ -60,6 +63,7 @@ class _CadastrarViewState extends State<CadastrarView> {
         razaoSocial: _viewModel.tipoPessoaAtual == TipoPessoa.juridica ? _razaoSocialController.text : null,
         cnpj: _viewModel.tipoPessoaAtual == TipoPessoa.juridica ? _cnpjController.text : null,
         inscEstadual: _viewModel.tipoPessoaAtual == TipoPessoa.juridica ? _inscricaoEstadualController.text : null,
+        session: session,
       );
 
       if (resultado != null && mounted) {
@@ -67,8 +71,7 @@ class _CadastrarViewState extends State<CadastrarView> {
           context,
           MaterialPageRoute(
             builder: (context) => CadastrarEnderecoView(
-              proprietario: resultado.proprietario,
-              senha: resultado.senha,
+              proprietario: resultado,
             ),
           ),
         );

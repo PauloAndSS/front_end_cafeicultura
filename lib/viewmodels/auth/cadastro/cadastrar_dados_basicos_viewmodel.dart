@@ -1,9 +1,14 @@
 import 'package:flutter/widgets.dart';
+import 'package:frond_end_cafeicultura_mobile/http/dtos/auth_dto.dart';
+import 'package:frond_end_cafeicultura_mobile/http/services/services_auth.dart';
+import 'package:frond_end_cafeicultura_mobile/http/services/services_proprietario.dart';
+import 'package:frond_end_cafeicultura_mobile/model/auth/credencial.dart';
 import 'package:frond_end_cafeicultura_mobile/model/auth/proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/auth/usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/session_viewmodel.dart';
 
 enum TipoPessoa { fisica, juridica }
 
@@ -18,6 +23,7 @@ class CadastrarViewModel extends ChangeNotifier {
   TipoPessoa _tipoPessoaAtual = TipoPessoa.fisica;
   TipoPessoa get tipoPessoaAtual => _tipoPessoaAtual;
 
+  final _proprietarioService = ServicesProprietario();
   void alterarTipoPessoa(TipoPessoa novoTipo) {
     if (_tipoPessoaAtual != novoTipo) {
       _tipoPessoaAtual = novoTipo;
@@ -25,17 +31,19 @@ class CadastrarViewModel extends ChangeNotifier {
     }
   }
 
-  ({Proprietario proprietario, String senha})? cadastroDadosBasicos({
+  Future<Proprietario?> cadastrarDadosBasicos({
     required String email,
     required String senha,
     required String telefone,
+    required SessionViewModel session,
     String? nome,
     String? cpf,
     String? razaoSocial,
     String? cnpj,
     String? inscEstadual,
-  }) {
+  }) async {
     _isLoading = true;
+    _mensagemErro = null;
     notifyListeners();
 
     try {
@@ -45,7 +53,6 @@ class CadastrarViewModel extends ChangeNotifier {
       Pessoa pessoaCadastrada;
 
       if (_tipoPessoaAtual == TipoPessoa.fisica) {
-        
         if (nome == null || cpf == null) throw ArgumentError('Dados de PF incompletos');
         
         final cpfVo = CPF.criar(cpf);
@@ -66,13 +73,43 @@ class CadastrarViewModel extends ChangeNotifier {
         );
       }
 
-      final proprietario = Proprietario(
+      final proprietarioSemId = Proprietario(
         email: emailVo,
         telefone: telefoneVo,
         pessoa: pessoaCadastrada,
       );
+
+      await _proprietarioService.cadastrar(
+        proprietario: proprietarioSemId,
+        senha: senha,
+      );
       
-      return (proprietario: proprietario, senha: senha);
+      final identificacao = IdentificacaoLogin.criar(proprietarioSemId.email.endereco);
+      
+      final authService = ServicesAuth();
+      final authResponse = await authService.autenticar(
+        LoginRequestDTO(
+          tipoEntrada: identificacao.tipoEntrada,
+          entrada: identificacao.valor,
+          senha: senha,
+        ),
+      );
+
+      final idGerado = authResponse.sessaoAtiva?.idUsuario;
+      if (idGerado == null) {
+        throw Exception('Erro ao capturar ID do usuário no sistema.');
+      }
+
+      String nomeParaLogar = pessoaCadastrada is PessoaFisica ? pessoaCadastrada.nome : (pessoaCadastrada as PessoaJuridica).razaoSocial;
+          
+      await session.login(idGerado, nomeParaLogar);
+
+      return Proprietario(
+        id: idGerado,
+        email: proprietarioSemId.email,
+        telefone: proprietarioSemId.telefone,
+        pessoa: pessoaCadastrada,
+      );
     } on ArgumentError catch (e) {
       debugPrint('Erro de validação no Domínio: ${e.message}');
       return null;
