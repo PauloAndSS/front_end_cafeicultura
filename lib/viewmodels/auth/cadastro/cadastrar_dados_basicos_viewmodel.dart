@@ -1,9 +1,10 @@
 import 'package:flutter/widgets.dart';
 import 'package:frond_end_cafeicultura_mobile/http/dtos/auth_dto.dart';
+import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_auth.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/auth/credencial.dart';
-import 'package:frond_end_cafeicultura_mobile/model/auth/proprietario.dart';
+import 'package:frond_end_cafeicultura_mobile/model/proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/auth/usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
@@ -110,13 +111,24 @@ class CadastrarViewModel extends ChangeNotifier {
         telefone: proprietarioSemId.telefone,
         pessoa: pessoaCadastrada,
       );
+    } on ApiValidationException catch (e) {
+      _mensagemErro = e.mensagens.map((msg) => '• $msg').join('\n');
+      return null;
+      
+    } on ApiException catch (e) {
+      _mensagemErro = e.mensagem;
+      return null;
+      
     } on ArgumentError catch (e) {
+      _mensagemErro = e.message;
       debugPrint('Erro de validação no Domínio: ${e.message}');
       return null;
+      
     } catch (e) {
-      _mensagemErro = 'Erro ao cadastrar. Tente novamente mais tarde.';
-      debugPrint('Erro interno: $e');
+      _mensagemErro = 'Erro ao cadastrar. Verifique sua conexão e tente novamente.';
+      debugPrint('Erro interno não tratado: $e');
       return null;
+      
     } finally {
       _isLoading = false;
       notifyListeners();

@@ -42,4 +42,19 @@ class Endereco {
     required this.logradouro,
     this.pais = "Brasil",
   });
+
+  factory Endereco.fromJson(Map<String, dynamic> json) {
+    return Endereco(
+      id: json['id'],
+      cidade: json['cidade'],
+      bairro: json['bairro'],
+      logradouro: json['logradouro'],
+      cep: CEP.criar(json['cep']),
+      uf: UF.values.firstWhere(
+        (e) => e.name.toUpperCase() == json['uf'].toString().toUpperCase(),
+        orElse: () => throw ArgumentError('UF inválida: ${json['uf']}'),
+      ),
+      pais: json['pais'] ?? 'Brasil', 
+    );
+  }
 }

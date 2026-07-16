@@ -1,7 +1,7 @@
 import 'package:flutter/widgets.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_proprietario.dart';
-import 'package:frond_end_cafeicultura_mobile/model/auth/proprietario.dart';
+import 'package:frond_end_cafeicultura_mobile/model/proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
@@ -14,6 +14,7 @@ class CadastrarEnderecoViewmodel extends ChangeNotifier {
   String? get mensagemErro => _mensagemErro;
 
   final _proprietarioService = ServicesProprietario();
+
 
   Future<Proprietario?> adicionarEndereco({
     required Proprietario proprietarioLogado,
@@ -75,16 +76,21 @@ class CadastrarEnderecoViewmodel extends ChangeNotifier {
     } on ApiValidationException catch (e) {
       _mensagemErro = e.mensagens.map((msg) => '• $msg').join('\n');
       return null;
+      
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
       return null;
+      
     } on ArgumentError catch (e) {
-      _mensagemErro = "Verifique os dados: ${e.message}";
+      _mensagemErro = e.message;
+      debugPrint('Erro de validação no Domínio: ${e.message}');
       return null;
+      
     } catch (e) {
-      _mensagemErro = 'Erro ao salvar o endereço. Tente novamente.';
-      debugPrint("Erro interno: $e");
+      _mensagemErro = 'Erro ao cadastrar. Verifique sua conexão e tente novamente.';
+      debugPrint('Erro interno não tratado: $e');
       return null;
+      
     } finally {
       _isLoading = false;
       notifyListeners();

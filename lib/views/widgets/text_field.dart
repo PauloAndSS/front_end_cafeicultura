@@ -7,9 +7,9 @@ class CustomTextField extends StatelessWidget {
   final bool isPassword;
   final String? Function(String?)? validator;
   final TextInputType keyboardType;
-  final String? hintText; 
+  final String? hintText;
   final List<TextInputFormatter>? inputFormatters;
-
+  final bool readOnly;
 
   const CustomTextField({
     super.key,
@@ -20,6 +20,7 @@ class CustomTextField extends StatelessWidget {
     this.validator,
     this.keyboardType = TextInputType.text,
     this.inputFormatters,
+    this.readOnly = false,
   });
 
   @override
@@ -30,8 +31,8 @@ class CustomTextField extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            fontSize: 16, 
-            fontWeight: FontWeight.w600, 
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
             color: Colors.black87,
           ),
         ),
@@ -41,11 +42,19 @@ class CustomTextField extends StatelessWidget {
           obscureText: isPassword,
           keyboardType: keyboardType,
           validator: validator,
+          readOnly: readOnly,
           inputFormatters: inputFormatters,
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            // 👇 Adicionado o preenchimento condicional de cor
+            filled: readOnly,
+            fillColor: readOnly ? Colors.grey.shade200 : Colors.transparent,
+
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 12,
+            ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
@@ -53,6 +62,10 @@ class CustomTextField extends StatelessWidget {
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+            ),
+            disabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: Colors.grey.shade300),
             ),
           ),
         ),

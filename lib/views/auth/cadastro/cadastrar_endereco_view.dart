@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/model/auth/proprietario.dart';
+import 'package:frond_end_cafeicultura_mobile/model/proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
@@ -58,7 +58,9 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
           ),
         );
 
-        Navigator.of(context).popUntil((route) => route.isFirst); // TODO: Ao implementar criaçao de propriedade, mudar destino da rota
+        Navigator.of(context).popUntil(
+          (route) => route.isFirst,
+        ); // TODO: Ao implementar criaçao de propriedade, mudar destino da rota
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -81,28 +83,44 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
   }
 
   void _finalizarCadastroSemEndereco() {
-    Navigator.of(context).popUntil((route) => route.isFirst); // TODO: Ao implementar criaçao de propriedade, mudar destino da rota
+    Navigator.of(context).popUntil(
+      (route) => route.isFirst,
+    ); // TODO: Ao implementar criaçao de propriedade, mudar destino da rota
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF9FB896),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10),
-            child: Column(
-              children: [
-                const LogoCircular(),
-                const SizedBox(height: 24),
-                _buildEnderecoCard(),
-              ],
+    return PopScope(
+      canPop:
+          false, // Bloqueia o "voltar" padrão (que iria pra tela de cadastro)
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+
+        // Ao invés de voltar uma tela, mandamos ele para a tela inicial!
+        // Isso tem o mesmo efeito do botão "Adicionar endereço depois"
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF9FB896),
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.white),
+        ),
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 10,
+              ),
+              child: Column(
+                children: [
+                  const LogoCircular(),
+                  const SizedBox(height: 24),
+                  _buildEnderecoCard(),
+                ],
+              ),
             ),
           ),
         ),
@@ -184,18 +202,15 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
 
             const SizedBox(height: 24),
 
-            // 👇 TRECHO CORRIGIDO 👇
             ListenableBuilder(
               listenable: _viewModel,
               builder: (context, _) {
-                // 1. Retorna o loading centralizado
                 if (_viewModel.isLoading) {
                   return const Center(
                     child: CircularProgressIndicator(color: Color(0xFF67835C)),
                   );
                 }
 
-                // 2. Retorna TODOS os botões agrupados dentro de uma Column
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -204,13 +219,11 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
                       onPressed: _finalizarCadastroComEndereco,
                     ),
 
-                    const SizedBox(
-                      height: 12,
-                    ),
+                    const SizedBox(height: 12),
 
                     CustomButton(
                       text: "Adicionar endereço depois",
-                      onPressed: _finalizarCadastroSemEndereco, 
+                      onPressed: _finalizarCadastroSemEndereco,
                       backgroundColor: Colors.white,
                       foregroundColor: const Color(0xFF67835C),
                     ),
@@ -218,8 +231,6 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
                 );
               },
             ),
-
-            // 👆 FIM DO TRECHO CORRIGIDO 👆
           ],
         ),
       ),

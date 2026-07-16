@@ -7,14 +7,17 @@ class SessionViewModel extends ChangeNotifier {
   bool _isLoggedIn = false;
   String _nomeUsuario = '';
   bool _isInitializing = true; 
+  int? _idUsuario;
 
   bool get isLoggedIn => _isLoggedIn;
   String get nomeUsuario => _nomeUsuario;
   bool get isInitializing => _isInitializing;
+  int? get idUsuario => _idUsuario;
 
   SessionViewModel() {
     _verificarSessaoSalva();
   }
+
 
   Future<void> _verificarSessaoSalva() async {
     final prefs = await SharedPreferences.getInstance();
@@ -24,7 +27,7 @@ class SessionViewModel extends ChangeNotifier {
     if (idSalvo != null && cookieSalvo != null) {
       _isLoggedIn = true;
       _nomeUsuario = prefs.getString('nome_usuario') ?? 'Produtor';
-      
+      _idUsuario = idSalvo;
       BaseService.sessionCookie = cookieSalvo; 
     }
 
@@ -43,6 +46,8 @@ class SessionViewModel extends ChangeNotifier {
 
     _isLoggedIn = true;
     _nomeUsuario = nome;
+    _idUsuario = idUsuario;
+    
     notifyListeners();
   }
 
