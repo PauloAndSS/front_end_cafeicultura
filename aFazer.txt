@@ -1,3 +1,11 @@
 ->Pagina de atualizar dados
-    -> lembrar de atualizar os dados de sessao
     -> Lembrar de deixar a UF selecionada a que o usuario tem
+    -> atualizar()
+        -> validar dados
+        -> atualizar dados
+            -> fazer lógica de saber quais dados estão alterados
+                -> atencao ao endereço, que no put atualiza tudo
+        -> atualizar nome da sessao
+        -> retornar erros corretamente
+
+-> Lógica de deleção de endereço

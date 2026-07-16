@@ -96,9 +96,6 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
   }
 
   void atualizar() {
-    //validar dados
-    //atualizar dados
-    //logica de trazer nome novo
   }
   Future<void> _carregarDados() async {
     final session = Provider.of<SessionViewModel>(context, listen: false);
@@ -155,21 +152,18 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: _podeSair, // Controla se o Flutter pode fechar a tela direto
+      canPop: _podeSair,
       onPopInvoked: (didPop) async {
-        // Se a tela já fechou, não fazemos nada
         if (didPop) return;
 
-        // Se tentou fechar, mostramos a caixinha
         final querSair = await _mostrarDialogoConfirmacao();
 
-        // Se ele confirmou que quer sair:
         if (querSair) {
           setState(() {
-            _podeSair = true; // Liberamos a trava
+            _podeSair = true;
           });
           if (mounted) {
-            Navigator.of(context).pop(); // Disparamos a saída novamente
+            Navigator.of(context).pop();
           }
         }
       },
