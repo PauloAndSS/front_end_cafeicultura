@@ -92,6 +92,7 @@ class ServicesProprietario extends BaseService {
     }
   }
 
+  //getters
   Future<Proprietario> buscarPorId(int id) async {
     final urlGet = Uri.parse('$url/$id/');
 
@@ -108,6 +109,184 @@ class ServicesProprietario extends BaseService {
       throw ApiException('Proprietário não encontrado.');
     } else {
       throw ApiException('Erro ao buscar dados: ${response.statusCode}');
+    }
+  }
+
+
+  //updates
+  Future<bool> atualizarEndereco(int id, Endereco endereco) async {
+    final uri = Uri.parse('$url/$id/endereco');
+    final dto = EnderecoDTO.fromEntity(endereco);
+
+    try {
+      final response = await http.put(
+        uri,
+        headers: defaultHeaders,
+        body: jsonEncode(dto.toJson()),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return true;
+      }
+
+      final corpoDecodificado = jsonDecode(response.body);
+
+      if (corpoDecodificado.containsKey('erros') && corpoDecodificado['erros'] is List) {
+        final List errosLista = corpoDecodificado['erros'];
+        throw ApiValidationException(errosLista.map((e) => e['msg'].toString()).toList());
+      } else {
+        final msg = corpoDecodificado['error'] ?? corpoDecodificado['mensagem'] ?? 'Erro desconhecido no servidor.';
+        throw ApiException(msg);
+      }
+    } on ApiValidationException {
+      rethrow;
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw Exception('Falha na comunicação: $e');
+    }
+  }
+
+  Future<bool> atualizarEmail(int id, String email) async {
+    final uri = Uri.parse('$url/$id/email');
+
+    try {
+      final response = await http.put(
+        uri,
+        headers: defaultHeaders,
+        body: jsonEncode({'email': email}),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return true;
+      }
+
+      final corpoDecodificado = jsonDecode(response.body);
+
+      if (corpoDecodificado.containsKey('erros') && corpoDecodificado['erros'] is List) {
+        final List errosLista = corpoDecodificado['erros'];
+        throw ApiValidationException(errosLista.map((e) => e['msg'].toString()).toList());
+      } else {
+        final msg = corpoDecodificado['error'] ?? corpoDecodificado['mensagem'] ?? 'Erro desconhecido no servidor.';
+        throw ApiException(msg);
+      }
+    } on ApiValidationException {
+      rethrow;
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw Exception('Falha na comunicação: $e');
+    }
+  }
+
+  Future<bool> atualizarTelefone(int id, String telefone) async {
+    final uri = Uri.parse('$url/$id/telefone');
+
+    try {
+      final response = await http.put(
+        uri,
+        headers: defaultHeaders,
+        body: jsonEncode({'telefone': telefone}),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return true;
+      }
+
+      final corpoDecodificado = jsonDecode(response.body);
+
+      if (corpoDecodificado.containsKey('erros') && corpoDecodificado['erros'] is List) {
+        final List errosLista = corpoDecodificado['erros'];
+        throw ApiValidationException(errosLista.map((e) => e['msg'].toString()).toList());
+      } else {
+        final msg = corpoDecodificado['error'] ?? corpoDecodificado['mensagem'] ?? 'Erro desconhecido no servidor.';
+        throw ApiException(msg);
+      }
+    } on ApiValidationException {
+      rethrow;
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw Exception('Falha na comunicação: $e');
+    }
+  }
+
+  Future<bool> atualizarIdentificacao({
+    required int id,
+    String? nome,
+    String? razaoSocial,
+  }) async {
+    final uri = Uri.parse('$url/$id/identificacao');
+
+    // Monta o JSON apenas com os campos que foram preenchidos
+    final Map<String, dynamic> requestBody = {};
+    if (nome != null) requestBody['nome'] = nome;
+    if (razaoSocial != null) requestBody['razaoSocial'] = razaoSocial;
+
+    try {
+      final response = await http.put(
+        uri,
+        headers: defaultHeaders,
+        body: jsonEncode(requestBody),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return true;
+      }
+
+      final corpoDecodificado = jsonDecode(response.body);
+
+      if (corpoDecodificado.containsKey('erros') && corpoDecodificado['erros'] is List) {
+        final List errosLista = corpoDecodificado['erros'];
+        throw ApiValidationException(errosLista.map((e) => e['msg'].toString()).toList());
+      } else {
+        final msg = corpoDecodificado['error'] ?? corpoDecodificado['mensagem'] ?? 'Erro desconhecido no servidor.';
+        throw ApiException(msg);
+      }
+    } on ApiValidationException {
+      rethrow;
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw Exception('Falha na comunicação: $e');
+    }
+  }
+
+  Future<bool> atualizarInscricaoEstadual({
+    required int id,
+    required String inscEstadual,
+    required String cnpj,
+  }) async {
+    final uri = Uri.parse('$url/$id/inscricao-estadual');
+
+    try {
+      final response = await http.put(
+        uri,
+        headers: defaultHeaders,
+        body: jsonEncode({
+          'inscricaoEstadual': inscEstadual,
+          'cnpj': cnpj,
+        }),
+      );
+
+      if (response.statusCode == 201 || response.statusCode == 200) {
+        return true;
+      }
+
+      final corpoDecodificado = jsonDecode(response.body);
+      if (corpoDecodificado.containsKey('erros') && corpoDecodificado['erros'] is List) {
+        final List errosLista = corpoDecodificado['erros'];
+        throw ApiValidationException(errosLista.map((e) => e['msg'].toString()).toList());
+      } else {
+        final msg = corpoDecodificado['error'] ?? corpoDecodificado['mensagem'] ?? 'Erro desconhecido.';
+        throw ApiException(msg);
+      }
+    } on ApiValidationException {
+      rethrow;
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw Exception('Falha na comunicação: $e');
     }
   }
 }

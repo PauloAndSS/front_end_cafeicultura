@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
+import 'package:frond_end_cafeicultura_mobile/model/proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/proprietario/atualizar_dados_viewmodel.dart';
@@ -24,7 +25,7 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
   bool _isPessoaFisica = true;
   bool _podeSair = false;
   final _formKey = GlobalKey<FormState>();
-
+  Proprietario? _dadosOriginais;
   // ==========================================
   // CONTROLADORES: Dados do Proprietário/Pessoa
   // ==========================================
@@ -92,11 +93,82 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
             );
           },
         ) ??
-        false; // Retorna false caso o usuário clique fora da caixinha para fechar
+        false;
   }
 
-  void atualizar() {
+  void atualizar() async {
+    if (_formKey.currentState!.validate()) {
+      if (_ufSelecionada == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Por favor, selecione um Estado (UF).'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      FocusScope.of(context).unfocus();
+
+      final session = Provider.of<SessionViewModel>(context, listen: false);
+      final idUsuario = session.idUsuario;
+
+      if (idUsuario == null) {
+        session.logout();
+        return;
+      }
+
+      if (_dadosOriginais == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Aguarde o carregamento dos dados antes de salvar.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+      print("Entrou");
+      final sucesso = await _viewModel.atualizar(
+        dadosOriginais: _dadosOriginais!,
+        idProprietario: idUsuario,
+        session: session,
+        isPessoaFisica: _isPessoaFisica,
+        nomeOuRazao: _nomeController.text,
+        emailDigitado: _emailController.text,
+        telefoneDigitado: _telefoneController.text,
+        cepDigitado: _cepController.text,
+        logradouro: _logradouroController.text,
+        bairro: _bairroController.text,
+        cidade: _cidadeController.text,
+        uf: _ufSelecionada!,
+        inscEstadualDigitada: _isPessoaFisica 
+            ? null 
+            : _inscricaoEstadualController.text,
+        cnpjDigitado: _isPessoaFisica 
+            ? null 
+            : _cnpjController.text,
+      );
+    print("Entrou2");
+      if (sucesso && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Dados atualizados com sucesso!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.of(context).pop();
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _viewModel.mensagemErro ?? 'Erro desconhecido ao atualizar.',
+            ),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
+
   Future<void> _carregarDados() async {
     final session = Provider.of<SessionViewModel>(context, listen: false);
     final idUsuario = session.idUsuario;
@@ -109,6 +181,7 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
     final dados = await _viewModel.carregarDadosProprietario(idUsuario);
 
     if (dados != null && mounted) {
+      _dadosOriginais = dados;
       setState(() {
         _isPessoaFisica = dados.pessoa is PessoaFisica;
 
@@ -357,8 +430,7 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
                             ? 'AGUARDE...'
                             : 'SALVAR ALTERAÇÕES',
                         backgroundColor: const Color(0xFF8FA67E),
-                        onPressed: () =>
-                            _viewModel.isLoading ? null : atualizar,
+                        onPressed: _viewModel.isLoading ? null : atualizar,
                       ),
                     ),
                     const SizedBox(height: 20),

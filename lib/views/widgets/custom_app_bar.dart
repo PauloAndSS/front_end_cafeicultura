@@ -11,7 +11,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   @override
   Widget build(BuildContext context) {
-    final session = Provider.of<SessionViewModel>(context, listen: false);
+    final session = context.watch<SessionViewModel>();
     final nomeCompleto = session.nomeUsuario;
     final primeiroNome = nomeCompleto.split(' ').first;
     return AppBar(

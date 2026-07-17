@@ -70,4 +70,13 @@ class SessionViewModel extends ChangeNotifier {
     } 
       BaseService.sessionCookie = null;
   }
+
+  Future<void> atualizarNomeUsuario(String novoNome) async {
+    _nomeUsuario = novoNome;
+    
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('nome_usuario', novoNome);
+    
+    notifyListeners(); 
+  }
 }
