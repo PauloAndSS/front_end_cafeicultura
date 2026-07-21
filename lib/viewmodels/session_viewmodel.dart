@@ -18,12 +18,11 @@ class SessionViewModel extends ChangeNotifier {
     _verificarSessaoSalva();
   }
 
-
   Future<void> _verificarSessaoSalva() async {
     final prefs = await SharedPreferences.getInstance();
     final idSalvo = prefs.getInt('id_usuario');
     final cookieSalvo = prefs.getString('cookie_sessao'); 
-
+    
     if (idSalvo != null && cookieSalvo != null) {
       _isLoggedIn = true;
       _nomeUsuario = prefs.getString('nome_usuario') ?? 'Produtor';
@@ -37,7 +36,6 @@ class SessionViewModel extends ChangeNotifier {
 
   Future<void> login(int idUsuario, String nome) async {
     final prefs = await SharedPreferences.getInstance();
-    
     final cookie = BaseService.sessionCookie ?? '';
 
     await prefs.setInt('id_usuario', idUsuario);
@@ -54,21 +52,21 @@ class SessionViewModel extends ChangeNotifier {
   Future<void> logout() async {
     try {
       await ServicesAuth().sair();
-      
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('id_usuario');
-      await prefs.remove('nome_usuario');
-      await prefs.remove('cookie_sessao'); 
-
-      _isLoggedIn = false;
-      _nomeUsuario = '';
-      
-      notifyListeners(); 
-    
     } catch (e) {
       debugPrint('Logout no servidor falhou: $e');
     } 
-      BaseService.sessionCookie = null;
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('id_usuario');
+    await prefs.remove('nome_usuario');
+    await prefs.remove('cookie_sessao'); 
+
+    _isLoggedIn = false;
+    _nomeUsuario = '';
+    _idUsuario = null;
+    BaseService.sessionCookie = null;
+      
+    notifyListeners(); 
   }
 
   Future<void> atualizarNomeUsuario(String novoNome) async {

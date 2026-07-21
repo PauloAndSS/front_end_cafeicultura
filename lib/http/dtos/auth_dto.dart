@@ -9,32 +9,31 @@ class LoginRequestDTO {
     required this.senha,
   });
 
-
   Map<String, dynamic> toJson() {
-    return {
-      "tipoEntrada": tipoEntrada,
-      "entrada": entrada,
-      "senha": senha,
-    };
+    return {"tipoEntrada": tipoEntrada, "entrada": entrada, "senha": senha};
   }
 }
 
 class SessaoAtivaDTO {
   final int? idUsuario;
   final String? nome;
-  
+  final List<int> idsPropriedades;
+
   SessaoAtivaDTO.fromJson(Map<String, dynamic> json)
       : idUsuario = (json['id']) as int?,
-        nome = (json['nome']) as String?;
+        nome = (json['nome']) as String?,
+        idsPropriedades = (json['idsPropriedades'] as List<dynamic>?)
+                ?.map((e) => e as int)
+                .toList() ?? []; 
 }
 
 class LoginResponseDTO {
   final String mensagem;
-  final SessaoAtivaDTO? sessaoAtiva; 
+  final SessaoAtivaDTO? sessaoAtiva;
 
   LoginResponseDTO.fromJson(Map<String, dynamic> json)
-      : mensagem = json['mensagem'] ?? '',
-        sessaoAtiva = json['dadosSessao']!= null
-            ? SessaoAtivaDTO.fromJson(json['dadosSessao']) // se dadosSessao vier no json, atribui valores aos atributos de SessaoAtivaDTO
-            : null;
+    : mensagem = json['mensagem'] ?? '',
+      sessaoAtiva = json['dadosSessao'] != null
+          ? SessaoAtivaDTO.fromJson(json['dadosSessao'])
+          : null;
 }

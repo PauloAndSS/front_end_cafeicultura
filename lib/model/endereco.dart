@@ -57,4 +57,14 @@ class Endereco {
       pais: json['pais'] ?? 'Brasil', 
     );
   }
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'cidade': cidade,
+    'bairro': bairro,
+    'logradouro': logradouro,
+    'cep': cep.formatado,
+    'uf': uf.name,
+    'pais': pais,
+  };
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_auth.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/entrar_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
@@ -35,11 +36,13 @@ class _EntrarViewState extends State<EntrarView> {
       FocusScope.of(context).unfocus();
 
       final session = Provider.of<SessionViewModel>(context, listen: false);
+      final propriedadesVM = Provider.of<PropriedadesUsuarioViewModel>(context, listen: false);
 
       final sucesso = await _viewModel.fazerLogin(
         _usuarioController.text,
         _senhaController.text,
         session,
+        propriedadesVM,
       );
 
       if (sucesso && mounted) {

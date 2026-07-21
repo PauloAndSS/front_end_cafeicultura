@@ -1,5 +1,3 @@
-// lib/http/services/services_auth.dart
-
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
