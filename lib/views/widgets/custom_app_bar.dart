@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/propriedade/atualizar_propriedade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/propriedade/cadastrar_propriedade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/proprietario/atualizar_dados_view.dart';
 import 'package:provider/provider.dart';
@@ -20,74 +21,104 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
     final listaPropriedades = propriedadesVM.propriedades;
+    
     return AppBar(
+      backgroundColor: Colors.green,
       title: Row(
         children: [
           Text("Olá, $primeiroNome"),
           const SizedBox(width: 16),
           
+          // Container unificado para o Select e o botão de Edição
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.only(left: 12, right: 4),
               decoration: BoxDecoration(
                 color: Colors.green.shade700,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<int>(
-                  dropdownColor: Colors.green.shade800,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
-                  icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
-                  hint: propriedadesVM.isLoading
-                      ? const Text('Carregando...', style: TextStyle(color: Colors.white70))
-                      : const Text('Selecionar Propriedade', style: TextStyle(color: Colors.white)),
-                  
-                  value: null, 
-                  
-                  items: [
-                    ...listaPropriedades.map((prop) {
-                      return DropdownMenuItem<int>(
-                        value: prop.id,
-                        child: Text(
-                          prop.nome,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(color: Colors.white),
-                        ),
-                      );
-                    }),
-                    
-                    const DropdownMenuItem<int>(
-                      value: -1,
-                      child: Text(
-                        '+ Nova Propriedade',
-                        style: TextStyle(
-                          color: Colors.amberAccent,
-                          fontWeight: FontWeight.bold,
-                        ),
+              child: Row(
+                children: [
+                  // O Select ocupando o espaço restante
+                  Expanded(
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        isExpanded: true,
+                        dropdownColor: Colors.green.shade800,
+                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                        icon: const Icon(Icons.arrow_drop_down, color: Colors.white),
+                        hint: propriedadesVM.isLoading
+                            ? const Text('Carregando...', style: TextStyle(color: Colors.white70))
+                            : const Text('Selecionar Propriedade', style: TextStyle(color: Colors.white)),
+                        
+                        // Reflete dinamicamente a propriedade selecionada
+                        value: propriedadesVM.idPropriedadeSelecionada, 
+                        
+                        items: [
+                          ...listaPropriedades.map((prop) {
+                            return DropdownMenuItem<int>(
+                              value: prop.id,
+                              child: Text(
+                                prop.nome,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                            );
+                          }),
+                          
+                          const DropdownMenuItem<int>(
+                            value: -1,
+                            child: Text(
+                              '+ Nova Propriedade',
+                              style: TextStyle(
+                                color: Colors.amberAccent,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                        
+                        onChanged: (int? valorSelecionado) {
+                          if (valorSelecionado == -1) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const CadastrarPropriedadeView(),
+                              ),
+                            );
+                          } else if (valorSelecionado != null) {
+                            propriedadesVM.selecionarPropriedade(valorSelecionado);
+                          }
+                        },
                       ),
                     ),
-                  ],
+                  ),
                   
-                  onChanged: (int? valorSelecionado) {
-                    if (valorSelecionado == -1) {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const CadastrarPropriedadeView(),
-                        ),
-                      );
-                    } else if (valorSelecionado != null) {
-                      propriedadesVM.selecionarPropriedade(valorSelecionado);
-                      debugPrint('Propriedade selecionada ID: $valorSelecionado');
-                    }
-                  },
-                ),
+                  // Lápis de edição ao lado do select, dentro do mesmo bloco verde
+                  if (propriedadesVM.idPropriedadeSelecionada != null)
+                    IconButton(
+                      icon: const Icon(Icons.edit, color: Colors.white, size: 20),
+                      tooltip: 'Editar Propriedade',
+                      splashRadius: 20,
+                      visualDensity: VisualDensity.compact,
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AtualizarPropriedadeView(
+                              idPropriedade: propriedadesVM.idPropriedadeSelecionada!,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                ],
               ),
             ),
           ),
         ],
       ),
-      backgroundColor: Colors.green,
+      
       actions: [
         PopupMenuButton<String>(
           icon: const Icon(Icons.person, color: Colors.white),

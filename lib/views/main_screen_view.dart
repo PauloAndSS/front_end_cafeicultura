@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_app_bar.dart';
 import 'package:provider/provider.dart';
 
@@ -7,26 +8,40 @@ import 'eventos/talhao_view.dart';
 
 import '../viewmodels/navegacao_viewmodel.dart';
 
-class MainScreenView extends StatelessWidget {
+class MainScreenView extends StatefulWidget {
   const MainScreenView({super.key});
+
+  @override
+  State<MainScreenView> createState() => _MainScreenViewState();
+}
+
+class _MainScreenViewState extends State<MainScreenView> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<PropriedadesUsuarioViewModel>(context, listen: false)
+          .carregarPropriedades();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<NavegacaoViewModel>();
 
     final telas = [
-      const SizedBox.shrink(),   // 0: Home (Ajustar depois para a view real da Home)
-      const SizedBox.shrink(),  // Atividades (Eventos) (Placeholder - Substitua pela View correta)
+      const SizedBox.shrink(),   // 0: Home 
+      const SizedBox.shrink(),  // Atividades (Eventos)
       const TalhaoView(),  
-      const SizedBox.shrink(), // Armazém (Placeholder - Substitua pela View correta)
-      const FinanceiroView(), //Financeiro (Placeholder - Substitua pela View correta)
+      const SizedBox.shrink(), // Armazém
+      const FinanceiroView(), // Financeiro
     ];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
 
-      // 👉 O Cabeçalho Fixo inserido aqui!
-      appBar: CustomAppBar(),
+      // Cabeçalho Fixo
+      appBar: const CustomAppBar(),
 
       body: IndexedStack(
         index: vm.indiceAtual,

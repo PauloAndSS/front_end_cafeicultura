@@ -1,7 +1,0 @@
--> CRIAÇÃO DE PROPRIEDADES:
-    -> Usuário precisa saber quais são as propriedades (backend está resolvendo esse bugfix);
-    -> Verificar se o select do header captura dados de cada propriedade (nome e id de cada propriedade).
-    -> Teste de criação de propriedade (atualmente não captura o id do usuário. assim que backend fizer as alterações, adicionar o id do usuário no payload)
-
--> EDIÇÃO DE PROPRIEDADES:
-    -> Ao clicar numa propriedade, ir para tela de editar a propriedade e utilizar os métodos de edição

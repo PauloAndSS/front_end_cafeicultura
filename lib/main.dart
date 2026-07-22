@@ -8,19 +8,14 @@ import 'viewmodels/session_viewmodel.dart';
 import 'views/main_screen_view.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized(); 
+
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => NavegacaoViewModel()),
         ChangeNotifierProvider(create: (_) => SessionViewModel()),
-        ChangeNotifierProvider(create: (context) {
-          final propriedadesVM = PropriedadesUsuarioViewModel();
-          
-          final session = Provider.of<SessionViewModel>(context, listen: false);
-          propriedadesVM.escutarIsLoggedIn(session);
-          
-          return propriedadesVM;
-        }), 
+        ChangeNotifierProvider(create: (_) => PropriedadesUsuarioViewModel()),
       ],
       child: const MeuApp(),
     ),
@@ -40,26 +35,8 @@ class MeuApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatefulWidget {
+class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
-
-  @override
-  State<AuthWrapper> createState() => _AuthWrapperState();
-}
-
-class _AuthWrapperState extends State<AuthWrapper> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final session = Provider.of<SessionViewModel>(context, listen: false);
-      final propriedadesVM = Provider.of<PropriedadesUsuarioViewModel>(context, listen: false);
-
-      if (session.isLoggedIn && session.idUsuario != null) {
-        propriedadesVM.carregarPropriedades(session.idUsuario!);
-      }
-    });
-  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/model/endereco.dart'; 
+import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/model/tamanho.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
@@ -16,7 +16,8 @@ class CadastrarPropriedadeView extends StatefulWidget {
   const CadastrarPropriedadeView({super.key});
 
   @override
-  State<CadastrarPropriedadeView> createState() => _CadastrarPropriedadeViewState();
+  State<CadastrarPropriedadeView> createState() =>
+      _CadastrarPropriedadeViewState();
 }
 
 class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
@@ -25,7 +26,7 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
 
   final _nomeController = TextEditingController();
   final _tamanhoValorController = TextEditingController();
-  Medida _tamanhoMedida = Medida.hectare; 
+  Medida _tamanhoMedida = Medida.hectare;
 
   final _cepController = TextEditingController();
   final _logradouroController = TextEditingController();
@@ -47,16 +48,18 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
   void _salvarPropriedade() async {
     if (_formKey.currentState!.validate() && _ufSelecionada != null) {
       FocusScope.of(context).unfocus();
-      
-      final session = Provider.of<SessionViewModel>(context, listen: false);
 
-      final propriedadesVM = Provider.of<PropriedadesUsuarioViewModel>(context, listen: false);
+      final session = Provider.of<SessionViewModel>(context, listen: false);
 
       final resultado = await _viewModel.cadastrarPropriedade(
         session: session,
         nome: _nomeController.text,
-        valorTamanho: double.tryParse(_tamanhoValorController.text.replaceAll(',', '.')) ?? 0.0,
-        medidaTamanho: _tamanhoMedida.jsonValue, 
+        valorTamanho:
+            double.tryParse(
+              _tamanhoValorController.text.replaceAll(',', '.'),
+            ) ??
+            0.0,
+        medidaTamanho: _tamanhoMedida.jsonValue,
         cep: _cepController.text,
         logradouro: _logradouroController.text,
         bairro: _bairroController.text,
@@ -65,12 +68,13 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
         pais: 'Brasil',
       );
 
-      if (resultado != null && mounted) {
-        propriedadesVM.adicionarPropriedadeLocal(resultado);
-        
+      if (resultado == true && mounted) {
+        Provider.of<PropriedadesUsuarioViewModel>(context, listen: false)
+            .carregarPropriedades();
+ 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Propriedade cadastrada com sucesso!'), 
+            content: Text('Propriedade cadastrada com sucesso!'),
             backgroundColor: Colors.green,
           ),
         );
@@ -78,7 +82,10 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(_viewModel.mensagemErro ?? 'Erro desconhecido ao cadastrar propriedade.'),
+            content: Text(
+              _viewModel.mensagemErro ??
+                  'Erro desconhecido ao cadastrar propriedade.',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -93,29 +100,84 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
     }
   }
 
+  Future<bool?> _mostrarDialogoConfirmacao() {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Descartar alterações?'),
+          content: const Text(
+            'Se você sair agora, todos os dados preenchidos serão perdidos.',
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(false), // Retorna false (não sai)
+              child: const Text(
+                'Cancelar',
+                style: TextStyle(color: Colors.grey),
+              ),
+            ),
+            TextButton(
+              onPressed: () =>
+                  Navigator.of(context).pop(true), // Retorna true (sai)
+              child: const Text(
+                'Sair',
+                style: TextStyle(
+                  color: Colors.red,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF9FB896),
-      appBar: AppBar(
-        title: const Text(
-          'Nova Propriedade',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+    return PopScope(
+      canPop: false, // Bloqueia o fechamento automático da tela
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return; // Se já fez o pop, não faz nada
+
+        // Mostra o diálogo de confirmação
+        final querSair = await _mostrarDialogoConfirmacao();
+
+        // Se o usuário clicou em "Sair" (retornou true), forçamos a saída da tela
+        if (querSair == true && context.mounted) {
+          Navigator.of(context).pop();
+        }
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF9FB896),
+        appBar: AppBar(
+          title: const Text(
+            'Nova Propriedade',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.white),
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.white), // Botão de retorno branco
-      ),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 10),
-            child: Column(
-              children: [
-                const LogoCircular(),
-                const SizedBox(height: 24),
-                _buildFormCard(),
-              ],
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 10,
+              ),
+              child: Column(
+                children: [
+                  const LogoCircular(),
+                  const SizedBox(height: 24),
+                  _buildFormCard(),
+                ],
+              ),
             ),
           ),
         ),
@@ -144,14 +206,14 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
               ),
             ),
             const SizedBox(height: 16),
-            
+
             CustomTextField(
               label: 'Nome da Propriedade',
               controller: _nomeController,
               validator: Validator.validarNome,
               hintText: 'Ex: Sítio Vô Augusto',
             ),
-            
+
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -160,9 +222,12 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
                   child: CustomTextField(
                     label: 'Tamanho',
                     controller: _tamanhoValorController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     hintText: 'Ex: 15.5',
-                    validator: (val) => val == null || val.isEmpty ? 'Obrigatório' : null,
+                    validator: (val) =>
+                        val == null || val.isEmpty ? 'Obrigatório' : null,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -183,22 +248,35 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
                       DropdownButtonFormField<Medida>(
                         value: _tamanhoMedida,
                         isExpanded: true,
-                        icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF67835C)),
+                        icon: const Icon(
+                          Icons.keyboard_arrow_down,
+                          color: Color(0xFF67835C),
+                        ),
                         decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 15),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 15,
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE0E0E0),
+                            ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
-                            borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFE0E0E0),
+                            ),
                           ),
                         ),
                         items: Medida.values.map((medida) {
                           return DropdownMenuItem<Medida>(
                             value: medida,
-                            child: Text(medida.nomeExibicao, style: const TextStyle(fontSize: 14)),
+                            child: Text(
+                              medida.nomeExibicao,
+                              style: const TextStyle(fontSize: 14),
+                            ),
                           );
                         }).toList(),
                         onChanged: (Medida? val) {

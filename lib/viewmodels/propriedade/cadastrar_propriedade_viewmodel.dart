@@ -15,7 +15,7 @@ class CadastrarPropriedadeViewModel extends ChangeNotifier {
 
   final _propriedadeService = ServicesPropriedade();
 
-  Future<Propriedade?> cadastrarPropriedade({
+  Future<bool?> cadastrarPropriedade({
     required SessionViewModel session,
     required String nome,
     required double valorTamanho,
@@ -53,7 +53,6 @@ class CadastrarPropriedadeViewModel extends ChangeNotifier {
 
       final resultado = await _propriedadeService.cadastrar(novaPropriedade);
       return resultado;
-      
     } on ApiValidationException catch (e) {
       _mensagemErro = e.mensagens.join('\n');
       return null;

@@ -102,9 +102,8 @@ class ServicesProprietario extends BaseService {
     );
     if (response.statusCode == 200) {
       final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-      print('JSON RECEBIDO: $jsonResponse');
+
       return Proprietario.fromJson(jsonResponse); 
-      
     } else if (response.statusCode == 404) {
       throw ApiException('Proprietário não encontrado.');
     } else {

@@ -4,6 +4,7 @@ import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/cadastro/cadastrar_endereco_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/propriedade/cadastrar_propriedade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
@@ -57,10 +58,12 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
             backgroundColor: Colors.green,
           ),
         );
-
-        Navigator.of(context).popUntil(
-          (route) => route.isFirst,
-        ); // TODO: Ao implementar criaçao de propriedade, mudar destino da rota
+      Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => CadastrarPropriedadeView(),
+          ),
+        );
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

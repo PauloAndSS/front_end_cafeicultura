@@ -9,6 +9,7 @@ class PropriedadesUsuarioViewModel extends ChangeNotifier {
   String? _mensagemErro;
   List<Propriedade> _propriedades = [];
   int? _idPropriedadeSelecionada;
+  bool _dadosCarregados = false;
 
   bool get isLoading => _isLoading;
   String? get mensagemErro => _mensagemErro;
@@ -17,16 +18,16 @@ class PropriedadesUsuarioViewModel extends ChangeNotifier {
 
   final _service = ServicesPropriedade();
 
-  Future<void> carregarPropriedades(int idUsuario) async {
+  Future<void> carregarPropriedades() async {
     _isLoading = true;
     _mensagemErro = null;
     notifyListeners();
 
     try {
-      _propriedades = await _service.buscarPorProprietario(idUsuario);
+      _propriedades = await _service.buscarPorProprietario();
 
+      _dadosCarregados = true;
       if (_propriedades.isNotEmpty) {
-        
         //se propriedade selecionada for nula
         _idPropriedadeSelecionada ??= _propriedades.first.id;
       } else {
@@ -66,14 +67,21 @@ void adicionarPropriedadeLocal(Propriedade novaPropriedade) {
   void limparDados() {
     _propriedades = [];
     _mensagemErro = null;
+    _dadosCarregados = false;
     notifyListeners();
   }
 
   
-  void escutarIsLoggedIn(SessionViewModel session) {
+void escutarIsLoggedIn(SessionViewModel session) {
+    if (session.isLoggedIn && !_dadosCarregados && !_isLoading) {
+      carregarPropriedades();
+    }
+
     session.addListener(() {
       if (!session.isLoggedIn) {
         limparDados();
+      } else if (session.isLoggedIn && !_dadosCarregados && !_isLoading) {
+        carregarPropriedades();
       }
     });
   }

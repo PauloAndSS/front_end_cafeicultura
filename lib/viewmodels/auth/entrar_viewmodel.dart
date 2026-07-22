@@ -37,7 +37,7 @@ class EntrarViewmodel extends ChangeNotifier{
 
       await session.login(id, nome);
 
-      propriedadesVM.carregarPropriedades(session.idUsuario!);
+      propriedadesVM.carregarPropriedades();
       return true;
 
     } on ArgumentError catch (e) {
