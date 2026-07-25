@@ -4,9 +4,9 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_app_bar.dart'
 import 'package:provider/provider.dart';
 
 import 'financeiro_view.dart';
-import 'eventos/talhao_view.dart';
-
-import '../viewmodels/navegacao_viewmodel.dart';
+import '../talhao/talhao_view.dart';
+import 'home_view.dart';
+import '../../viewmodels/navegacao_viewmodel.dart';
 
 class MainScreenView extends StatefulWidget {
   const MainScreenView({super.key});
@@ -30,7 +30,7 @@ class _MainScreenViewState extends State<MainScreenView> {
     final vm = context.watch<NavegacaoViewModel>();
 
     final telas = [
-      const SizedBox.shrink(),   // 0: Home 
+      const HomeView(), 
       const SizedBox.shrink(),  // Atividades (Eventos)
       const TalhaoView(),  
       const SizedBox.shrink(), // Armazém
@@ -40,7 +40,6 @@ class _MainScreenViewState extends State<MainScreenView> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
 
-      // Cabeçalho Fixo
       appBar: const CustomAppBar(),
 
       body: IndexedStack(

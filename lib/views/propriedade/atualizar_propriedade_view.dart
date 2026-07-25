@@ -254,6 +254,7 @@ class _AtualizarPropriedadeViewState extends State<AtualizarPropriedadeView> {
                     label: 'Tamanho',
                     controller: _tamanhoValorController,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [AppMasks.inteiroMilhar],
                     validator: (value) => value == null || value.isEmpty ? 'Obrigatório' : null,
                   ),
                 ),

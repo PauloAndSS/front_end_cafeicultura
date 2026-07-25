@@ -115,7 +115,7 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
           actions: [
             TextButton(
               onPressed: () =>
-                  Navigator.of(context).pop(false), // Retorna false (não sai)
+                  Navigator.of(context).pop(false),
               child: const Text(
                 'Cancelar',
                 style: TextStyle(color: Colors.grey),
@@ -123,7 +123,7 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
             ),
             TextButton(
               onPressed: () =>
-                  Navigator.of(context).pop(true), // Retorna true (sai)
+                  Navigator.of(context).pop(true),
               child: const Text(
                 'Sair',
                 style: TextStyle(
@@ -141,14 +141,12 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: false, // Bloqueia o fechamento automático da tela
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return; // Se já fez o pop, não faz nada
+        if (didPop) return;
 
-        // Mostra o diálogo de confirmação
         final querSair = await _mostrarDialogoConfirmacao();
 
-        // Se o usuário clicou em "Sair" (retornou true), forçamos a saída da tela
         if (querSair == true && context.mounted) {
           Navigator.of(context).pop();
         }
@@ -225,6 +223,7 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
+                    inputFormatters: [AppMasks.inteiroMilhar],
                     hintText: 'Ex: 15.5',
                     validator: (val) =>
                         val == null || val.isEmpty ? 'Obrigatório' : null,
