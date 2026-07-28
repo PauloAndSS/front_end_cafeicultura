@@ -15,10 +15,10 @@ class TalhoesViewModel extends ChangeNotifier {
   List<Talhao> get talhoes => _todosTalhoes;
 
   List<Talhao> get talhoesAtivos => 
-      _todosTalhoes.where((t) => t.arquivado != true).toList();
+      _todosTalhoes.where((t) => t.dataFim == null).toList();
 
   List<Talhao> get talhoesEncerrados => 
-      _todosTalhoes.where((t) => t.arquivado == true).toList();
+      _todosTalhoes.where((t) => t.dataFim != null).toList();
 
   final _service = ServicesTalhao();
 

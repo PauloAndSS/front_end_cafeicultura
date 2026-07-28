@@ -44,6 +44,7 @@ class Validator {
     return null;
   }
 
+
   static String? validarInscEstadual(String? value) {
     // opcional
     if (value == null || value.trim().isEmpty) {

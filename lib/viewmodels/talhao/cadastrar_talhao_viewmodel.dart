@@ -37,6 +37,7 @@ class CadastrarTalhaoViewModel extends ChangeNotifier {
     }
   }
 
+
   Future<bool?> cadastrarTalhao(Talhao talhao) async {
     _isLoading = true;
     _mensagemErro = null;
