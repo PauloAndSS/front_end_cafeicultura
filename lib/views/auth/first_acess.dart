@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'entrar_view.dart';
-import 'cadastro/cadastrar_dados_basicos_view.dart';
+import '../proprietario/cadastrar_dados_basicos_view.dart';
 
 class FirstAcess extends StatelessWidget {
   const FirstAcess({super.key});

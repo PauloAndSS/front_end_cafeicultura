@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_app_bar.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_bottom_navbar.dart';
 import 'package:provider/provider.dart';
 
 import 'financeiro_view.dart';
@@ -16,13 +17,47 @@ class MainScreenView extends StatefulWidget {
 }
 
 class _MainScreenViewState extends State<MainScreenView> {
+  late PageController _pageController;
+
   @override
   void initState() {
     super.initState();
+    
+    // Inicializa o controlador da página com a aba atual salva no ViewModel
+    final vm = Provider.of<NavegacaoViewModel>(context, listen: false);
+    _pageController = PageController(initialPage: vm.indiceAtual);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<PropriedadesUsuarioViewModel>(context, listen: false)
           .carregarPropriedades();
     });
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  // Acionado quando o usuário arrasta a tela para o lado
+  void _onPageChanged(int index) {
+    final vm = Provider.of<NavegacaoViewModel>(context, listen: false);
+    if (vm.indiceAtual != index) {
+      vm.alterarAba(index); // Atualiza o estado do rodapé sem recriar a página
+    }
+  }
+
+  // Acionado quando o usuário clica direto em um ícone do rodapé
+  void _onBottomNavTapped(int index) {
+    final vm = Provider.of<NavegacaoViewModel>(context, listen: false);
+    vm.alterarAba(index);
+    
+    // Faz a animação de transição suave até a página clicada
+    _pageController.animateToPage(
+      index,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeInOut,
+    );
   }
 
   @override
@@ -31,89 +66,28 @@ class _MainScreenViewState extends State<MainScreenView> {
 
     final telas = [
       const SizedBox.shrink(),   // 0: Home 
-      const SizedBox.shrink(),  // Atividades (Eventos)
-      const TalhaoView(),  
-      const SizedBox.shrink(), // Armazém
-      const FinanceiroView(), // Financeiro
+      const SizedBox.shrink(),  // 1: Atividades (Eventos)
+      const TalhaoView(),       // 2: Talhões
+      const SizedBox.shrink(),  // 3: Armazém
+      const FinanceiroView(),   // 4: Financeiro
     ];
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-
-      // Cabeçalho Fixo
+      resizeToAvoidBottomInset: false, 
+      
       appBar: const CustomAppBar(),
 
-      body: IndexedStack(
-        index: vm.indiceAtual,
+      body: PageView(
+        controller: _pageController,
+        onPageChanged: _onPageChanged,
+        physics: const BouncingScrollPhysics(),
         children: telas,
       ),
 
-      bottomNavigationBar: Padding(
-        padding: const EdgeInsets.all(12),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(35),
-          child: NavigationBarTheme(
-            data: NavigationBarThemeData(
-              backgroundColor: const Color(0xFF8FA67E),
-              indicatorColor: Colors.white.withValues(alpha: 0.18),
-              labelTextStyle: WidgetStateProperty.all(
-                const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              iconTheme: WidgetStateProperty.resolveWith(
-                (states) {
-                  if (states.contains(WidgetState.selected)) {
-                    return const IconThemeData(
-                      color: Colors.white,
-                      size: 30,
-                    );
-                  }
-                  return const IconThemeData(
-                    color: Colors.white70,
-                    size: 26,
-                  );
-                },
-              ),
-            ),
-            child: NavigationBar(
-              height: 85,
-              elevation: 0,
-              selectedIndex: vm.indiceAtual,
-              onDestinationSelected: vm.alterarAba,
-              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home),
-                  label: 'Home',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.coffee_outlined),
-                  selectedIcon: Icon(Icons.coffee),
-                  label: 'Atividades',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.agriculture_outlined),
-                  selectedIcon: Icon(Icons.agriculture),
-                  label: 'Talhões',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.warehouse_outlined),
-                  selectedIcon: Icon(Icons.warehouse),
-                  label: 'Armazém',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.attach_money_outlined),
-                  selectedIcon: Icon(Icons.attach_money),
-                  label: 'Financeiro',
-                ),
-              ],
-            ),
-          ),
-        ),
+      bottomNavigationBar: CustomBottomNavBar(
+        currentIndex: vm.indiceAtual,
+        onTap: _onBottomNavTapped,
       ),
     );
   }

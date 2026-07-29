@@ -17,13 +17,9 @@ class AtualizarDadosViewModel extends ChangeNotifier {
 
   final ServicesProprietario _proprietarioService;
 
-  // Injeção de dependência opcional para manter a arquitetura limpa e testável
   AtualizarDadosViewModel({ServicesProprietario? service})
       : _proprietarioService = service ?? ServicesProprietario();
 
-  // ==========================================
-  // CARREGAR DADOS
-  // ==========================================
   Future<Proprietario?> carregarDadosProprietario(int idProprietario) async {
     _isLoading = true;
     _mensagemErro = null;
@@ -45,9 +41,6 @@ class AtualizarDadosViewModel extends ChangeNotifier {
     }
   }
 
-  // ==========================================
-  // ATUALIZAR DADOS
-  // ==========================================
   Future<bool> atualizar({
     required Proprietario dadosOriginais,
     required SessionViewModel session,
@@ -63,6 +56,7 @@ class AtualizarDadosViewModel extends ChangeNotifier {
     required UF uf,
     String? inscEstadualDigitada,
     String? cnpjDigitado,
+    String? pais,
   }) async {
     _isLoading = true;
     _mensagemErro = null;
@@ -118,11 +112,13 @@ class AtualizarDadosViewModel extends ChangeNotifier {
         mudouEndereco = true;
       } else {
         final cepOrigNum = endOrig.cep.numero.replaceAll(RegExp(r'\D'), '');
+        // 2. Comparação segura lidando com nulos
         if (cepAtualNum != cepOrigNum ||
             logradouro.trim() != endOrig.logradouro ||
             bairro.trim() != endOrig.bairro ||
             cidade.trim() != endOrig.cidade ||
-            uf != endOrig.uf) {
+            uf != endOrig.uf ||
+            (pais?.trim() ?? '') != (endOrig.pais ?? '')) { 
           mudouEndereco = true;
         }
       }
@@ -135,6 +131,7 @@ class AtualizarDadosViewModel extends ChangeNotifier {
           cep: cepVo,
           logradouro: logradouro.trim(),
           uf: uf,
+          pais: pais?.trim(),
         );
         requisicoes.add(_proprietarioService.atualizarEndereco(idProprietario, novoEndereco));
       }

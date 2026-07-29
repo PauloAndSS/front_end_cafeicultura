@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/cadastro/cadastrar_dados_basicos_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/proprietario/cadastrar_dados_basicos_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/proprietario/cadastrar_endereco_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
@@ -9,7 +9,7 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:provider/provider.dart'; 
-import '../entrar_view.dart';
+import '../auth/entrar_view.dart';
 
 class CadastrarView extends StatefulWidget {
   const CadastrarView({super.key});

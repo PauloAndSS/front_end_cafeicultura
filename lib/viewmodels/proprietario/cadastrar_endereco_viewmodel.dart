@@ -23,6 +23,7 @@ class CadastrarEnderecoViewmodel extends ChangeNotifier {
     required String bairro,
     required String cidade,
     required UF uf,
+    String? pais,
   }) async {
     _isLoading = true;
     _mensagemErro = null;
@@ -36,6 +37,7 @@ class CadastrarEnderecoViewmodel extends ChangeNotifier {
         cep: cep,
         logradouro: logradouro.trim(),
         uf: uf,
+        pais: pais,
       );
 
       final idProprietario = proprietarioLogado.id;
@@ -43,13 +45,11 @@ class CadastrarEnderecoViewmodel extends ChangeNotifier {
         throw Exception('Tentativa de cadastrar endereço em um usuário sem ID.');
       }
 
-      // 2. Chama a API para salvar o Endereço
       await _proprietarioService.cadastrarEndereco(
         idProprietario: idProprietario,
         endereco: enderecoFinal,
       );
 
-      // 3. Atualiza as entidades locais
       final pessoaAnterior = proprietarioLogado.pessoa;
       final pessoaCompleta = pessoaAnterior is PessoaFisica
           ? PessoaFisica(

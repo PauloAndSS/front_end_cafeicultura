@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:frond_end_cafeicultura_mobile/http/dtos/cadastro_proprietario_dto.dart';
-import 'package:frond_end_cafeicultura_mobile/http/dtos/endereco_dto.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/proprietario.dart';
@@ -25,7 +24,6 @@ class ServicesProprietario extends BaseService {
         headers: defaultHeaders,
         body: jsonEncode(dto.cadastrar()),
       );
-      print(response.body);
       if (response.statusCode == 201 || response.statusCode == 200) {
         BaseService.atualizarCookie(response);
 
@@ -66,13 +64,12 @@ class ServicesProprietario extends BaseService {
     required Endereco endereco,
   }) async {
     final urlEndereco = Uri.parse('$url/$idProprietario/endereco');
-    final dto = EnderecoDTO.fromEntity(endereco);
 
     try {
       final response = await http.post(
         urlEndereco,
         headers: defaultHeaders,
-        body: jsonEncode(dto.toJson()),
+        body: jsonEncode(endereco.toJson()),
       );
       if (response.statusCode == 201 || response.statusCode == 200) {
         return true;
@@ -115,13 +112,12 @@ class ServicesProprietario extends BaseService {
   //updates
   Future<bool> atualizarEndereco(int id, Endereco endereco) async {
     final uri = Uri.parse('$url/$id/endereco');
-    final dto = EnderecoDTO.fromEntity(endereco);
 
     try {
       final response = await http.put(
         uri,
         headers: defaultHeaders,
-        body: jsonEncode(dto.toJson()),
+        body: jsonEncode(endereco.toJson()),
       );
 
       if (response.statusCode == 201 || response.statusCode == 200) {

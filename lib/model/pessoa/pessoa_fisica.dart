@@ -1,3 +1,4 @@
+import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 
 class CPF {
@@ -75,4 +76,24 @@ class PessoaFisica extends Pessoa {
     required this.cpf,
     super.endereco
   });
+
+  factory PessoaFisica.fromJson(Map<String, dynamic> json) {
+    return PessoaFisica(
+      id: json['id'],
+      nome: json['nome'] ?? '',
+      cpf: CPF.criar(json['cpf'] ?? ''),
+      endereco: json['endereco'] != null ? Endereco.fromJson(json['endereco']) : null,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) 'id': id,
+      'tipoPessoa': 'fisica',
+      'nome': nome,
+      'cpf': cpf.numero,
+      if (endereco != null) 'endereco': endereco!.toJson(),
+    };
+  }
 }

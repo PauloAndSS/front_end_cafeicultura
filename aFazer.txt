@@ -1,0 +1,7 @@
+PESSOAS
+-> separar ao dar get em pessoas, quem é fornecedor, meeiro, etc. Para mostrar na tela dividido por categoria
+-> reaproveitar tela de cadastro de usuário para utilizar em cadastro de pessoas
+-> implementar cadastro, update e exclusão de endereço (/pessoa/cadastrar-endereco/:id da pessoa)
+-> Tela de visualizar os detalhes da pessoa com aviso de TODO de posterior implementação de verificar suas atividades anteriores (histórico de atividades e despesas referente à essa pessoa). Adicionar também esse aviso de TODO no talhão, propriedade e safra (ou adicionar um Em Breve...). 
+-> view da tela de pessoas de acordo com o figma
+-> atualização de salário do funcionário

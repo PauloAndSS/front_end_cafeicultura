@@ -8,4 +8,7 @@ abstract class Pessoa {
     this.id,
     this.endereco,
   });
+
+  Map<String, dynamic> toJson();
+  
 }

@@ -1,3 +1,4 @@
+import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 
 class CNPJ {
@@ -75,4 +76,26 @@ class PessoaJuridica extends Pessoa {
     this.inscricaoEstadual,
     super.endereco
   });
+
+  factory PessoaJuridica.fromJson(Map<String, dynamic> json) {
+    return PessoaJuridica(
+      id: json['id'],
+      razaoSocial: json['razaoSocial'] ?? '',
+      cnpj: CNPJ.criar(json['cnpj'] ?? ''),
+      inscricaoEstadual: json['inscrEstadual'] ?? json['inscricaoEstadual'],
+      endereco: json['endereco'] != null ? Endereco.fromJson(json['endereco']) : null,
+    );
+  }
+
+  @override
+  Map<String, dynamic> toJson() {
+    return {
+      if (id != null) 'id': id,
+      'tipoPessoa': 'juridica',
+      'razaoSocial': razaoSocial,
+      'cnpj': cnpj.numero,
+      if (inscricaoEstadual != null) 'inscrEstadual': inscricaoEstadual,
+      if (endereco != null) 'endereco': endereco!.toJson(),
+    };
+  }
 }

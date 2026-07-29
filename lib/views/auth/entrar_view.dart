@@ -9,7 +9,7 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:provider/provider.dart';
-import 'cadastro/cadastrar_dados_basicos_view.dart';
+import '../proprietario/cadastrar_dados_basicos_view.dart';
 
 class EntrarView extends StatefulWidget {
   const EntrarView({super.key});

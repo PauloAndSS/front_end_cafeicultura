@@ -29,7 +29,7 @@ class Endereco {
   final String cidade;
   final CEP cep;
   final UF uf;
-  final String pais;
+  final String? pais;
   final String bairro;
   final String logradouro;
 
