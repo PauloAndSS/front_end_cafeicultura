@@ -9,12 +9,18 @@ class ServicesTalhao extends BaseService {
 
   Future<bool> cadastrar(Talhao talhao) async {
     try {
+      final bodyEnviado = jsonEncode(talhao.toJson());
       final response = await http.post(
-        Uri.parse('$url/'),
+        Uri.parse('$url'),
         headers: defaultHeaders,
         body: jsonEncode(talhao.toJson()),
       );
-
+    print('====== DEBUG POST TALHÃO ======');
+      print('URL: $url');
+      print('PAYLOAD ENVIADO: $bodyEnviado');
+      print('STATUS CODE: ${response.statusCode}');
+      print('BODY RECEBIDO (bruto): ${response.body}');
+      print('===============================');
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {

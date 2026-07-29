@@ -30,7 +30,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
   final List<Variedade> _variedadesSelecionadas = [];
 
   final _viewModel = CadastrarTalhaoViewModel();
-  final List<String> _opcoesEspecie = ['conilon', 'arabica'];
+  final List<String> _opcoesEspecie = ['Conilon', 'Arábica'];
 
   @override
   void initState() {
@@ -119,10 +119,11 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
       final novoTalhao = Talhao(
         nome: _nomeController.text.trim(),
         idPropriedade: propriedadesVM.idPropriedadeSelecionada!,
-        qtdPeCafe: int.tryParse(_qtdPesController.text) ?? 0,
+        qtdPeCafe: int.tryParse(_qtdPesController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
+        
         dataInicio: _dataInicio!,
         tamanho: Tamanho(
-          valor: double.tryParse(_tamanhoController.text.replaceAll(',', '.')) ?? 0.0,
+          valor: double.tryParse(_tamanhoController.text.replaceAll('.', '').replaceAll(',', '.')) ?? 0.0,
           medida: _tamanhoMedida,
         ),
         especie: _especieSelecionada!,
