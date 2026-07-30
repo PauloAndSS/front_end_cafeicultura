@@ -3,29 +3,33 @@ import 'package:frond_end_cafeicultura_mobile/model/tamanho.dart';
 class Variedade {
   final int id;
   final String descricao;
+  final String especie;
 
   Variedade({
     required this.id,
     required this.descricao,
+    required this.especie
   });
 
   factory Variedade.fromJson(dynamic json) {
     if (json is String) {
-      return Variedade(id: 0, descricao: json);
+      return Variedade(id: 0, descricao: json, especie: json);
     }
     if (json is Map<String, dynamic>) {
       return Variedade(
         id: json['id'] ?? 0,
         descricao: json['descricao'] ?? '',
+        especie: json['especie'] ?? '',
       );
     }
-    return Variedade(id: 0, descricao: json.toString());
+    return Variedade(id: 0, descricao: json.toString(),especie: json.toString());
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'descricao': descricao,
+      'especie': especie
     };
   }
 

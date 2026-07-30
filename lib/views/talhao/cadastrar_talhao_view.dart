@@ -355,36 +355,45 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                                   style: TextStyle(color: Colors.grey),
                                 ),
                               )
-                            : Wrap(
-                                spacing: 8.0,
-                                runSpacing: 4.0,
-                                children: _viewModel.variedades.map((variedade) {
-                                  final isSelected = _variedadesSelecionadas.contains(
-                                    variedade,
-                                  );
-                                  return FilterChip(
-                                    label: Text(
-                                      variedade.descricao,
-                                      style: TextStyle(
-                                        color: isSelected
-                                            ? Colors.white
-                                            : Colors.black87,
-                                      ),
-                                    ),
-                                    selected: isSelected,
-                                    selectedColor: const Color(0xFF8FA67E),
-                                    onSelected: (bool selected) {
-                                      setState(() {
-                                        if (selected) {
-                                          _variedadesSelecionadas.add(variedade);
-                                        } else {
-                                          _variedadesSelecionadas.remove(variedade);
-                                        }
-                                      });
-                                    },
-                                  );
-                                }).toList(),
-                              ),
+                            :  Wrap(
+    spacing: 8.0,
+    runSpacing: 4.0,
+    // Adicionamos o .where para filtrar antes de mapear
+    children: _viewModel.variedades
+        .where((variedade) {
+          // Supondo que o atributo no modelo Variedade se chame 'especie' ou 'tipo'
+          // É importante que o texto retornado pela API/Modelo seja exatamente igual
+          // ao que está no Dropdown ('Conilon' ou 'Arábica'). 
+          // Se houver diferença de maiúsculas/minúsculas, use .toLowerCase() em ambos.
+          return variedade.especie == _especieSelecionada; 
+        })
+        .map((variedade) {
+      final isSelected = _variedadesSelecionadas.contains(
+        variedade,
+      );
+      return FilterChip(
+        label: Text(
+          variedade.descricao,
+          style: TextStyle(
+            color: isSelected
+                ? Colors.white
+                : Colors.black87,
+          ),
+        ),
+        selected: isSelected,
+        selectedColor: const Color(0xFF8FA67E),
+        onSelected: (bool selected) {
+          setState(() {
+            if (selected) {
+              _variedadesSelecionadas.add(variedade);
+            } else {
+              _variedadesSelecionadas.remove(variedade);
+            }
+          });
+        },
+      );
+    }).toList(),
+  ),
 
                     const SizedBox(height: 32),
 
