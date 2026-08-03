@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 
 import 'financeiro_view.dart';
 import 'eventos/talhao_view.dart';
+import 'safra/safra_view_page.dart';
 
 import '../viewmodels/navegacao_viewmodel.dart';
 
@@ -32,6 +33,7 @@ class _MainScreenViewState extends State<MainScreenView> {
     final telas = [
       const SizedBox.shrink(),   // 0: Home 
       const SizedBox.shrink(),  // Atividades (Eventos)
+      const SafraViewPage(),
       const TalhaoView(),  
       const SizedBox.shrink(), // Armazém
       const FinanceiroView(), // Financeiro
@@ -94,6 +96,11 @@ class _MainScreenViewState extends State<MainScreenView> {
                   icon: Icon(Icons.coffee_outlined),
                   selectedIcon: Icon(Icons.coffee),
                   label: 'Atividades',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.grass_outlined),
+                  selectedIcon: Icon(Icons.grass),
+                  label: 'Safras',
                 ),
                 NavigationDestination(
                   icon: Icon(Icons.agriculture_outlined),
