@@ -1,3 +1,4 @@
+import 'package:intl/intl.dart';
 import 'package:frond_end_cafeicultura_mobile/model/tamanho.dart';
 
 class Variedade {
@@ -8,7 +9,7 @@ class Variedade {
   Variedade({
     required this.id,
     required this.descricao,
-    required this.especie
+    required this.especie,
   });
 
   factory Variedade.fromJson(dynamic json) {
@@ -22,20 +23,25 @@ class Variedade {
         especie: json['especie'] ?? '',
       );
     }
-    return Variedade(id: 0, descricao: json.toString(),especie: json.toString());
+    return Variedade(
+      id: 0,
+      descricao: json.toString(),
+      especie: json.toString(),
+    );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'descricao': descricao,
-      'especie': especie
+      'especie': especie,
     };
   }
 
   @override
   String toString() => descricao;
 }
+
 class Talhao {
   final int? id;
   final String nome;
@@ -48,7 +54,6 @@ class Talhao {
   final List<int>? variedadesIds;
   final List<Variedade>? variedadesCafe;
   final bool? arquivado;
-  
 
   Talhao({
     this.id,
@@ -63,28 +68,61 @@ class Talhao {
     this.variedadesCafe,
     this.arquivado,
   });
-  
+
+  String get qtdPeCafeFormatada {
+    final formatter = NumberFormat('#,##0', 'pt_BR');
+    return formatter.format(qtdPeCafe);
+  }
+
+  String get tamanhoFormatado {
+    final formatter = NumberFormat('#,##0.##', 'pt_BR');
+    return '${formatter.format(tamanho.valor)} ${tamanho.medida.nomeExibicao}';
+  }
+
+  String get especieFormatada {
+    if (especie.isEmpty) return 'Não informada';
+    return especie[0].toUpperCase() + especie.substring(1);
+  }
+
+  String get dataInicioFormatada {
+    return DateFormat('dd/MM/yyyy').format(dataInicio);
+  }
+
+  String? get dataFimFormatada {
+    if (dataFim == null) return null;
+    return DateFormat('dd/MM/yyyy').format(dataFim!);
+  }
+
+  String get variedadesTexto {
+    if (variedadesCafe == null || variedadesCafe!.isEmpty) {
+      return 'Nenhuma variedade';
+    }
+    return variedadesCafe!.map((v) => v.descricao).join(', ');
+  }
+
   factory Talhao.fromJson(Map<String, dynamic> json) {
     return Talhao(
       id: json['id'],
       nome: json['nome'] ?? '',
       idPropriedade: json['idPropriedade'] ?? 0,
       qtdPeCafe: json['qtdPeCafe'] ?? 0,
-      dataInicio: json['dataInicio'] != null 
-          ? DateTime.parse(json['dataInicio']) 
+      dataInicio: json['dataInicio'] != null
+          ? DateTime.parse(json['dataInicio'])
           : DateTime.now(),
-      dataFim: json['dataFim'] != null 
-          ? DateTime.parse(json['dataFim']) 
+      dataFim: json['dataFim'] != null
+          ? DateTime.parse(json['dataFim'])
           : null,
-      tamanho: json['tamanho'] != null 
-          ? Tamanho.fromJson(json['tamanho']) 
+      tamanho: json['tamanho'] != null
+          ? Tamanho.fromJson(json['tamanho'])
           : Tamanho(valor: 0.0, medida: Medida.hectare),
       especie: json['especie'] ?? '',
-      variedadesIds: json['variedadesIds'] != null 
-          ? List<int>.from(json['variedadesIds']) 
+      variedadesIds: json['variedadesIds'] != null
+          ? List<int>.from(json['variedadesIds'])
           : null,
-      variedadesCafe: json['variedadesCafe'] != null 
-          ? (json['variedadesCafe'] as List).map((v) => Variedade.fromJson(v)).toList() 
+      variedadesCafe: json['variedadesCafe'] != null
+          ? (json['variedadesCafe'] as List)
+              .map((v) => Variedade.fromJson(v))
+              .toList()
           : null,
       arquivado: json['arquivado'],
     );
@@ -101,7 +139,8 @@ class Talhao {
       'tamanho': tamanho.toJson(),
       'especie': especie,
       if (variedadesIds != null) 'variedadesIds': variedadesIds,
-      if (variedadesCafe != null) 'variedadesCafe': variedadesCafe!.map((v) => v.toJson()).toList(),
+      if (variedadesCafe != null)
+        'variedadesCafe': variedadesCafe!.map((v) => v.toJson()).toList(),
       if (arquivado != null) 'arquivado': arquivado,
     };
   }

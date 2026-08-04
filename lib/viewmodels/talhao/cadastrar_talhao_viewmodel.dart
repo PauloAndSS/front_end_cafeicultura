@@ -30,7 +30,6 @@ class CadastrarTalhaoViewModel extends ChangeNotifier {
       _mensagemErro = e.mensagem;
     } catch (e) {
       _mensagemErro = 'Erro ao carregar variedades.';
-      print('Erro: $e');
     } finally {
       _isLoadingVariedades = false;
       notifyListeners();
@@ -54,7 +53,6 @@ class CadastrarTalhaoViewModel extends ChangeNotifier {
       return null;
     } catch (e) {
       _mensagemErro = 'Erro interno ao cadastrar talhão. Verifique os dados.';
-      print('Erro: $e');
       return null;
     } finally {
       _isLoading = false;

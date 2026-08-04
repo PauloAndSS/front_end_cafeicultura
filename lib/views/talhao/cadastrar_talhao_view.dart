@@ -30,6 +30,8 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
   final List<Variedade> _variedadesSelecionadas = [];
 
   final _viewModel = CadastrarTalhaoViewModel();
+
+  // Apenas Conilon e Arábica para a espécie do talhão
   final List<String> _opcoesEspecie = ['Conilon', 'Arábica'];
 
   @override
@@ -48,11 +50,12 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
   }
 
   Future<void> _selecionarData(BuildContext context) async {
+    final DateTime hoje = DateTime.now();
     final DateTime? dataEscolhida = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
+      initialDate: _dataInicio ?? hoje,
       firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      lastDate: hoje, // Data de início limitada até a data atual
       helpText: 'Selecione a data de início do talhão',
       builder: (context, child) {
         return Theme(
@@ -101,7 +104,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
       FocusScope.of(context).unfocus();
 
       final propriedadesVM = context.read<PropriedadesUsuarioViewModel>();
-      
+
       if (propriedadesVM.idPropriedadeSelecionada == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -119,11 +122,20 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
       final novoTalhao = Talhao(
         nome: _nomeController.text.trim(),
         idPropriedade: propriedadesVM.idPropriedadeSelecionada!,
-        qtdPeCafe: int.tryParse(_qtdPesController.text.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0,
-        
+        qtdPeCafe:
+            int.tryParse(
+              _qtdPesController.text.replaceAll(RegExp(r'[^0-9]'), ''),
+            ) ??
+            0,
         dataInicio: _dataInicio!,
         tamanho: Tamanho(
-          valor: double.tryParse(_tamanhoController.text.replaceAll('.', '').replaceAll(',', '.')) ?? 0.0,
+          valor:
+              double.tryParse(
+                _tamanhoController.text
+                    .replaceAll('.', '')
+                    .replaceAll(',', '.'),
+              ) ??
+              0.0,
           medida: _tamanhoMedida,
         ),
         especie: _especieSelecionada!,
@@ -133,7 +145,9 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
       final resultado = await _viewModel.cadastrarTalhao(novoTalhao);
 
       if (resultado == true && mounted) {
-        context.read<TalhoesViewModel>().carregarTalhoes(propriedadesVM.idPropriedadeSelecionada!);
+        context.read<TalhoesViewModel>().carregarTalhoes(
+          propriedadesVM.idPropriedadeSelecionada!,
+        );
 
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -146,7 +160,8 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _viewModel.mensagemErro ?? 'Erro desconhecido ao cadastrar talhão.',
+              _viewModel.mensagemErro ??
+                  'Erro desconhecido ao cadastrar talhão.',
             ),
             backgroundColor: Colors.red,
           ),
@@ -178,7 +193,6 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
         backgroundColor: const Color(0xFF67835C),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      // Envolvemos com ListenableBuilder (ou AnimatedBuilder) para re-renderizar quando o ViewModel mudar de estado
       body: ListenableBuilder(
         listenable: _viewModel,
         builder: (context, child) {
@@ -220,9 +234,10 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
-                            inputFormatters: [AppMasks.inteiroMilhar],
-                            validator: (val) =>
-                                val == null || val.isEmpty ? 'Obrigatório' : null,
+                            inputFormatters: [AppMasks.decimal],
+                            validator: (val) => val == null || val.isEmpty
+                                ? 'Obrigatório'
+                                : null,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -311,9 +326,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                       items: _opcoesEspecie.map((especie) {
                         return DropdownMenuItem(
                           value: especie,
-                          child: Text(
-                            especie[0].toUpperCase() + especie.substring(1),
-                          ),
+                          child: Text(especie),
                         );
                       }).toList(),
                       onChanged: (val) {
@@ -339,66 +352,77 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                         ? const Center(
                             child: Padding(
                               padding: EdgeInsets.all(12.0),
-                              child: CircularProgressIndicator(color: Color(0xFF67835C)),
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF67835C),
+                              ),
                             ),
                           )
                         : _especieSelecionada == null
-                            ? Container(
-                                width: double.infinity,
-                                padding: const EdgeInsets.all(16),
-                                decoration: BoxDecoration(
-                                  color: Colors.grey.shade100,
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: const Text(
-                                  'Selecione a espécie primeiro.',
-                                  style: TextStyle(color: Colors.grey),
-                                ),
-                              )
-                            :  Wrap(
-    spacing: 8.0,
-    runSpacing: 4.0,
-    // Adicionamos o .where para filtrar antes de mapear
-    children: _viewModel.variedades
-        .where((variedade) {
-          // Supondo que o atributo no modelo Variedade se chame 'especie' ou 'tipo'
-          // É importante que o texto retornado pela API/Modelo seja exatamente igual
-          // ao que está no Dropdown ('Conilon' ou 'Arábica'). 
-          // Se houver diferença de maiúsculas/minúsculas, use .toLowerCase() em ambos.
-          return variedade.especie == _especieSelecionada; 
-        })
-        .map((variedade) {
-      final isSelected = _variedadesSelecionadas.contains(
-        variedade,
-      );
-      return FilterChip(
-        label: Text(
-          variedade.descricao,
-          style: TextStyle(
-            color: isSelected
-                ? Colors.white
-                : Colors.black87,
-          ),
-        ),
-        selected: isSelected,
-        selectedColor: const Color(0xFF8FA67E),
-        onSelected: (bool selected) {
-          setState(() {
-            if (selected) {
-              _variedadesSelecionadas.add(variedade);
-            } else {
-              _variedadesSelecionadas.remove(variedade);
-            }
-          });
-        },
-      );
-    }).toList(),
-  ),
+                        ? Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade100,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Text(
+                              'Selecione a espécie primeiro.',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          )
+                        : Wrap(
+                            spacing: 8.0,
+                            runSpacing: 4.0,
+                            children: _viewModel.variedades
+                                .where((variedade) {
+                                  final especieTalhao = _especieSelecionada!
+                                      .toLowerCase()
+                                      .trim();
+                                  final especieVar = variedade.especie
+                                      .toLowerCase()
+                                      .trim();
+
+                                  return especieVar == especieTalhao ||
+                                      especieVar == 'mista';
+                                })
+                                .map((variedade) {
+                                  final isSelected = _variedadesSelecionadas
+                                      .contains(variedade);
+                                  return FilterChip(
+                                    label: Text(
+                                      variedade.descricao,
+                                      style: TextStyle(
+                                        color: isSelected
+                                            ? Colors.white
+                                            : Colors.black87,
+                                      ),
+                                    ),
+                                    selected: isSelected,
+                                    selectedColor: const Color(0xFF8FA67E),
+                                    onSelected: (bool selected) {
+                                      setState(() {
+                                        if (selected) {
+                                          _variedadesSelecionadas.add(
+                                            variedade,
+                                          );
+                                        } else {
+                                          _variedadesSelecionadas.remove(
+                                            variedade,
+                                          );
+                                        }
+                                      });
+                                    },
+                                  );
+                                })
+                                .toList(),
+                          ),
 
                     const SizedBox(height: 32),
 
                     CustomButton(
-                      text: _viewModel.isLoading ? 'Salvando...' : 'Salvar Talhão',
+                      text: _viewModel.isLoading
+                          ? 'Salvando...'
+                          : 'Salvar Talhão',
                       onPressed: _viewModel.isLoading ? null : _salvar,
                     ),
                   ],

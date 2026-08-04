@@ -34,4 +34,23 @@ class DetalhesTalhaoViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> excluir(int id) async {
+    _isLoading = true;
+    _mensagemErro = null;
+    notifyListeners();
+    try {
+      final resultado = await _talhaoService.excluirTalhao(id);
+      return resultado;
+    } on ApiException catch (e) {
+      _mensagemErro = e.mensagem;
+      return false;
+    } catch (e) {
+      _mensagemErro = 'Erro ao excluir talhão.';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

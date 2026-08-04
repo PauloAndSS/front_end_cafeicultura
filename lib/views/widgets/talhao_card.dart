@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/talhao.dart';
-import 'package:frond_end_cafeicultura_mobile/views/talhao/detalhes_talhao_view.dart';
 
 class TalhaoCard extends StatelessWidget {
   final Talhao talhao;
@@ -14,8 +13,8 @@ class TalhaoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dataFormatada = 
-        '${talhao.dataInicio.day.toString().padLeft(2, '0')}/${talhao.dataInicio.month.toString().padLeft(2, '0')}/${talhao.dataInicio.year}';
+    final bool estaEncerrado =
+        talhao.dataFim != null || talhao.arquivado == true;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -35,14 +34,7 @@ class TalhaoCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: onTap ?? () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => DetalhesTalhaoView(talhao: talhao),
-              ),
-            );
-          },
+          onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Column(
@@ -50,7 +42,11 @@ class TalhaoCard extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.agriculture, color: Color(0xFF8FA67E), size: 32),
+                    const Icon(
+                      Icons.agriculture,
+                      color: Color(0xFF8FA67E),
+                      size: 32,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -62,7 +58,29 @@ class TalhaoCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black26),
+                    if (estaEncerrado)
+                      Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.red.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Text(
+                          'Encerrado',
+                          style: TextStyle(
+                            color: Colors.red,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Colors.black26,
+                    ),
                   ],
                 ),
                 const Padding(
@@ -72,15 +90,19 @@ class TalhaoCard extends StatelessWidget {
                 _buildInfoRow(
                   icon: Icons.square_foot,
                   title: 'Tamanho',
-                  value: '${talhao.tamanho.valor} ${talhao.tamanho.medida.name}',
+                  value: talhao.tamanhoFormatado,
                 ),
                 const SizedBox(height: 12),
                 _buildInfoRow(
                   icon: Icons.eco_outlined,
                   title: 'Espécie',
-                  value: talhao.especie.isNotEmpty 
-                      ? talhao.especie[0].toUpperCase() + talhao.especie.substring(1) 
-                      : 'Não informada', 
+                  value: talhao.especieFormatada,
+                ),
+                const SizedBox(height: 12),
+                _buildInfoRow(
+                  icon: Icons.category_outlined,
+                  title: 'Variedades de Café',
+                  value: talhao.variedadesTexto,
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -90,18 +112,26 @@ class TalhaoCard extends StatelessWidget {
                       child: _buildInfoRow(
                         icon: Icons.grass,
                         title: 'Pés de Café',
-                        value: '${talhao.qtdPeCafe}',
+                        value: talhao.qtdPeCafeFormatada,
                       ),
                     ),
                     Expanded(
                       child: _buildInfoRow(
                         icon: Icons.calendar_today,
                         title: 'Data de Início',
-                        value: dataFormatada,
+                        value: talhao.dataInicioFormatada,
                       ),
                     ),
                   ],
                 ),
+                if (talhao.dataFimFormatada != null) ...[
+                  const SizedBox(height: 12),
+                  _buildInfoRow(
+                    icon: Icons.event_available,
+                    title: 'Data de Encerramento',
+                    value: talhao.dataFimFormatada!,
+                  ),
+                ],
               ],
             ),
           ),
@@ -110,8 +140,11 @@ class TalhaoCard extends StatelessWidget {
     );
   }
 
-  // O mesmo construtor de linhas elegantes, agora interno ao widget
-  Widget _buildInfoRow({required IconData icon, required String title, required String value}) {
+  Widget _buildInfoRow({
+    required IconData icon,
+    required String title,
+    required String value,
+  }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -132,10 +165,7 @@ class TalhaoCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 value,
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: Colors.black87,
-                ),
+                style: const TextStyle(fontSize: 15, color: Colors.black87),
               ),
             ],
           ),

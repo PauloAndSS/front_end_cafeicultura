@@ -19,12 +19,41 @@ class DetalhesTalhaoView extends StatefulWidget {
 class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
   final _viewModel = DetalhesTalhaoViewModel();
 
+  void _onSucesso(String mensagem) {
+    final propriedadesVM = context.read<PropriedadesUsuarioViewModel>();
+    if (propriedadesVM.idPropriedadeSelecionada != null) {
+      context.read<TalhoesViewModel>().carregarTalhoes(
+        propriedadesVM.idPropriedadeSelecionada!,
+      );
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensagem),
+        backgroundColor: Colors.green,
+      ),
+    );
+
+    Navigator.of(context).pop(true);
+  }
+
+  void _onErro(String mensagem) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(mensagem),
+        backgroundColor: Colors.red,
+      ),
+    );
+  }
+
   Future<void> _confirmarEncerramento(BuildContext context) async {
+    final DateTime hoje = DateTime.now();
+
     final DateTime? dataFimEscolhida = await showDatePicker(
       context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2100),
+      initialDate: hoje,
+      firstDate: widget.talhao.dataInicio,
+      lastDate: hoje,
       helpText: 'Selecione a data de encerramento do talhão',
       builder: (context, child) {
         return Theme(
@@ -41,10 +70,8 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
     );
 
     if (dataFimEscolhida == null) return;
-
     if (!mounted) return;
 
-    // Confirmação extra via Dialog
     final confirmar = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -74,46 +101,88 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
       if (!mounted) return;
 
       if (sucesso == true) {
-        // Atualiza a lista de talhões ativos na tela anterior
-        final propriedadesVM = context.read<PropriedadesUsuarioViewModel>();
-        if (propriedadesVM.idPropriedadeSelecionada != null) {
-          context.read<TalhoesViewModel>().carregarTalhoes(
-            propriedadesVM.idPropriedadeSelecionada!,
-          );
-        }
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Talhão encerrado com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.of(context).pop(); // Volta para a tela anterior
+        _onSucesso('Talhão encerrado com sucesso!');
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _viewModel.mensagemErro ?? 'Erro ao encerrar talhão.',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        _onErro(_viewModel.mensagemErro ?? 'Erro ao encerrar talhão.');
       }
     }
   }
 
+  Future<void> _confirmarExclusao(BuildContext context) async {
+    final confirmar = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Excluir Talhão'),
+        content: Text(
+          'Tem certeza que deseja excluir permanentemente o talhão "${widget.talhao.nome}"?\n\nEsta ação não poderá ser desfeita.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Excluir', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmar == true) {
+      final sucesso = await _viewModel.excluir(widget.talhao.id!);
+
+      if (!mounted) return;
+
+      if (sucesso == true) {
+        _onSucesso('Talhão excluído com sucesso!');
+      } else {
+        _onErro(_viewModel.mensagemErro ?? 'Erro ao excluir talhão.');
+      }
+    }
+  }
+
+  // 👇 Método reutilizável para seções que serão implementadas futuramente
+  Widget _buildSecaoEmBreve(String titulo) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          titulo,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: Colors.black12),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Center(
+            child: Text(
+              'Em breve...',
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.black45,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final dataInicioFormatada = 
-        '${widget.talhao.dataInicio.day.toString().padLeft(2, '0')}/${widget.talhao.dataInicio.month.toString().padLeft(2, '0')}/${widget.talhao.dataInicio.year}';
-
-    final dataFimFormatada = widget.talhao.dataFim != null
-        ? '${widget.talhao.dataFim!.day.toString().padLeft(2, '0')}/${widget.talhao.dataFim!.month.toString().padLeft(2, '0')}/${widget.talhao.dataFim!.year}'
-        : null;
-
-    final variedadesTexto = widget.talhao.variedadesCafe != null && widget.talhao.variedadesCafe!.isNotEmpty
-        ? widget.talhao.variedadesCafe!.map((v) => v.descricao).join(', ')
-        : 'Nenhuma variedade.';
+    final bool estaEncerrado = widget.talhao.dataFim != null || widget.talhao.arquivado == true;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
@@ -161,7 +230,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
                               color: Color(0xFF67835C),
                             ),
                           ),
-                          if (widget.talhao.arquivado == true)
+                          if (estaEncerrado)
                             Container(
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                               decoration: BoxDecoration(
@@ -169,7 +238,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: const Text(
-                                'Arquivado',
+                                'Encerrado',
                                 style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
                               ),
                             ),
@@ -178,36 +247,25 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
                       const Divider(height: 24),
                       _buildInfoRow('Nome:', widget.talhao.nome),
                       const SizedBox(height: 12),
-                      _buildInfoRow(
-                        'Espécie:', 
-                        widget.talhao.especie.isNotEmpty 
-                            ? widget.talhao.especie[0].toUpperCase() + widget.talhao.especie.substring(1) 
-                            : 'Não informada',
-                      ),
+                      _buildInfoRow('Espécie:', widget.talhao.especieFormatada),
                       const SizedBox(height: 12),
-                      _buildInfoRow('Variedades de Café:', variedadesTexto),
+                      _buildInfoRow('Variedades de Café:', widget.talhao.variedadesTexto),
                       const SizedBox(height: 12),
-                      _buildInfoRow(
-                        'Quantidade de Pés:',
-                        '${widget.talhao.qtdPeCafe}',
-                      ),
+                      _buildInfoRow('Quantidade de Pés:', widget.talhao.qtdPeCafeFormatada),
                       const SizedBox(height: 12),
-                      _buildInfoRow(
-                        'Tamanho:',
-                        '${widget.talhao.tamanho.valor} ${widget.talhao.tamanho.medida.nomeExibicao}',
-                      ),
+                      _buildInfoRow('Tamanho:', widget.talhao.tamanhoFormatado),
                       const SizedBox(height: 12),
-                      _buildInfoRow('Data de Início:', dataInicioFormatada),
-                      if (dataFimFormatada != null) ...[
+                      _buildInfoRow('Data de Início:', widget.talhao.dataInicioFormatada),
+                      if (widget.talhao.dataFimFormatada != null) ...[
                         const SizedBox(height: 12),
-                        _buildInfoRow('Data de Encerramento:', dataFimFormatada),
+                        _buildInfoRow('Data de Encerramento:', widget.talhao.dataFimFormatada!),
                       ],
                     ],
                   ),
                 ),
                 const SizedBox(height: 32),
-                // 👇 Verifica se o talhão está arquivado para exibir o aviso ou o botão de encerramento
-                if (widget.talhao.arquivado == true)
+
+                if (estaEncerrado)
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -245,6 +303,23 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
                           : () => _confirmarEncerramento(context),
                     ),
                   ),
+
+                const SizedBox(height: 12),
+
+                SizedBox(
+                  width: double.infinity,
+                  child: CustomButton(
+                    text: _viewModel.isLoading ? 'Aguarde...' : 'Excluir Talhão',
+                    onPressed: _viewModel.isLoading ? null : () => _confirmarExclusao(context),
+                    backgroundColor: const Color(0xFFD32F2F),
+                    foregroundColor: Colors.white,
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // 👇 Seção de Atividades do Talhão em breve
+                _buildSecaoEmBreve('Atividades :'),
               ],
             ),
           );

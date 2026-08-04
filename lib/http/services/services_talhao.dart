@@ -9,21 +9,16 @@ class ServicesTalhao extends BaseService {
 
   Future<bool> cadastrar(Talhao talhao) async {
     try {
-      final bodyEnviado = jsonEncode(talhao.toJson());
       final response = await http.post(
         Uri.parse('$url'),
         headers: defaultHeaders,
         body: jsonEncode(talhao.toJson()),
       );
-    print('====== DEBUG POST TALHÃO ======');
-      print('URL: $url');
-      print('PAYLOAD ENVIADO: $bodyEnviado');
-      print('STATUS CODE: ${response.statusCode}');
-      print('BODY RECEBIDO (bruto): ${response.body}');
-      print('===============================');
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
-      } else {
+      } else if(response.statusCode == 400){
+        throw ApiException('Erro ao cadastrar talhão. Verifique seus dados e tente novamente.');
+      }else {
         final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
         final msg =
             jsonResponse['error'] ??
@@ -39,19 +34,33 @@ class ServicesTalhao extends BaseService {
   }
 
   //getters
-  Future<List<Talhao>> buscarTodosTalhoesPorPropriedade(
-    int idPropriedade,
-  ) async {
+Future<List<Talhao>> buscarTodosTalhoesPorPropriedade(
+    int idPropriedade, {
+    int pagina = 1,
+    int limite = 10,
+  }) async {
     try {
+      final limiteFinal = limite > 10 ? 10 : limite;
+
+      final uri = Uri.parse('$url/propriedade/todos/$idPropriedade').replace(
+        queryParameters: {
+          'pagina': pagina.toString(),
+          'limite': limiteFinal.toString(),
+        },
+      );
+
       final response = await http.get(
-        Uri.parse('$url/propriedade/todos/$idPropriedade'),
+        uri,
         headers: defaultHeaders,
       );
 
       if (response.statusCode == 200) {
-        final List<dynamic> jsonList = jsonDecode(
+        final Map<String, dynamic> jsonBody = jsonDecode(
           utf8.decode(response.bodyBytes),
         );
+
+        final List<dynamic> jsonList = jsonBody['talhoes'] ?? [];
+
         return jsonList.map((json) => Talhao.fromJson(json)).toList();
       } else {
         final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
@@ -111,6 +120,32 @@ class ServicesTalhao extends BaseService {
             jsonResponse['error'] ??
             jsonResponse['mensagem'] ??
             'Erro ao encerrar talhão.';
+        throw ApiException(msg);
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw Exception('Falha na comunicação: $e');
+    }
+  }
+
+  Future<bool> excluirTalhao(int idTalhao) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$baseUrl/talhoes/$idTalhao'),
+        headers: defaultHeaders,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return true;
+      } else if(response.statusCode == 403){
+        throw ApiException('Talhão não pode ser excluído pois há atividades cadastradas nele.');
+      }else {
+        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
+        final msg =
+            jsonResponse['error'] ??
+            jsonResponse['mensagem'] ??
+            'Erro ao excluir talhão.';
         throw ApiException(msg);
       }
     } on ApiException {
