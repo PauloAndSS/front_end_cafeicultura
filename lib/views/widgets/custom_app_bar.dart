@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/pessoas/pessoas_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/propriedade/atualizar_propriedade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/propriedade/cadastrar_propriedade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/proprietario/atualizar_dados_view.dart';
@@ -183,9 +184,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           onSelected: (String escolha) {
             if (escolha == 'pessoas') {
-              // TODO: Substituir pelo Navigator.push para a tela de Pessoas Cadastradas
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Redirecionando para Pessoas Cadastradas...')),
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PessoasView()),
               );
             }
           },

@@ -3,7 +3,7 @@ import 'package:frond_end_cafeicultura_mobile/http/dtos/auth_dto.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_auth.dart';
 import 'package:frond_end_cafeicultura_mobile/model/auth/credencial.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/session_viewmodel.dart';
 
 class EntrarViewmodel extends ChangeNotifier{
@@ -40,14 +40,11 @@ class EntrarViewmodel extends ChangeNotifier{
       propriedadesVM.carregarPropriedades();
       return true;
 
-    } on ArgumentError catch (e) {
-      _mensagemErro = e.message;
-      return false;
     } on ApiException catch (e) {
-      _mensagemErro = e.toString();
+      _mensagemErro = e.mensagem;
       return false;
     } catch (e) {
-      _mensagemErro = e.toString().replaceAll('Exception: ', '');
+      _mensagemErro = 'Ocorreu um erro interno no aplicativo. Tente novamente.';
       return false;
     } finally {
       _isLoading = false;

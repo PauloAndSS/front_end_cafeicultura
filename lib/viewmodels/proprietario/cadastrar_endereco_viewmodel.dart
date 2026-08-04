@@ -73,24 +73,12 @@ class CadastrarEnderecoViewmodel extends ChangeNotifier {
         pessoa: pessoaCompleta,
       );
 
-    } on ApiValidationException catch (e) {
-      _mensagemErro = e.mensagens.map((msg) => '• $msg').join('\n');
-      return null;
-      
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
       return null;
-      
-    } on ArgumentError catch (e) {
-      _mensagemErro = e.message;
-      debugPrint('Erro de validação no Domínio: ${e.message}');
-      return null;
-      
     } catch (e) {
-      _mensagemErro = 'Erro ao cadastrar. Verifique sua conexão e tente novamente.';
-      debugPrint('Erro interno não tratado: $e');
+      _mensagemErro = 'Ocorreu um erro interno no aplicativo. Tente novamente mais tarde.';
       return null;
-      
     } finally {
       _isLoading = false;
       notifyListeners();

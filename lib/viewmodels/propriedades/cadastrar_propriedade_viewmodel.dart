@@ -53,16 +53,12 @@ class CadastrarPropriedadeViewModel extends ChangeNotifier {
 
       final resultado = await _propriedadeService.cadastrar(novaPropriedade);
       return resultado;
-    } on ApiValidationException catch (e) {
-      _mensagemErro = e.mensagens.join('\n');
-      return null;
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
-      return null;
+      return false;
     } catch (e) {
-      _mensagemErro = 'Erro interno ao cadastrar propriedade. Verifique os dados.';
-      print('Erro: $e');
-      return null;
+      _mensagemErro = 'Ocorreu um erro interno no aplicativo. Tente novamente mais tarde.';
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();

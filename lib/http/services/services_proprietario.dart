@@ -26,36 +26,20 @@ class ServicesProprietario extends BaseService {
       );
       if (response.statusCode == 201 || response.statusCode == 200) {
         BaseService.atualizarCookie(response);
-
-        return CadastroProprietarioResponseDTO.fromJson(
-          jsonDecode(response.body),
-        );
+        final cadastroResponse = extrairDadosResposta(response.bodyBytes);
+        return CadastroProprietarioResponseDTO.fromJson(cadastroResponse);
       } else {
-        final corpoDecodificado = jsonDecode(response.body);
-
-        if (corpoDecodificado.containsKey('erros') &&
-            corpoDecodificado['erros'] is List) {
-          final List errosLista = corpoDecodificado['erros'];
-
-          final mensagensBrutas = errosLista
-              .map((e) => e['msg'].toString())
-              .toList();
-
-          throw ApiValidationException(mensagensBrutas);
-        } else {
-          final msg =
-              corpoDecodificado['error'] ??
-              corpoDecodificado['mensagem'] ??
-              'Erro desconhecido no servidor.';
-          throw ApiException(msg);
-        }
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao cadastrar proprietário.',
+        );
       }
     } on ApiValidationException {
       rethrow;
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw Exception('Falha na comunicação ao cadastrar proprietário. Tente novamente mais tarde.');
     }
   }
 
@@ -73,41 +57,48 @@ class ServicesProprietario extends BaseService {
       );
       if (response.statusCode == 201 || response.statusCode == 200) {
         return true;
+      }else{
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao cadastrar endereço do proprietário.',
+        );
       }
-      final corpoDecodificado = jsonDecode(response.body);
-      final msg =
-          corpoDecodificado['error'] ??
-          corpoDecodificado['mensagem'] ??
-          'Erro desconhecido no servidor.';
-      throw ApiException(msg);
     } on ApiValidationException {
       rethrow;
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw Exception('Falha na comunicação ao cadastrar endereço do proprietário. Tente novamente mais tarde.');
     }
   }
 
   //getters
-  Future<Proprietario> buscarPorId(int id) async {
+Future<Proprietario> buscarPorId(int id) async {
     final urlGet = Uri.parse('$url/$id/');
+    
+    try {
+      final response = await http.get(
+        urlGet,
+        headers: defaultHeaders,
+      );
 
-    final response = await http.get(
-      urlGet,
-      headers: defaultHeaders,
-    );
-    if (response.statusCode == 200) {
-      final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-
-      return Proprietario.fromJson(jsonResponse); 
-    } else if (response.statusCode == 404) {
-      throw ApiException('Proprietário não encontrado.');
-    } else {
-      throw ApiException('Erro ao buscar dados: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        final dadosProprietario = extrairDadosResposta(response.bodyBytes);
+        return Proprietario.fromJson(dadosProprietario);
+      } else if (response.statusCode == 404) {
+        throw ApiException('Proprietário não encontrado.');
+      } else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao buscar dados do proprietário.',
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw Exception('Falha na comunicação ao buscar dados do proprietário. Tente novamente mais tarde.');
     }
   }
-
 
   //updates
   Future<bool> atualizarEndereco(int id, Endereco endereco) async {
@@ -122,23 +113,18 @@ class ServicesProprietario extends BaseService {
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return true;
-      }
-
-      final corpoDecodificado = jsonDecode(response.body);
-
-      if (corpoDecodificado.containsKey('erros') && corpoDecodificado['erros'] is List) {
-        final List errosLista = corpoDecodificado['erros'];
-        throw ApiValidationException(errosLista.map((e) => e['msg'].toString()).toList());
-      } else {
-        final msg = corpoDecodificado['error'] ?? corpoDecodificado['mensagem'] ?? 'Erro desconhecido no servidor.';
-        throw ApiException(msg);
+      }else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao atualizar endereço do proprietário.',
+        );
       }
     } on ApiValidationException {
       rethrow;
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw Exception('Falha na comunicação ao atualizar endereço do proprietário. Tente novamente mais tarde.');
     }
   }
 
@@ -154,23 +140,18 @@ class ServicesProprietario extends BaseService {
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return true;
-      }
-
-      final corpoDecodificado = jsonDecode(response.body);
-
-      if (corpoDecodificado.containsKey('erros') && corpoDecodificado['erros'] is List) {
-        final List errosLista = corpoDecodificado['erros'];
-        throw ApiValidationException(errosLista.map((e) => e['msg'].toString()).toList());
-      } else {
-        final msg = corpoDecodificado['error'] ?? corpoDecodificado['mensagem'] ?? 'Erro desconhecido no servidor.';
-        throw ApiException(msg);
+      }else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao atualizar e-mail do proprietário.',
+        );
       }
     } on ApiValidationException {
       rethrow;
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw Exception('Falha na comunicação ao atualizar e-mail do proprietário. Tente novamente mais tarde.');
     }
   }
 
@@ -186,23 +167,18 @@ class ServicesProprietario extends BaseService {
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return true;
-      }
-
-      final corpoDecodificado = jsonDecode(response.body);
-
-      if (corpoDecodificado.containsKey('erros') && corpoDecodificado['erros'] is List) {
-        final List errosLista = corpoDecodificado['erros'];
-        throw ApiValidationException(errosLista.map((e) => e['msg'].toString()).toList());
-      } else {
-        final msg = corpoDecodificado['error'] ?? corpoDecodificado['mensagem'] ?? 'Erro desconhecido no servidor.';
-        throw ApiException(msg);
+      }else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao atualizar telefone do proprietário.',
+        );
       }
     } on ApiValidationException {
       rethrow;
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw Exception('Falha na comunicação ao atualizar telefone do proprietário. Tente novamente mais tarde.');
     }
   }
 
@@ -213,7 +189,6 @@ class ServicesProprietario extends BaseService {
   }) async {
     final uri = Uri.parse('$url/$id/identificacao');
 
-    // Monta o JSON apenas com os campos que foram preenchidos
     final Map<String, dynamic> requestBody = {};
     if (nome != null) requestBody['nome'] = nome;
     if (razaoSocial != null) requestBody['razaoSocial'] = razaoSocial;
@@ -227,23 +202,18 @@ class ServicesProprietario extends BaseService {
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return true;
-      }
-
-      final corpoDecodificado = jsonDecode(response.body);
-
-      if (corpoDecodificado.containsKey('erros') && corpoDecodificado['erros'] is List) {
-        final List errosLista = corpoDecodificado['erros'];
-        throw ApiValidationException(errosLista.map((e) => e['msg'].toString()).toList());
-      } else {
-        final msg = corpoDecodificado['error'] ?? corpoDecodificado['mensagem'] ?? 'Erro desconhecido no servidor.';
-        throw ApiException(msg);
+      }else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao atualizar dados do proprietário.',
+        );
       }
     } on ApiValidationException {
       rethrow;
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw Exception('Falha na comunicação ao atualizar dados do proprietário. Tente novamente mais tarde.');
     }
   }
 
@@ -266,22 +236,18 @@ class ServicesProprietario extends BaseService {
 
       if (response.statusCode == 201 || response.statusCode == 200) {
         return true;
-      }
-
-      final corpoDecodificado = jsonDecode(response.body);
-      if (corpoDecodificado.containsKey('erros') && corpoDecodificado['erros'] is List) {
-        final List errosLista = corpoDecodificado['erros'];
-        throw ApiValidationException(errosLista.map((e) => e['msg'].toString()).toList());
-      } else {
-        final msg = corpoDecodificado['error'] ?? corpoDecodificado['mensagem'] ?? 'Erro desconhecido.';
-        throw ApiException(msg);
+      }else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao atualizar inscrição estadual.',
+        );
       }
     } on ApiValidationException {
       rethrow;
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw Exception('Falha na comunicação ao atualizar inscrição estadual. Tente novamente mais tarde.');
     }
   }
 }

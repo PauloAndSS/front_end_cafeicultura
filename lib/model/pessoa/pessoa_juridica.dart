@@ -98,4 +98,7 @@ class PessoaJuridica extends Pessoa {
       if (endereco != null) 'endereco': endereco!.toJson(),
     };
   }
+
+  @override
+  String get nomeParaExibicao => razaoSocial;
 }

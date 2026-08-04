@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/pessoas_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/auth/first_acess.dart';
 import 'package:provider/provider.dart';
 
@@ -16,6 +17,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => NavegacaoViewModel()),
         ChangeNotifierProvider(create: (_) => SessionViewModel()),
         ChangeNotifierProvider(create: (_) => PropriedadesUsuarioViewModel()),
+        ChangeNotifierProvider(create: (_) => PessoasViewModel()),
       ],
       child: const MeuApp(),
     ),

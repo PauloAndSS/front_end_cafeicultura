@@ -32,8 +32,7 @@ class AtualizarDadosViewModel extends ChangeNotifier {
       _mensagemErro = e.mensagem;
       return null;
     } catch (e) {
-      _mensagemErro = 'Erro de conexão. Tente novamente.';
-      debugPrint('Erro ao carregar dados: $e');
+      _mensagemErro = 'Ocorreu um erro interno no aplicativo. Tente novamente mais tarde.';
       return null;
     } finally {
       _isLoading = false;
@@ -147,19 +146,11 @@ class AtualizarDadosViewModel extends ChangeNotifier {
       }
 
       return true;
-    } on ApiValidationException catch (e) {
-      _mensagemErro = e.mensagens.map((msg) => '• $msg').join('\n');
-      return false;
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
       return false;
-    } on ArgumentError catch (e) {
-      _mensagemErro = e.message;
-      debugPrint('Erro de validação (Domínio): ${e.message}');
-      return false;
     } catch (e) {
-      _mensagemErro = 'Falha ao salvar as alterações. Verifique sua conexão e tente novamente.';
-      debugPrint('Erro interno ao atualizar: $e');
+      _mensagemErro = 'Ocorreu um erro interno no aplicativo. Tente novamente mais tarde.';
       return false;
     } finally {
       _isLoading = false;

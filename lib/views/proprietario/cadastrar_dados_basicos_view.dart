@@ -11,15 +11,15 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:provider/provider.dart'; 
 import '../auth/entrar_view.dart';
 
-class CadastrarView extends StatefulWidget {
-  const CadastrarView({super.key});
+class CadastrarUsuarioView extends StatefulWidget {
+  const CadastrarUsuarioView({super.key});
 
   @override
-  State<CadastrarView> createState() => _CadastrarViewState();
+  State<CadastrarUsuarioView> createState() => _CadastrarUsuarioViewState();
 }
 
-class _CadastrarViewState extends State<CadastrarView> {
-  final _viewModel = CadastrarViewModel();
+class _CadastrarUsuarioViewState extends State<CadastrarUsuarioView> {
+  final _viewModel = CadastrarUsuarioViewModel();
   final _formKey = GlobalKey<FormState>();
 
   final _emailController = TextEditingController();

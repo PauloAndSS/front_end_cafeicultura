@@ -36,8 +36,7 @@ class PropriedadesUsuarioViewModel extends ChangeNotifier {
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
     } catch (e) {
-      _mensagemErro = 'Erro de conexão ao carregar suas propriedades.';
-      debugPrint('Erro no carregamento das propriedades: $e');
+      _mensagemErro = 'Ocorreu um erro interno no aplicativo. Tente novamente mais tarde.';
     } finally {
       _isLoading = false;
       notifyListeners();

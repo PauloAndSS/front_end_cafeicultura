@@ -1,12 +1,3 @@
-class ApiValidationException implements Exception {
-  final List<String> mensagens;
-
-  ApiValidationException(this.mensagens);
-
-  @override
-  String toString() => mensagens.join('\n');
-}
-
 class ApiException implements Exception {
   final String mensagem;
 
@@ -14,4 +5,10 @@ class ApiException implements Exception {
 
   @override
   String toString() => mensagem;
+}
+
+class ApiValidationException extends ApiException {
+  final List<String> mensagens;
+
+  ApiValidationException(this.mensagens) : super(mensagens.join('\n'));
 }

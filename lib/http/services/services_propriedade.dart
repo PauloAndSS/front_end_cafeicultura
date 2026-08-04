@@ -19,16 +19,15 @@ Future<bool> cadastrar(Propriedade propriedade) async {
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
       } else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg = jsonResponse['error'] ?? 
-                    jsonResponse['mensagem'] ?? 
-                    'Erro ao cadastrar propriedade.';
-        throw ApiException(msg);
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao cadastrar propriedade.',
+        );
       }
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw Exception('Falha na comunicação ao cadastrar propriedade. Tente novamente mais tarde.');
     }
   }
 
@@ -41,19 +40,18 @@ Future<bool> cadastrar(Propriedade propriedade) async {
       );
 
       if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        return Propriedade.fromJson(jsonResponse);
+        final dadosPropriedade = extrairDadosResposta(response.bodyBytes); 
+        return Propriedade.fromJson(dadosPropriedade);
       } else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg = jsonResponse['error'] ?? 
-                    jsonResponse['mensagem'] ?? 
-                    'Erro ao buscar propriedade.';
-        throw ApiException(msg);
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao buscar propriedade.',
+        );
       }
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw Exception('Falha na comunicação ao buscar propriedade. Tente novamente mais tarde.');
     }
   }
 
@@ -63,22 +61,19 @@ Future<bool> cadastrar(Propriedade propriedade) async {
         Uri.parse('$url/proprietario'),
         headers: defaultHeaders,
       );
-
       if (response.statusCode == 200) {
-        final List<dynamic> jsonList = jsonDecode(utf8.decode(response.bodyBytes));
-        
-        return jsonList.map((json) => Propriedade.fromJson(json)).toList();
+        final dadosPropriedades = extrairDadosResposta(response.bodyBytes);
+        return dadosPropriedades.map<Propriedade>((propriedade) => Propriedade.fromJson(propriedade)).toList();
       } else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg = jsonResponse['error'] ?? 
-                    jsonResponse['mensagem'] ?? 
-                    'Erro ao buscar suas propriedades.';
-        throw ApiException(msg);
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao buscar propriedades.',
+        );
       }
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw Exception('Falha na comunicação ao buscar propriedades. Tente novamente mais tarde.');
     }
   }
 
@@ -94,16 +89,15 @@ Future<bool> cadastrar(Propriedade propriedade) async {
       if (response.statusCode == 200 || response.statusCode == 204) {
         return true;
       } else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg = jsonResponse['error'] ?? 
-                    jsonResponse['mensagem'] ?? 
-                    'Erro ao atualizar nome da propriedade.';
-        throw ApiException(msg);
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao atualizar nome da propriedade.',
+        );
       }
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw Exception('Falha na comunicação ao atualizar nome da propriedade. Tente novamente mais tarde.');
     }
   }
 
@@ -118,16 +112,15 @@ Future<bool> cadastrar(Propriedade propriedade) async {
       if (response.statusCode == 200 || response.statusCode == 204) {
         return true;
       } else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg = jsonResponse['error'] ?? 
-                    jsonResponse['mensagem'] ?? 
-                    'Erro ao atualizar tamanho da propriedade.';
-        throw ApiException(msg);
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao atualizar tamanho da propriedade.',
+        );
       }
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw Exception('Falha na comunicação ao atualizar tamanho da propriedade. Tente novamente mais tarde.');
     }
   }
 
@@ -142,16 +135,15 @@ Future<bool> cadastrar(Propriedade propriedade) async {
       if (response.statusCode == 200 || response.statusCode == 204) {
         return true;
       } else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg = jsonResponse['error'] ?? 
-                    jsonResponse['mensagem'] ?? 
-                    'Erro ao atualizar endereço da propriedade.';
-        throw ApiException(msg);
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao atualizar endereço da propriedade.',
+        );
       }
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw Exception('Falha na comunicação ao atualizar endereço da propriedade. Tente novamente mais tarde.');
     }
   }
 }
