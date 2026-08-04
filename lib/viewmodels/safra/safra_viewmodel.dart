@@ -40,15 +40,10 @@ class SafraViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await http.get(
-        Uri.parse('${_service.baseUrl}/safras/propriedade/$idPropriedade'),
-        headers: _service.defaultHeaders,
-      );
+      final safrasCarregadas = await _buscarSafrasDaPropriedade(idPropriedade);
 
-      debugPrint('GET safras status=${response.statusCode} body=${response.body}');
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        _safras = _parseSafras(response.body);
+      if (safrasCarregadas.isNotEmpty) {
+        _safras = _ordenarSafras(safrasCarregadas);
 
         if (_safras.isNotEmpty) {
           _safraSelecionada = _safras.first;
@@ -61,7 +56,9 @@ class SafraViewModel extends ChangeNotifier {
           _relatorio = [];
         }
       } else {
-        throw ApiException(_extractErrorMessage(response.body));
+        _safras = [];
+        _safraSelecionada = null;
+        _relatorio = [];
       }
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
@@ -115,7 +112,15 @@ class SafraViewModel extends ChangeNotifier {
       if (response.statusCode >= 200 && response.statusCode < 300) {
         _relatorio = _parseRelatorio(response.body);
       } else {
-        throw ApiException(_extractErrorMessage(response.body));
+        final mensagemDeErro = _extractErrorMessage(response.body);
+
+        if (_isMensagemSemRegistro(mensagemDeErro)) {
+          // Não é um erro de fato: apenas não há eventos cadastrados
+          // ainda para essa safra. Tratamos como relatório vazio.
+          _relatorio = [];
+        } else {
+          throw ApiException(mensagemDeErro);
+        }
       }
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
@@ -126,6 +131,183 @@ class SafraViewModel extends ChangeNotifier {
       _isLoadingRelatorio = false;
       notifyListeners();
     }
+  }
+
+  Future<bool> criarSafra({
+    required int idPropriedade,
+    DateTime? dataInicio,
+  }) async {
+    _isLoading = true;
+    _mensagemErro = null;
+    notifyListeners();
+
+    try {
+      final payload = {
+        'idPropriedade': idPropriedade,
+        'dataInicio': (dataInicio ?? DateTime.now()).toUtc().toIso8601String(),
+      };
+
+      final response = await http.post(
+        Uri.parse('${_service.baseUrl}/safras/'),
+        headers: _service.defaultHeaders,
+        body: jsonEncode(payload),
+      );
+
+      debugPrint('POST safra status=${response.statusCode} body=${response.body}');
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        await _refreshSafrasAfterMutation(idPropriedade);
+        return true;
+      }
+
+      throw ApiException(_extractErrorMessage(response.body));
+    } on ApiException catch (e) {
+      _mensagemErro = e.mensagem;
+    } catch (e) {
+      _mensagemErro = 'Erro ao cadastrar a safra.';
+      debugPrint('Erro ao cadastrar safra: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+
+    return false;
+  }
+
+  Future<bool> encerrarSafra({
+    required int idPropriedade,
+    required int idSafra,
+    DateTime? dataFim,
+  }) async {
+    if (idSafra <= 0) {
+      _mensagemErro = 'Selecione uma safra válida para encerrar.';
+      notifyListeners();
+      return false;
+    }
+
+    _isLoading = true;
+    _mensagemErro = null;
+    notifyListeners();
+
+    try {
+      final response = await http.patch(
+        Uri.parse('${_service.baseUrl}/safras/$idSafra/finalizar'),
+        headers: _service.defaultHeaders,
+        body: jsonEncode({
+          'dataFim': (dataFim ?? DateTime.now()).toUtc().toIso8601String(),
+        }),
+      );
+
+      debugPrint('PATCH safra status=${response.statusCode} body=${response.body}');
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        await _refreshSafrasAfterMutation(idPropriedade);
+        return true;
+      }
+
+      throw ApiException(_extractErrorMessage(response.body));
+    } on ApiException catch (e) {
+      _mensagemErro = e.mensagem;
+    } catch (e) {
+      _mensagemErro = 'Erro ao encerrar a safra.';
+      debugPrint('Erro ao encerrar safra: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+
+    return false;
+  }
+
+  Future<void> _refreshSafrasAfterMutation(int idPropriedade) async {
+    try {
+      final novasSafras = await _buscarSafrasDaPropriedade(idPropriedade);
+      _safras = _ordenarSafras(novasSafras);
+
+      if (novasSafras.isEmpty) {
+        _safraSelecionada = null;
+        _relatorio = [];
+      } else if (_safraSelecionada == null ||
+          !novasSafras.any((safra) => safra.id == _safraSelecionada?.id)) {
+        _safraSelecionada = _safras.first;
+        await carregarRelatorioDaSafra(
+          idPropriedade: idPropriedade,
+          idSafra: _safraSelecionada!.id!,
+        );
+      } else if (_safraSelecionada != null) {
+        final safraAtualizada = novasSafras.firstWhere(
+          (safra) => safra.id == _safraSelecionada!.id,
+          orElse: () => _safraSelecionada!,
+        );
+        _safraSelecionada = safraAtualizada;
+        await carregarRelatorioDaSafra(
+          idPropriedade: idPropriedade,
+          idSafra: safraAtualizada.id!,
+        );
+      }
+
+      notifyListeners();
+    } catch (e) {
+      debugPrint('Erro ao atualizar a lista de safras após mutação: $e');
+    }
+  }
+
+  Future<List<Safra>> _buscarSafrasDaPropriedade(int idPropriedade) async {
+    final endpoints = [
+      Uri.parse('${_service.baseUrl}/safras/propriedade/${idPropriedade}/safras/todas'),
+    ];
+
+    final listasEncontradas = <List<Safra>>[];
+
+    for (final endpoint in endpoints) {
+      try {
+        final response = await http.get(endpoint, headers: _service.defaultHeaders);
+
+        debugPrint('GET safras status=${response.statusCode} body=${response.body}');
+
+        if (response.statusCode >= 200 && response.statusCode < 300) {
+          final lista = _parseSafras(response.body);
+          if (lista.isNotEmpty) {
+            listasEncontradas.add(lista);
+          }
+        }
+      } catch (e) {
+        debugPrint('Erro ao buscar safras em $endpoint: $e');
+      }
+    }
+
+    if (listasEncontradas.isEmpty) {
+      return [];
+    }
+
+    final merged = <int, Safra>{};
+    for (final lista in listasEncontradas) {
+      for (final safra in lista) {
+        if (safra.id != null) {
+          merged[safra.id!] = safra;
+        }
+      }
+    }
+
+    if (merged.isNotEmpty) {
+      return _ordenarSafras(merged.values.toList());
+    }
+
+    return _ordenarSafras(listasEncontradas.first);
+  }
+
+  List<Safra> _ordenarSafras(List<Safra> safras) {
+    final copia = List<Safra>.from(safras);
+    copia.sort((a, b) {
+      final dataA = a.dataInicio ?? a.dataFim ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final dataB = b.dataInicio ?? b.dataFim ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final comparacaoData = dataB.compareTo(dataA);
+      if (comparacaoData != 0) {
+        return comparacaoData;
+      }
+      return (a.id ?? 0).compareTo(b.id ?? 0);
+    });
+    return copia;
   }
 
   List<Safra> _parseSafras(String body) {
@@ -200,6 +382,11 @@ class SafraViewModel extends ChangeNotifier {
       payload['events'],
       payload['relatorio'],
       payload['dados'],
+      payload['ativas'],
+      payload['encerradas'],
+      payload['historico'],
+      payload['todos'],
+      payload['all'],
     ];
 
     for (final candidate in candidates) {
@@ -214,6 +401,33 @@ class SafraViewModel extends ChangeNotifier {
     }
 
     return [];
+  }
+
+  bool _isMensagemSemRegistro(String mensagem) {
+    final normalizada = _removerAcentos(mensagem.toLowerCase());
+
+    final indicaAusencia = normalizada.contains('nao possui') ||
+        normalizada.contains('nenhum') ||
+        normalizada.contains('sem eventos') ||
+        normalizada.contains('sem registro');
+
+    final indicaEventos = normalizada.contains('evento') ||
+        normalizada.contains('registrad') ||
+        normalizada.contains('exemplo') ||
+        normalizada.contains('relatorio');
+
+    return indicaAusencia && indicaEventos;
+  }
+
+  String _removerAcentos(String texto) {
+    const comAcento = 'áàãâäéèêëíìîïóòõôöúùûüçÁÀÃÂÄÉÈÊËÍÌÎÏÓÒÕÔÖÚÙÛÜÇ';
+    const semAcento = 'aaaaaeeeeiiiiooooouuuucAAAAAEEEEIIIIOOOOOUUUUC';
+
+    var resultado = texto;
+    for (var i = 0; i < comAcento.length; i++) {
+      resultado = resultado.replaceAll(comAcento[i], semAcento[i]);
+    }
+    return resultado;
   }
 
   String _extractErrorMessage(String body) {

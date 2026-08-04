@@ -8,16 +8,17 @@ class Safra {
   final String status;
   final bool ativa;
 
-  const Safra({
+  Safra({
     this.id,
     this.propriedadeId,
     this.nome = '',
     this.descricao = '',
     this.dataInicio,
     this.dataFim,
-    this.status = 'Ativa',
-    this.ativa = true,
-  });
+    String? status,
+    bool? ativa,
+  })  : status = status ?? (dataFim != null ? 'Encerrada' : 'Ativa'),
+        ativa = ativa ?? (dataFim == null);
 
   factory Safra.fromJson(Map<String, dynamic> json) {
     final rawId = json['id'] ?? json['safraId'] ?? json['idSafra'];
@@ -26,12 +27,6 @@ class Safra {
         json['idPropriedade'] ??
         json['propriedade']?['id'];
 
-    final rawStatus = json['status'] ?? json['situacao'] ?? json['estado'];
-    final bool isActive =
-        json['ativa'] == true ||
-        rawStatus?.toString().toLowerCase() != 'finalizada' &&
-            rawStatus?.toString().toLowerCase() != 'encerrada';
-
     return Safra(
       id: rawId is num ? rawId.toInt() : int.tryParse(rawId?.toString() ?? ''),
       propriedadeId: rawPropriedadeId is num
@@ -39,10 +34,27 @@ class Safra {
           : int.tryParse(rawPropriedadeId?.toString() ?? ''),
       nome: json['nome']?.toString() ?? '',
       descricao: json['descricao']?.toString() ?? '',
-      dataInicio: _parseDate(json['dataInicio'] ?? json['inicio'] ?? json['data_inicio']),
-      dataFim: _parseDate(json['dataFim'] ?? json['fim'] ?? json['data_fim']),
-      status: rawStatus?.toString() ?? 'Ativa',
-      ativa: isActive,
+      dataInicio: _parseDate(
+        json['dataInicio'] ??
+            json['inicio'] ??
+            json['data_inicio'] ??
+            json['dataInicial'] ??
+            json['data_inicial'],
+      ),
+      dataFim: _parseDate(
+        json['dataFim'] ??
+            json['fim'] ??
+            json['data_fim'] ??
+            json['dataTermino'] ??
+            json['data_termino'] ??
+            json['dataFinalizacao'] ??
+            json['data_finalizacao'] ??
+            json['dataEncerramento'] ??
+            json['data_encerramento'],
+      ),
+      // status e ativa não vêm mais do backend: são derivados
+      // automaticamente pelo construtor a partir de dataFim.
+      // Se tem data de fim, é porque a safra já foi encerrada.
     );
   }
 
@@ -58,6 +70,8 @@ class Safra {
       'ativa': ativa,
     };
   }
+
+  bool get isEncerrada => !ativa;
 
   String get periodoTexto {
     if (dataInicio == null && dataFim == null) {
@@ -98,6 +112,21 @@ class Safra {
 
     return null;
   }
+
+  // Importante para o DropdownButtonFormField: sem isso, o Flutter compara
+  // por identidade de objeto e, assim que a lista de safras é recarregada
+  // (nova instância criada a partir do JSON), o valor selecionado deixa de
+  // "bater" com os itens da lista e o select aparece vazio.
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) {
+      return true;
+    }
+    return other is Safra && other.id != null && other.id == id;
+  }
+
+  @override
+  int get hashCode => id?.hashCode ?? super.hashCode;
 }
 
 class SafraEvento {

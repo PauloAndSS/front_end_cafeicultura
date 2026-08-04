@@ -21,6 +21,17 @@ void main() {
     expect(safra.ativa, true);
   });
 
+  test('deve considerar uma safra encerrada quando o status indica isso', () {
+    final safra = Safra.fromJson({
+      'id': 2,
+      'nome': 'Safra 2024',
+      'status': 'Encerrada',
+      'ativa': false,
+    });
+
+    expect(safra.isEncerrada, isTrue);
+  });
+
   test('deve resolver o host da API para o ambiente correto', () {
     expect(
       BaseService.resolveBaseUrl(isWeb: true, platform: TargetPlatform.android),
