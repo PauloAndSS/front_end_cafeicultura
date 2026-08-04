@@ -68,4 +68,14 @@ abstract class BaseService {
     
     return jsonResponse;
   }
-}
+
+  Map<String, dynamic> extrairDadosPaginados(List<int> bodyBytes) {
+    final jsonResponse = jsonDecode(utf8.decode(bodyBytes));
+
+    if (jsonResponse is Map<String, dynamic>) {
+      return jsonResponse;
+    }
+    
+    throw ApiException('Formato de resposta inválido para paginação.');
+  }
+} 

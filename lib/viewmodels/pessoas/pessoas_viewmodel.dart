@@ -19,6 +19,13 @@ class PessoasViewModel extends ChangeNotifier {
 
   final ServicesPessoa _service;
 
+  int _paginaAtual = 1;
+  int _totalPaginas = 1;
+  final int _limite = 20;
+  
+  bool _isLoadingMore = false;
+  bool get isLoadingMore => _isLoadingMore;
+
   PessoasViewModel({ServicesPessoa? service}) 
       : _service = service ?? ServicesPessoa();
 
@@ -28,18 +35,56 @@ class PessoasViewModel extends ChangeNotifier {
   List<Fornecedor> get fornecedores => _todasPessoas.whereType<Fornecedor>().toList();
   List<PrestadorDeServico> get prestadores => _todasPessoas.whereType<PrestadorDeServico>().toList();
 
-  Future<void> carregarPessoas() async {
+  Future<void> carregarPessoas({bool recarregar = false}) async {
+    if (recarregar) {
+      _paginaAtual = 1;
+      _todasPessoas.clear();
+    }
+
+    if (_isLoading || _isLoadingMore) return;
+
     _isLoading = true;
     _mensagemErro = null;
     notifyListeners();
+
     try {
-      _todasPessoas = await _service.buscarPorProprietario();
+      final resultadoDTO = await _service.buscarPorProprietario(
+        pagina: _paginaAtual,
+        limite: _limite,
+      );
+      
+      _todasPessoas = resultadoDTO.data;
+      _totalPaginas = resultadoDTO.totalPaginas;
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
     } catch (e) {
       _mensagemErro = 'Ocorreu um erro interno no aplicativo. Tente novamente mais tarde.';
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> carregarMaisPessoas() async {
+    if (_isLoadingMore || _isLoading || _paginaAtual >= _totalPaginas) return;
+
+    _isLoadingMore = true;
+    _paginaAtual++;
+    notifyListeners();
+
+    try {
+      final resultadoDTO = await _service.buscarPorProprietario(
+        pagina: _paginaAtual,
+        limite: _limite,
+      );
+      
+      _todasPessoas.addAll(resultadoDTO.data);
+      _totalPaginas = resultadoDTO.totalPaginas;
+    } catch (e) {
+      // Reverte o incremento da página caso ocorra falha de rede ao buscar mais
+      _paginaAtual--;
+    } finally {
+      _isLoadingMore = false;
       notifyListeners();
     }
   }

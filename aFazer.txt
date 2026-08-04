@@ -1,5 +1,6 @@
-PESSOAS
--> buscar pessoas não está atualizando
--> Tela de visualizar os detalhes da pessoa com aviso de TODO de posterior implementação de verificar suas atividades anteriores (histórico de atividades e despesas referente à essa pessoa). Adicionar também esse aviso de TODO no talhão, propriedade e safra (ou adicionar um Em Breve...). 
--> atualização de salário do funcionário
-    -> add confirmação de que realmente quer sair da tela se há dados alterados
+-> IMPLEMENTAR A MÁSCARA DE FORMATAÇÃO DE NÚMERO no cadastro e update do salário do funcionário
+
+-> verificar atividades já registradas no talhão, propriedade e safra (adicionar um Em Breve... na view).
+
+-> Paginação de talhões no get por propriedade
+

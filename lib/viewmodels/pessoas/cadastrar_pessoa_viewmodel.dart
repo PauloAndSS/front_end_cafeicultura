@@ -1,32 +1,31 @@
 import 'package:flutter/widgets.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_pessoas.dart';
-import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/cliente.dart';
-import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/fornecedor.dart';
-import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/funcionario.dart';
-import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/meeiro.dart';
-import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/prestador.dart';
-
-enum TipoPapelCadastro { funcionario, meeiro, fornecedor, prestador, cliente }
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 
 class CadastroPessoaViewModel extends ChangeNotifier {
-  final ServicesFuncionario _servicesFuncionario = ServicesFuncionario();
-  final ServicesMeeiro _servicesMeeiro = ServicesMeeiro();
-  final ServicesFornecedor _servicesFornecedor = ServicesFornecedor();
-  final ServicesPrestadorDeServico _servicesPrestador =
-      ServicesPrestadorDeServico();
-  final ServicesCliente _servicesCliente = ServicesCliente();
-
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
   String? _mensagemErro;
   String? get mensagemErro => _mensagemErro;
 
-  TipoPapelCadastro? _papelSelecionado;
-  TipoPapelCadastro? get papelSelecionado => _papelSelecionado;
+  TipoPapel? _papelSelecionado;
+  TipoPapel? get papelSelecionado => _papelSelecionado;
 
-  void selecionarPapel(TipoPapelCadastro? papel) {
+  late final Map<TipoPapel, dynamic> _services;
+
+  CadastroPessoaViewModel() {
+    _services = {
+      TipoPapel.funcionario: ServicesFuncionario(),
+      TipoPapel.meeiro: ServicesMeeiro(),
+      TipoPapel.fornecedor: ServicesFornecedor(),
+      TipoPapel.prestador: ServicesPrestadorDeServico(),
+      TipoPapel.cliente:  ServicesCliente(),
+    };
+  }
+
+  void selecionarPapel(TipoPapel? papel) {
     _papelSelecionado = papel;
     notifyListeners();
   }
@@ -43,23 +42,8 @@ class CadastroPessoaViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      switch (_papelSelecionado!) {
-        case TipoPapelCadastro.funcionario:
-          await _servicesFuncionario.cadastrar(objetoPapel as Funcionario);
-          break;
-        case TipoPapelCadastro.meeiro:
-          await _servicesMeeiro.cadastrar(objetoPapel as Meeiro);
-          break;
-        case TipoPapelCadastro.fornecedor:
-          await _servicesFornecedor.cadastrar(objetoPapel as Fornecedor);
-          break;
-        case TipoPapelCadastro.prestador:
-          await _servicesPrestador.cadastrar(objetoPapel as PrestadorDeServico);
-          break;
-        case TipoPapelCadastro.cliente:
-          await _servicesCliente.cadastrar(objetoPapel as Cliente);
-          break;
-      }
+      await _services[_papelSelecionado!].cadastrar(objetoPapel);
+      
       return true;
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;

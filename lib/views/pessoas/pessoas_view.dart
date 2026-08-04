@@ -5,6 +5,7 @@ import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/funciona
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/meeiro.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/prestador.dart';
 import 'package:frond_end_cafeicultura_mobile/views/pessoas/cadastrar_pessoa_view.dart';
+import 'package:frond_end_cafeicultura_mobile/views/pessoas/detalhes_pessoa_view.dart';
 import 'package:provider/provider.dart';
 
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/pessoas_viewmodel.dart';
@@ -21,12 +22,28 @@ class PessoasView extends StatefulWidget {
 }
 
 class _PessoasViewState extends State<PessoasView> {
+  final ScrollController _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
+    _scrollController.addListener(_onScroll);
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<PessoasViewModel>().carregarPessoas();
+      context.read<PessoasViewModel>().carregarPessoas(recarregar: true);
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      context.read<PessoasViewModel>().carregarMaisPessoas();
+    }
   }
 
   Future<void> _abrirTelaCadastro() async {
@@ -36,7 +53,7 @@ class _PessoasViewState extends State<PessoasView> {
     );
 
     if (resultado == true && mounted) {
-      context.read<PessoasViewModel>().carregarPessoas();
+      context.read<PessoasViewModel>().carregarPessoas(recarregar: true);
     }
   }
 
@@ -63,8 +80,17 @@ class _PessoasViewState extends State<PessoasView> {
           return PessoaCardWidget(
             nome: item.pessoa.nomeParaExibicao,
             funcao: _obterNomeFuncao(item),
-            onTap: () {
-              // TODO: Navegar para detalhes da pessoa
+            onTap: () async {
+              final alterou = await Navigator.push<bool>(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => DetalhesPessoaView(papelPessoa: item),
+                ),
+              );
+              
+              if (alterou == true && mounted) {
+                context.read<PessoasViewModel>().carregarPessoas(recarregar: true);
+              }
             },
           );
         }, childCount: lista.length),
@@ -138,12 +164,24 @@ class _PessoasViewState extends State<PessoasView> {
                 vertical: 16.0,
               ),
               child: CustomScrollView(
+                controller: _scrollController,
                 slivers: [
+                  ..._buildSecao('Clientes', vm.clientes),
+                  ..._buildSecao('Fornecedores', vm.fornecedores),
                   ..._buildSecao('Funcionários', vm.funcionarios),
                   ..._buildSecao('Meeiros', vm.meeiros),
-                  ..._buildSecao('Fornecedores', vm.fornecedores),
                   ..._buildSecao('Prestadores', vm.prestadores),
-                  ..._buildSecao('Clientes', vm.clientes),
+                  
+
+                  if (vm.isLoadingMore)
+                    const SliverToBoxAdapter(
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(vertical: 24.0),
+                        child: Center(
+                          child: CircularProgressIndicator(color: Color(0xFF8FA67E)),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

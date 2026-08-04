@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:frond_end_cafeicultura_mobile/http/dtos/paginacao_dto.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/cliente.dart';
@@ -14,15 +15,19 @@ import 'package:http/http.dart' as http;
 class ServicesPessoa extends BaseService {
   late final Uri url = Uri.parse('$baseUrl/pessoas');
 
-  Future<List<PapelPessoa>> buscarPorProprietario() async {
+  Future<ResultadoPaginadoDTO<PapelPessoa>> buscarPorProprietario({
+  int pagina = 1,
+  int limite = 20,
+}) async {
+    late final Uri url = Uri.parse('$baseUrl/pessoas?pagina=$pagina&limite=$limite');
     try {
       final response = await http.get(url, headers: defaultHeaders);
       if (response.statusCode == 200) {
-        final List<dynamic> dadosPessoas = extrairDadosResposta(response.bodyBytes);
-        
-        return dadosPessoas
-            .map<PapelPessoa>((jsonItem) => PapelPessoaFactory.fromJson(jsonItem))
-            .toList();
+      final Map<String, dynamic> jsonResponse = extrairDadosPaginados(response.bodyBytes);
+      return ResultadoPaginadoDTO<PapelPessoa>.fromJson(
+          jsonResponse,
+          (jsonItem) => PapelPessoaFactory.fromJson(jsonItem),
+        );
       } else {
         tratarErroRequisicao(
           response.bodyBytes,
@@ -32,7 +37,9 @@ class ServicesPessoa extends BaseService {
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw ApiException('Falha na comunicação ao buscar dados das pessoas. Tente novamente mais tarde.');
+      throw ApiException(
+        'Falha na comunicação ao buscar dados das pessoas. Tente novamente mais tarde.',
+      );
     }
   }
 }
@@ -49,7 +56,9 @@ class ServicesFornecedor extends BaseService {
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
-      } else {
+      } else if(response.statusCode == 409){
+        throw ApiException('CNPJ ou CPF já cadastrado no sistema.');
+        } else {
         tratarErroRequisicao(
           response.bodyBytes,
           fallbackMsg: 'Erro ao cadastrar fornecedor.',
@@ -58,7 +67,9 @@ class ServicesFornecedor extends BaseService {
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw ApiException('Falha na comunicação ao cadastrar fornecedor. Tente novamente mais tarde.');
+      throw ApiException(
+        'Falha na comunicação ao cadastrar fornecedor. Tente novamente mais tarde.',
+      );
     }
   }
 
@@ -80,7 +91,32 @@ class ServicesFornecedor extends BaseService {
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw ApiException('Falha na comunicação ao buscar fornecedor. Tente novamente mais tarde.');
+      throw ApiException(
+        'Falha na comunicação ao buscar fornecedor. Tente novamente mais tarde.',
+      );
+    }
+  }
+
+  Future<bool> excluir(int id) async {
+    final urlDelete = Uri.parse('$url/$id/');
+    try {
+      final response = await http.delete(urlDelete, headers: defaultHeaders);
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return true;
+      } else if(response.statusCode == 403) {
+        throw ApiException('Nao eh possivel excluir um fornecedor que possui relacao com outro cadastro.');
+        }else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao excluir fornecedor.',
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(
+        'Falha na comunicação ao excluir fornecedor. Tente novamente mais tarde.',
+      );
     }
   }
 }
@@ -98,6 +134,8 @@ class ServicesFuncionario extends BaseService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
+      } else if (response.statusCode == 409) {
+        throw ApiException('CPF já cadastrado no sistema.');
       } else {
         tratarErroRequisicao(
           response.bodyBytes,
@@ -107,7 +145,9 @@ class ServicesFuncionario extends BaseService {
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw ApiException('Falha na comunicação ao cadastrar funcionário. Tente novamente mais tarde.');
+      throw ApiException(
+        'Falha na comunicação ao cadastrar funcionário. Tente novamente mais tarde.',
+      );
     }
   }
 
@@ -129,7 +169,58 @@ class ServicesFuncionario extends BaseService {
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw ApiException('Falha na comunicação ao buscar funcionário. Tente novamente mais tarde.');
+      throw ApiException(
+        'Falha na comunicação ao buscar funcionário. Tente novamente mais tarde.',
+      );
+    }
+  }
+
+  Future<bool> excluir(int id) async {
+    final urlDelete = Uri.parse('$url/$id/');
+    try {
+      final response = await http.delete(urlDelete, headers: defaultHeaders);
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return true;
+      } else if(response.statusCode == 403){
+        throw ApiException('Funcionario possui atividades e/ou despesas cadastradas e não pode ser excluído.');
+      } else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao excluir funcionário.',
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(
+        'Falha na comunicação ao excluir funcionário. Tente novamente mais tarde.',
+      );
+    }
+  }
+
+  Future<bool> atualizarSalario(int id, double salario) async {
+    final urlPut = Uri.parse('$url/$id/salario');
+    try {
+      final response = await http.put(
+        urlPut,
+        headers: defaultHeaders,
+        body: jsonEncode({'salario': salario}),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao atualizar salário do funcionário.',
+        );
+      }
+  } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(
+        'Falha na comunicação ao atualizar salário do funcionário. Tente novamente mais tarde.',
+      );
     }
   }
 }
@@ -150,6 +241,8 @@ class ServicesCliente extends BaseService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
+      } else if (response.statusCode == 409) {
+        throw ApiException('CPF ou CNPJ já cadastrado no sistema.');
       } else {
         tratarErroRequisicao(
           response.bodyBytes,
@@ -159,7 +252,9 @@ class ServicesCliente extends BaseService {
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw ApiException('Falha na comunicação ao cadastrar cliente. Tente novamente mais tarde.');
+      throw ApiException(
+        'Falha na comunicação ao cadastrar cliente. Tente novamente mais tarde.',
+      );
     }
   }
 
@@ -181,7 +276,32 @@ class ServicesCliente extends BaseService {
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw ApiException('Falha na comunicação ao buscar cliente. Tente novamente mais tarde.');
+      throw ApiException(
+        'Falha na comunicação ao buscar cliente. Tente novamente mais tarde.',
+      );
+    }
+  }
+
+  Future<bool> excluir(int id) async {
+    final urlDelete = Uri.parse('$url/$id/');
+    try {
+      final response = await http.delete(urlDelete, headers: defaultHeaders);
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return true;
+      } else if(response.statusCode == 403) {
+        throw ApiException('Cliente possui atividades e/ou despesas cadastradas e não pode ser excluído.');
+      } else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao excluir cliente.',
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(
+        'Falha na comunicação ao excluir cliente. Tente novamente mais tarde.',
+      );
     }
   }
 }
@@ -202,7 +322,9 @@ class ServicesMeeiro extends BaseService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
-      } else {
+      } else if (response.statusCode == 409){
+        throw ApiException('CPF já cadastrado no sistema.');
+      }else {
         tratarErroRequisicao(
           response.bodyBytes,
           fallbackMsg: 'Erro ao cadastrar Meeiro.',
@@ -211,7 +333,9 @@ class ServicesMeeiro extends BaseService {
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw ApiException('Falha na comunicação ao cadastrar Meeiro. Tente novamente mais tarde.');
+      throw ApiException(
+        'Falha na comunicação ao cadastrar Meeiro. Tente novamente mais tarde.',
+      );
     }
   }
 
@@ -233,7 +357,32 @@ class ServicesMeeiro extends BaseService {
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw ApiException('Falha na comunicação ao buscar meeiro. Tente novamente mais tarde.');
+      throw ApiException(
+        'Falha na comunicação ao buscar meeiro. Tente novamente mais tarde.',
+      );
+    }
+  }
+
+  Future<bool> excluir(int id) async {
+    final urlDelete = Uri.parse('$url/$id/');
+    try {
+      final response = await http.delete(urlDelete, headers: defaultHeaders);
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return true;
+      } else if(response.statusCode == 403){
+        throw ApiException('Meeiro possui atividades e/ou despesas cadastradas e não pode ser excluído.');
+      } else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao excluir meeiro.',
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(
+        'Falha na comunicação ao excluir meeiro. Tente novamente mais tarde.',
+      );
     }
   }
 }
@@ -253,6 +402,8 @@ class ServicesPrestadorDeServico extends BaseService {
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
+      } else if(response.statusCode == 409) {
+        throw ApiException('CNPJ ou CPF já cadastrado no sistema.');
       } else {
         tratarErroRequisicao(
           response.bodyBytes,
@@ -262,7 +413,9 @@ class ServicesPrestadorDeServico extends BaseService {
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw ApiException('Falha na comunicação ao cadastrar prestador de serviço. Tente novamente mais tarde.');
+      throw ApiException(
+        'Falha na comunicação ao cadastrar prestador de serviço. Tente novamente mais tarde.',
+      );
     }
   }
 
@@ -284,7 +437,32 @@ class ServicesPrestadorDeServico extends BaseService {
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw ApiException('Falha na comunicação ao buscar prestador de serviço. Tente novamente mais tarde.');
+      throw ApiException(
+        'Falha na comunicação ao buscar prestador de serviço. Tente novamente mais tarde.',
+      );
+    }
+  }
+
+  Future<bool> excluir(int id) async {
+    final urlDelete = Uri.parse('$url/$id/');
+    try {
+      final response = await http.delete(urlDelete, headers: defaultHeaders);
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return true;
+      } else if(response.statusCode == 403){
+        throw ApiException('Prestador de serviço possui atividades e/ou despesas cadastradas e não pode ser excluído.');
+      }else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao excluir Prestador de Serviço.',
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(
+        'Falha na comunicação ao excluir Prestador de Serviço. Tente novamente mais tarde.',
+      );
     }
   }
 }
