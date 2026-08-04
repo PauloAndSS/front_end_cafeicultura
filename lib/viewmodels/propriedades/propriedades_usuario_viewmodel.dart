@@ -29,14 +29,21 @@ class PropriedadesUsuarioViewModel extends ChangeNotifier {
       _dadosCarregados = true;
       if (_propriedades.isNotEmpty) {
         //se propriedade selecionada for nula
-        _idPropriedadeSelecionada ??= _propriedades.first.id;
+        final aindaExiste = _propriedades.any(
+          (p) => p.id == _idPropriedadeSelecionada,
+        );
+
+        if (_idPropriedadeSelecionada == null || !aindaExiste) {
+          _idPropriedadeSelecionada = _propriedades.first.id;
+        }
       } else {
         _idPropriedadeSelecionada = null;
       }
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
     } catch (e) {
-      _mensagemErro = 'Ocorreu um erro interno no aplicativo. Tente novamente mais tarde.';
+      _mensagemErro =
+          'Ocorreu um erro interno no aplicativo. Tente novamente mais tarde.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -47,22 +54,22 @@ class PropriedadesUsuarioViewModel extends ChangeNotifier {
     _idPropriedadeSelecionada = idPropriedade;
 
     final index = _propriedades.indexWhere((p) => p.id == idPropriedade);
-    
+
     if (index > 0) {
-      final propriedadeEscolhida = _propriedades.removeAt(index); 
-      _propriedades.insert(0, propriedadeEscolhida); 
+      final propriedadeEscolhida = _propriedades.removeAt(index);
+      _propriedades.insert(0, propriedadeEscolhida);
     }
 
     notifyListeners();
   }
 
-void adicionarPropriedadeLocal(Propriedade novaPropriedade) {
+  void adicionarPropriedadeLocal(Propriedade novaPropriedade) {
     _propriedades.insert(0, novaPropriedade);
     _idPropriedadeSelecionada = novaPropriedade.id;
-    
+
     notifyListeners();
   }
-  
+
   void limparDados() {
     _propriedades = [];
     _mensagemErro = null;
@@ -70,8 +77,7 @@ void adicionarPropriedadeLocal(Propriedade novaPropriedade) {
     notifyListeners();
   }
 
-  
-void escutarIsLoggedIn(SessionViewModel session) {
+  void escutarIsLoggedIn(SessionViewModel session) {
     if (session.isLoggedIn && !_dadosCarregados && !_isLoading) {
       carregarPropriedades();
     }

@@ -146,4 +146,26 @@ Future<bool> cadastrar(Propriedade propriedade) async {
       throw Exception('Falha na comunicação ao atualizar endereço da propriedade. Tente novamente mais tarde.');
     }
   }
+
+  //delete
+  Future<bool> excluir(int id) async {
+    final urlDelete = Uri.parse('$url/$id/');
+    try {
+      final response = await http.delete(urlDelete, headers: defaultHeaders);
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return true;
+      } else if(response.statusCode == 403) {
+        throw ApiException('Propriedade possui atividades e/ou despesas cadastradas e não pode ser excluida.');
+      }else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao excluir propriedade.',
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw Exception('Falha na comunicação ao excluir propriedade. Tente novamente mais tarde.');
+    }
+  }
 }

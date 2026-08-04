@@ -62,4 +62,23 @@ class AtualizarPropriedadeViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> excluir(int id) async {
+    _isLoading = true;
+    _mensagemErro = null;
+    notifyListeners();
+    try {
+      await _service.excluir(id);
+      return true;
+    } on ApiException catch (e) {
+      _mensagemErro = e.mensagem;
+      return false;
+    } catch (e) {
+      _mensagemErro = 'Ocorreu um erro interno ao excluir. Tente novamente mais tarde.';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
 }

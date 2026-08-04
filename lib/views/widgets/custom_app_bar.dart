@@ -18,24 +18,21 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     final session = context.watch<SessionViewModel>();
     final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
     final listaPropriedades = propriedadesVM.propriedades;
+    final int? idSelecionadoValido = listaPropriedades.any(
+      (p) => p.id == propriedadesVM.idPropriedadeSelecionada,
+    )
+        ? propriedadesVM.idPropriedadeSelecionada
+        : null;
 
     return AppBar(
       backgroundColor: const Color(0xFF8FA67E),
       elevation: 0,
       centerTitle: true,
-      
-      // ==========================================
-      // CENTRO: LOGO
-      // ==========================================
       title: Image.asset(
         'assets/images/logo_cafe.png',
         height: 80,
         fit: BoxFit.contain,
       ),
-
-      // ==========================================
-      // ESQUERDA: SELETOR DE PROPRIEDADE
-      // ==========================================
       leadingWidth: 190,
       leading: Padding(
         padding: const EdgeInsets.only(left: 12.0, top: 10.0, bottom: 10.0),
@@ -59,7 +56,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   ? const Text('Carregando...', overflow: TextOverflow.ellipsis)
                   : const Text('Propriedade', overflow: TextOverflow.ellipsis),
               
-              value: propriedadesVM.idPropriedadeSelecionada,
+              value: idSelecionadoValido,
               
               items: [
                 ...listaPropriedades.map((prop) {
@@ -72,7 +69,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   );
                 }),
                 
-                if (propriedadesVM.idPropriedadeSelecionada != null)
+                if (idSelecionadoValido != null)
                   const DropdownMenuItem<int>(
                     value: -2,
                     child: Row(
@@ -104,12 +101,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                     context, 
                     MaterialPageRoute(builder: (context) => const CadastrarPropriedadeView())
                   );
-                } else if (valorSelecionado == -2 && propriedadesVM.idPropriedadeSelecionada != null) {
+                } else if (valorSelecionado == -2 && idSelecionadoValido != null) {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (context) => AtualizarPropriedadeView(
-                        idPropriedade: propriedadesVM.idPropriedadeSelecionada!,
+                        idPropriedade: idSelecionadoValido,
                       ),
                     ),
                   );
@@ -121,21 +118,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
         ),
       ),
-
-      // ==========================================
-      // DIREITA: ÍCONES DE AÇÃO
-      // ==========================================
       actions: [
-        // 1. Sino de Notificações
         IconButton(
           icon: const Icon(Icons.notifications_none, color: Colors.white, size: 26),
           tooltip: 'Notificações',
-          onPressed: () {
-            // TODO: Implementar lógica de notificações futuramente
-          },
+          onPressed: () {},
         ),
         
-        // 2. Menu do Usuário (Perfil)
         PopupMenuButton<String>(
           icon: const Icon(Icons.person_outline, color: Colors.white, size: 26),
           tooltip: 'Perfil',
