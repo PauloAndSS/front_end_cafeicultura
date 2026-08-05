@@ -65,6 +65,7 @@ O projeto é separado em camadas para garantir o desacoplamento entre a interfac
 
 ## Integrações e Links Úteis
 * Toda a comunicação HTTP é feita com o repositório de backend:
-```bash https://github.com/heitorPoleze/backend_cafeicultura
+```bash
+https://github.com/heitorPoleze/backend_cafeicultura
 ```
 * Consulte o repositório do backend para acessar a documentação detalhada da API, rotas e payloads esperados.
