@@ -29,7 +29,7 @@ O projeto é separado em camadas para garantir o desacoplamento entre a interfac
 * **Android Studio**: IDE recomendada para simular o uso do aplicativo.
 
 > **⚠️ Atenção sobre a Execução:** 
-> Para executar e testar o Flutter corretamente neste projeto, é **obrigatório** utilizar um emulador de telefone (como o AVD do Android Studio) ou um dispositivo físico. Isso é necessário para o correto funcionamento dos cookies e da sessão, visto que o comportamento na web difere da arquitetura mobile implementada no backend.
+> Para executar e testar o Flutter corretamente neste projeto, é **obrigatório** utilizar um emulador de telefone (como via Virtual Device Manager do Android Studio) ou um dispositivo físico. Isso é necessário para o correto funcionamento dos cookies e da sessão, visto que o comportamento na web difere da arquitetura mobile implementada no backend.
 
 ## Como Executar o Projeto
 
