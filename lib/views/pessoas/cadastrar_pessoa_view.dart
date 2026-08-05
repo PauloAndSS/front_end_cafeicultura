@@ -343,9 +343,9 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                         const Divider(height: 32),
                         
                         CustomTextField(
-                          label: 'CTPS',
+                          label: 'CTPS (Opcional)',
                           controller: _ctpsController,
-                          hintText: 'Número da carteira de trabalho (Opcional)',
+                          hintText: 'Número da carteira de trabalho',
                           keyboardType: TextInputType.number,
                         ),
                         CustomTextField(

@@ -1,0 +1,1 @@
+ao clicar em voltar na página de pessoas, clicou 2 vezes e saiu do app. Não tem como configurar para em caso de clicar em voltar, voltar para a página inicial?

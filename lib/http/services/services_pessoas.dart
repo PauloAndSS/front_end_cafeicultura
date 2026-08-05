@@ -56,9 +56,7 @@ class ServicesFornecedor extends BaseService {
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
-      } else if(response.statusCode == 409){
-        throw ApiException('CNPJ ou CPF já cadastrado no sistema.');
-        } else {
+      } else {
         tratarErroRequisicao(
           response.bodyBytes,
           fallbackMsg: 'Erro ao cadastrar fornecedor.',
