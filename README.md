@@ -39,6 +39,7 @@ O projeto é separado em camadas para garantir o desacoplamento entre a interfac
 2. **Instalar as dependências:**   
   ```bash
    flutter pub get
+  ```
 
 
 3. **Iniciar o emulador:**   
@@ -48,7 +49,7 @@ O projeto é separado em camadas para garantir o desacoplamento entre a interfac
 4. **Rodar a aplicação:**   
   ```bash
    flutter run
-
+```
 
 ## Fluxo de Trabalho (Git Flow)
 * Adotamos o modelo Git Flow para o controle de versão e organização do desenvolvimento
