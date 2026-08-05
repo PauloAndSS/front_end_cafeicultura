@@ -1,6 +1,6 @@
-# Gestão Sítio Vô Augusto - Mobile App
+# Sysgrano - Mobile App
 
-Aplicativo desenvolvido em Flutter para o ecossistema do Gestão Sítio Vô Augusto, focado no gerenciamento de propriedades cafeeiras, talhões, pessoas e finanças agrícolas. O projeto adota uma arquitetura baseada no padrão **MVVM (Model-View-ViewModel)** com gerenciamento de estado via **Provider**.
+Aplicativo desenvolvido em Flutter para o ecossistema do Sysgrano, focado no gerenciamento de propriedades cafeeiras. O projeto adota uma arquitetura baseada no padrão **MVVM (Model-View-ViewModel)** com gerenciamento de estado via **Provider**.
 
 ## Visão Geral da Arquitetura e Estrutura de Pastas
 
