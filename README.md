@@ -4,9 +4,12 @@ Aplicativo desenvolvido em Flutter para o ecossistema do Gestão Sítio Vô Augu
 
 ## Visão Geral da Arquitetura e Estrutura de Pastas
 
-O projeto é separado em camadas para garantir o desacoplamento entre a interface visual, a lógica de apresentação e os modelos de domínio. A estrutura principal fica dentro do diretório `lib/src/` (ou `lib/`):
+O projeto é separado em camadas para garantir o desacoplamento entre a interface visual, a lógica de apresentação e os modelos de domínio. 
 
 * **`assets/`**: Diretório reservado para imagens, ícones e demais recursos estáticos do aplicativo.
+
+* A estrutura principal fica dentro do diretório `lib/`:
+  
 * **`http/`**: Camada de comunicação de rede (API do backend).
   * **`services/`**: Métodos de requisição HTTP, centralizando os métodos de recebimento de mensagens de erro.
   * **`exceptions/`**: Exceções programadas a serem recebidas e tratadas pelo sistema.
@@ -35,7 +38,6 @@ O projeto é separado em camadas para garantir o desacoplamento entre a interfac
    git clone [https://github.com/heitorPoleze/frond_end_cafeicultura_mobile.git](https://github.com/heitorPoleze/frond_end_cafeicultura_mobile.git)
    cd frond_end_cafeicultura_mobile
 
-
 2. **Instalar as dependências:**   
   ```bash
    flutter pub get
@@ -48,6 +50,7 @@ O projeto é separado em camadas para garantir o desacoplamento entre a interfac
 
 4. **Rodar a aplicação:**   
   ```bash
+   git checkout develop
    flutter run
 ```
 
