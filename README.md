@@ -46,7 +46,7 @@ O projeto é separado em camadas para garantir o desacoplamento entre a interfac
 
 
 3. **Iniciar o emulador:**   
-> Abra o Android Studio e inicie o seu emulador (Virtual Device). Certifique-se de que ele está online e que o VS Code o reconhece.
+* Abra o Android Studio e inicie o seu emulador (Virtual Device). Certifique-se de que ele está online e que o VS Code o reconhece.
 
 
 4. **Rodar a aplicação:**   
@@ -66,5 +66,5 @@ O projeto é separado em camadas para garantir o desacoplamento entre a interfac
 ## Integrações e Links Úteis
 * Toda a comunicação HTTP é feita com o repositório de backend:
 ```bash https://github.com/heitorPoleze/backend_cafeicultura
-
+```
 * Consulte o repositório do backend para acessar a documentação detalhada da API, rotas e payloads esperados.
