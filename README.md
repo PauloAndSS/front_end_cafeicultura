@@ -35,16 +35,20 @@ O projeto é separado em camadas para garantir o desacoplamento entre a interfac
    git clone [https://github.com/heitorPoleze/frond_end_cafeicultura_mobile.git](https://github.com/heitorPoleze/frond_end_cafeicultura_mobile.git)
    cd frond_end_cafeicultura_mobile
 
+
 2. **Instalar as dependências:**   
   ```bash
    flutter pub get
 
+
 3. **Iniciar o emulador:**   
 > Abra o Android Studio, inicie o seu emulador (Virtual Device) e certifique-se de que ele está online
+
 
 4. **Rodar a aplicação:**   
   ```bash
    flutter run
+
 
 ## Fluxo de Trabalho (Git Flow)
 * Adotamos o modelo Git Flow para o controle de versão e organização do desenvolvimento
