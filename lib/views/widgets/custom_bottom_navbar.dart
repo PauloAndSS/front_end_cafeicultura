@@ -1,35 +1,65 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/main_screen_view.dart'; 
 
 class CustomBottomNavBar extends StatelessWidget {
-  final int currentIndex;
-  final ValueChanged<int> onTap;
+  final bool ocultarSelecao;
 
   const CustomBottomNavBar({
     super.key,
-    required this.currentIndex,
-    required this.onTap,
+    this.ocultarSelecao = false,
   });
+
+  void _onTabTapped(BuildContext context, int index) {
+    final navVM = context.read<NavegacaoViewModel>();
+
+    if (navVM.indiceAtual != index) {
+      navVM.alterarAba(index);
+    }
+
+    if (ocultarSelecao) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const MainScreenView()),
+        (route) => false,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    // O footer observa o estado global sozinho
+    final navVM = context.watch<NavegacaoViewModel>();
+    final int currentIndex = navVM.indiceAtual;
+
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(
-        top: Radius.circular(30), 
-      ),
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
       child: NavigationBarTheme(
         data: NavigationBarThemeData(
           backgroundColor: const Color(0xFF8FA67E),
-          indicatorColor: Colors.white.withOpacity(0.18),
-          labelTextStyle: WidgetStateProperty.all(
-            const TextStyle(
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-            ),
+          indicatorColor: !ocultarSelecao
+              ? Colors.white.withValues(alpha: 0.18)
+              : Colors.transparent,
+          labelTextStyle: WidgetStateProperty.resolveWith(
+            (states) {
+              if (!ocultarSelecao && states.contains(WidgetState.selected)) {
+                return const TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                );
+              }
+              return const TextStyle(
+                color: Colors.white70,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              );
+            },
           ),
           iconTheme: WidgetStateProperty.resolveWith(
             (states) {
-              if (states.contains(WidgetState.selected)) {
+              if (!ocultarSelecao && states.contains(WidgetState.selected)) {
                 return const IconThemeData(color: Colors.white, size: 30);
               }
               return const IconThemeData(color: Colors.white70, size: 26);
@@ -39,8 +69,8 @@ class CustomBottomNavBar extends StatelessWidget {
         child: NavigationBar(
           height: 70,
           elevation: 0,
-          selectedIndex: currentIndex,
-          onDestinationSelected: onTap,
+          selectedIndex: ocultarSelecao ? 0 : currentIndex,
+          onDestinationSelected: (index) => _onTabTapped(context, index),
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
           destinations: const [
             NavigationDestination(

@@ -6,6 +6,7 @@ import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/meeiro.d
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/prestador.dart';
 import 'package:frond_end_cafeicultura_mobile/views/pessoas/cadastrar_pessoa_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/pessoas/detalhes_pessoa_view.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_bottom_navbar.dart';
 import 'package:provider/provider.dart';
 
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/pessoas_viewmodel.dart';
@@ -208,6 +209,7 @@ class _PessoasViewState extends State<PessoasView> {
           ],
         ),
       ),
+      bottomNavigationBar: const CustomBottomNavBar(ocultarSelecao: true),
     );
   }
 }

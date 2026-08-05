@@ -13,6 +13,31 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
 
+  void _navegarSubstituindo(BuildContext context, Widget novaTela) {
+    final rotaAtual = ModalRoute.of(context);
+    if (rotaAtual != null && rotaAtual.settings.name == novaTela.runtimeType.toString()) {
+      return;
+    }
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => novaTela,
+        settings: RouteSettings(name: novaTela.runtimeType.toString()),
+      ),
+    );
+  }
+
+  /// Para formulários ou telas secundárias (ex: Cadastrar/Atualizar), usa push normal
+  void _navegarFormulario(BuildContext context, Widget novaTela) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => novaTela,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = context.watch<SessionViewModel>();
@@ -97,18 +122,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               ],
               onChanged: (int? valorSelecionado) {
                 if (valorSelecionado == -1) {
-                  Navigator.push(
-                    context, 
-                    MaterialPageRoute(builder: (context) => const CadastrarPropriedadeView())
-                  );
+                  _navegarFormulario(context, const CadastrarPropriedadeView());
                 } else if (valorSelecionado == -2 && idSelecionadoValido != null) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AtualizarPropriedadeView(
-                        idPropriedade: idSelecionadoValido,
-                      ),
-                    ),
+                  _navegarFormulario(
+                    context, 
+                    AtualizarPropriedadeView(idPropriedade: idSelecionadoValido),
                   );
                 } else if (valorSelecionado != null) {
                   propriedadesVM.selecionarPropriedade(valorSelecionado);
@@ -132,10 +150,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           onSelected: (String escolha) async {
             if (escolha == 'atualizar') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AtualizarDadosView()),
-              );
+              _navegarFormulario(context, const AtualizarDadosView());
             } else if (escolha == 'sair') {
               await session.logout();
               if (context.mounted) {
@@ -173,10 +188,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           onSelected: (String escolha) {
             if (escolha == 'pessoas') {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const PessoasView()),
-              );
+              _navegarSubstituindo(context, const PessoasView());
             }
           },
           itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[

@@ -1,3 +1,4 @@
+// lib/views/main_screen_view.dart
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_app_bar.dart';
@@ -6,7 +7,6 @@ import 'package:provider/provider.dart';
 
 import 'financeiro_view.dart';
 import 'eventos/talhao_view.dart';
-
 import '../viewmodels/navegacao_viewmodel.dart';
 
 class MainScreenView extends StatefulWidget {
@@ -18,54 +18,52 @@ class MainScreenView extends StatefulWidget {
 
 class _MainScreenViewState extends State<MainScreenView> {
   late PageController _pageController;
+  late NavegacaoViewModel _navViewModel;
 
   @override
   void initState() {
     super.initState();
     
-    // Inicializa o controlador da página com a aba atual salva no ViewModel
-    final vm = Provider.of<NavegacaoViewModel>(context, listen: false);
-    _pageController = PageController(initialPage: vm.indiceAtual);
+    _navViewModel = context.read<NavegacaoViewModel>();
+    _pageController = PageController(initialPage: _navViewModel.indiceAtual);
+
+    _navViewModel.addListener(_sincronizarPageController);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<PropriedadesUsuarioViewModel>(context, listen: false)
-          .carregarPropriedades();
+      context.read<PropriedadesUsuarioViewModel>().carregarPropriedades();
     });
   }
 
   @override
   void dispose() {
+    _navViewModel.removeListener(_sincronizarPageController);
     _pageController.dispose();
     super.dispose();
   }
 
-  // Acionado quando o usuário arrasta a tela para o lado
-  void _onPageChanged(int index) {
-    final vm = Provider.of<NavegacaoViewModel>(context, listen: false);
-    if (vm.indiceAtual != index) {
-      vm.alterarAba(index); // Atualiza o estado do rodapé sem recriar a página
+  void _sincronizarPageController() {
+    if (_pageController.hasClients) {
+      final paginaAtual = _pageController.page?.round() ?? 0;
+      if (paginaAtual != _navViewModel.indiceAtual) {
+        _pageController.animateToPage(
+          _navViewModel.indiceAtual,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
     }
   }
 
-  // Acionado quando o usuário clica direto em um ícone do rodapé
-  void _onBottomNavTapped(int index) {
-    final vm = Provider.of<NavegacaoViewModel>(context, listen: false);
-    vm.alterarAba(index);
-    
-    // Faz a animação de transição suave até a página clicada
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+  void _onPageChanged(int index) {
+    if (_navViewModel.indiceAtual != index) {
+      _navViewModel.alterarAba(index); 
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final vm = context.watch<NavegacaoViewModel>();
-
     final telas = [
-      const SizedBox.shrink(),   // 0: Home 
+      const SizedBox.shrink(),  // 0: Home 
       const SizedBox.shrink(),  // 1: Atividades (Eventos)
       const TalhaoView(),       // 2: Talhões
       const SizedBox.shrink(),  // 3: Armazém
@@ -85,10 +83,7 @@ class _MainScreenViewState extends State<MainScreenView> {
         children: telas,
       ),
 
-      bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: vm.indiceAtual,
-        onTap: _onBottomNavTapped,
-      ),
+      bottomNavigationBar: const CustomBottomNavBar(),
     );
   }
 }

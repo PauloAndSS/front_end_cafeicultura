@@ -81,7 +81,6 @@ class PessoasViewModel extends ChangeNotifier {
       _todasPessoas.addAll(resultadoDTO.data);
       _totalPaginas = resultadoDTO.totalPaginas;
     } catch (e) {
-      // Reverte o incremento da página caso ocorra falha de rede ao buscar mais
       _paginaAtual--;
     } finally {
       _isLoadingMore = false;
