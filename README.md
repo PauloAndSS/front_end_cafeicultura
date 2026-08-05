@@ -46,7 +46,7 @@ O projeto é separado em camadas para garantir o desacoplamento entre a interfac
 
 
 3. **Iniciar o emulador:**   
-> Abra o Android Studio, inicie o seu emulador (Virtual Device) e certifique-se de que ele está online
+> Abra o Android Studio e inicie o seu emulador (Virtual Device). Certifique-se de que ele está online e que o VS Code o reconhece.
 
 
 4. **Rodar a aplicação:**   
