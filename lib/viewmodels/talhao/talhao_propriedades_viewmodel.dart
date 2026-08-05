@@ -1,9 +1,7 @@
-// lib/viewmodels/talhao/talhoes_viewmodel.dart
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_talhao.dart';
 import 'package:frond_end_cafeicultura_mobile/model/talhao.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/session_viewmodel.dart';
 
 class TalhoesViewModel extends ChangeNotifier {
   bool _isLoading = false;
@@ -19,7 +17,7 @@ class TalhoesViewModel extends ChangeNotifier {
   bool get isLoadingMais => _isLoadingMais;
   String? get mensagemErro => _mensagemErro;
   bool get temMaisPaginas => _temMaisPaginas;
-
+  int? get idPropriedadeAtual => _idPropriedadeAtual;
   List<Talhao> get talhoes => _todosTalhoes;
 
   List<Talhao> get talhoesAtivos =>
@@ -53,15 +51,13 @@ class TalhoesViewModel extends ChangeNotifier {
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
     } catch (e) {
-      _mensagemErro = 'Erro de conexão ao carregar talhões.';
-      debugPrint('Erro no carregamento dos talhões: $e');
+      _mensagemErro = 'Ocorreu um erro interno ao carregar talhões. Tente novamente mais tarde.';
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  /// Busca a próxima página e anexa ao final da lista existente
   Future<void> carregarMaisTalhoes() async {
     if (_isLoadingMais || !_temMaisPaginas || _idPropriedadeAtual == null) return;
 
@@ -92,22 +88,5 @@ class TalhoesViewModel extends ChangeNotifier {
       _isLoadingMais = false;
       notifyListeners();
     }
-  }
-
-  void limparDados() {
-    _todosTalhoes = [];
-    _mensagemErro = null;
-    _paginaAtual = 1;
-    _temMaisPaginas = true;
-    _idPropriedadeAtual = null;
-    notifyListeners();
-  }
-
-  void escutarIsLoggedIn(SessionViewModel session) {
-    session.addListener(() {
-      if (!session.isLoggedIn) {
-        limparDados();
-      }
-    });
   }
 }

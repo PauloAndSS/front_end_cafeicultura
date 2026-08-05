@@ -11,7 +11,7 @@ class DetalhesTalhaoViewModel extends ChangeNotifier {
   String? _mensagemErro;
   String? get mensagemErro => _mensagemErro;
 
-  Future<bool?> encerrar(int idTalhao, DateTime dataFim) async {
+  Future<bool> encerrar(int idTalhao, DateTime dataFim) async {
     _isLoading = true;
     _mensagemErro = null;
     notifyListeners();
@@ -19,16 +19,12 @@ class DetalhesTalhaoViewModel extends ChangeNotifier {
     try {
       final resultado = await _talhaoService.encerrarTalhao(idTalhao, dataFim);
       return resultado;
-    } on ApiValidationException catch (e) {
-      _mensagemErro = e.mensagens.join('\n');
-      return null;
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
-      return null;
+      return false;
     } catch (e) {
-      _mensagemErro = 'Erro interno ao encerrar talhão.';
-      print('Erro: $e');
-      return null;
+      _mensagemErro = 'Erro interno ao encerrar talhão. Tente novamente mais tarde';
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();

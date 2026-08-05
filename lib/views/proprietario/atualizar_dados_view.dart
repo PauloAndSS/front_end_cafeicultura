@@ -6,7 +6,7 @@ import 'package:frond_end_cafeicultura_mobile/model/proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/proprietario/atualizar_dados_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/session_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
@@ -126,7 +126,6 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
         );
         return;
       }
-      print("Entrou");
       final sucesso = await _viewModel.atualizar(
         dadosOriginais: _dadosOriginais!,
         idProprietario: idUsuario,
@@ -139,6 +138,7 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
         logradouro: _logradouroController.text,
         bairro: _bairroController.text,
         cidade: _cidadeController.text,
+        pais: _paisController.text,
         uf: _ufSelecionada!,
         inscEstadualDigitada: _isPessoaFisica 
             ? null 
@@ -147,7 +147,6 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
             ? null 
             : _cnpjController.text,
       );
-    print("Entrou2");
       if (sucesso && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -208,6 +207,7 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
           _bairroController.text = endereco.bairro;
           _cidadeController.text = endereco.cidade;
           _ufSelecionada = endereco.uf;
+          _paisController.text = endereco.pais!;
         }
       });
     } else if (mounted) {
@@ -222,12 +222,62 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
     }
   }
 
+  bool _houveAlteracao() {
+    if (_dadosOriginais == null) return false;
+
+    if (_emailController.text.trim() != _dadosOriginais!.email.endereco) return true;
+    
+    final telMasked = AppMasks.telefone.maskText(_dadosOriginais!.telefone.numero);
+    if (_telefoneController.text.trim() != telMasked) return true;
+
+    if (_isPessoaFisica) {
+      final pf = _dadosOriginais!.pessoa as PessoaFisica;
+      if (_nomeController.text.trim() != pf.nome) return true;
+    } else {
+      final pj = _dadosOriginais!.pessoa as PessoaJuridica;
+      if (_nomeController.text.trim() != pj.razaoSocial) return true;
+      if (_inscricaoEstadualController.text.trim() != (pj.inscricaoEstadual ?? '')) return true;
+    }
+
+    final endereco = _dadosOriginais!.pessoa.endereco;
+    if (endereco == null) {
+      if (_cepController.text.isNotEmpty ||
+          _logradouroController.text.isNotEmpty ||
+          _bairroController.text.isNotEmpty ||
+          _cidadeController.text.isNotEmpty ||
+          _paisController.text.isNotEmpty ||
+          _ufSelecionada != null) {
+        return true;
+      }
+    } else {
+      final cepMasked = AppMasks.cep.maskText(endereco.cep.numero);
+      if (_cepController.text.trim() != cepMasked) return true;
+      if (_logradouroController.text.trim() != endereco.logradouro) return true;
+      if (_bairroController.text.trim() != endereco.bairro) return true;
+      if (_cidadeController.text.trim() != endereco.cidade) return true;
+      if (_ufSelecionada != endereco.uf) return true;
+      if (_paisController.text.trim() != (endereco.pais ?? '')) return true;
+    }
+
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return PopScope(
+return PopScope(
       canPop: _podeSair,
       onPopInvoked: (didPop) async {
         if (didPop) return;
+
+        if (!_houveAlteracao()) {
+          setState(() {
+            _podeSair = true;
+          });
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+          return;
+        }
 
         final querSair = await _mostrarDialogoConfirmacao();
 

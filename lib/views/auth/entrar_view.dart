@@ -2,14 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_auth.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/entrar_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/session_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:provider/provider.dart';
-import 'cadastro/cadastrar_dados_basicos_view.dart';
+import '../proprietario/cadastrar_dados_basicos_view.dart';
 
 class EntrarView extends StatefulWidget {
   const EntrarView({super.key});
@@ -36,13 +35,12 @@ class _EntrarViewState extends State<EntrarView> {
       FocusScope.of(context).unfocus();
 
       final session = Provider.of<SessionViewModel>(context, listen: false);
-      final propriedadesVM = Provider.of<PropriedadesUsuarioViewModel>(context, listen: false);
 
+      // 👇 Removemos a busca do PropriedadesUsuarioViewModel daqui
       final sucesso = await _viewModel.fazerLogin(
         _usuarioController.text,
         _senhaController.text,
         session,
-        propriedadesVM,
       );
 
       if (sucesso && mounted) {
@@ -146,7 +144,7 @@ class _EntrarViewState extends State<EntrarView> {
                               isBold: false,
                               isUnderlined: true,
                               onPressed:
-                                  _entrar, // mudar ao implementar esqueci a senha
+                                  _entrar, // TODO:  ao implementar esqueci a senha
                             ),
                             CustomTextButton(
                               text: 'Criar conta',
@@ -155,7 +153,7 @@ class _EntrarViewState extends State<EntrarView> {
                                 Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const CadastrarView(),
+                                    builder: (context) => const CadastrarUsuarioView(),
                                   ),
                                 );
                               },

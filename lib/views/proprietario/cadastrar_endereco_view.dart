@@ -3,7 +3,7 @@ import 'package:frond_end_cafeicultura_mobile/model/proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/cadastro/cadastrar_endereco_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/proprietario/cadastrar_endereco_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/propriedade/cadastrar_propriedade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';

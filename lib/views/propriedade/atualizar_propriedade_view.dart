@@ -3,8 +3,8 @@ import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/model/tamanho.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/atualizar_propriedade_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/atualizar_propriedade_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/uf_dropdown.dart';
@@ -68,6 +68,60 @@ class _AtualizarPropriedadeViewState extends State<AtualizarPropriedadeView> {
     _bairroController.dispose();
     _cidadeController.dispose();
     super.dispose();
+  }
+  
+  Future<void> _confirmarExclusaoPropriedade() async {
+    final querExcluir = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          title: const Text('Excluir Propriedade?'),
+          content: Text(
+            'Deseja realmente excluir a propriedade "${_nomeController.text}"? Esta ação não poderá ser desfeita.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              child: const Text(
+                'Excluir',
+                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (querExcluir == true && mounted) {
+      final sucesso = await _viewModel.excluir(widget.idPropriedade);
+
+      if (sucesso && mounted) {
+        // Atualiza a lista na tela anterior
+        Provider.of<PropriedadesUsuarioViewModel>(context, listen: false)
+            .carregarPropriedades();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Propriedade excluída com sucesso!'),
+            backgroundColor: Color(0xFF8FA67E),
+          ),
+        );
+
+        Navigator.of(context).pop();
+      } else if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_viewModel.mensagemErro ?? 'Erro ao excluir propriedade.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   bool _temAlteracoes() {
@@ -342,11 +396,17 @@ class _AtualizarPropriedadeViewState extends State<AtualizarPropriedadeView> {
                 ),
               ],
             ),
-            
             const SizedBox(height: 32),
             CustomButton(
               text: _viewModel.isLoading ? "Salvando..." : "Salvar Alterações",
               onPressed: _viewModel.isLoading ? null : _salvarAlteracoes, 
+            ),
+            const SizedBox(height: 12),
+            CustomButton(
+              text: _viewModel.isLoading ? "Aguarde..." : "Excluir Propriedade", 
+              onPressed: _viewModel.isLoading ? null : _confirmarExclusaoPropriedade,
+              backgroundColor: const Color(0xFFD32F2F),
+              foregroundColor: Colors.white,
             ),
           ],
         ),

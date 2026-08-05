@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/talhao.dart';
 import 'package:frond_end_cafeicultura_mobile/model/tamanho.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/cadastrar_talhao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_propriedades_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';

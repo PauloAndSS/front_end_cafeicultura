@@ -1,8 +1,7 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:http/http.dart' as http;
-import 'services.dart'; 
+import 'services.dart';
 import '../dtos/auth_dto.dart';
 
 class ServicesAuth extends BaseService {
@@ -15,22 +14,20 @@ class ServicesAuth extends BaseService {
         headers: defaultHeaders,
         body: jsonEncode(dto.toJson()),
       );
-
       if (response.statusCode == 200 || response.statusCode == 201) {
         BaseService.atualizarCookie(response);
-        return LoginResponseDTO.fromJson(jsonDecode(response.body));
+        final dadosAuth = extrairDadosResposta(response.bodyBytes);
+        return LoginResponseDTO.fromJson(dadosAuth);
       } else {
-        final jsonResponse = jsonDecode(response.body);
-        
-        final msg = jsonResponse['error'] ?? 
-                    jsonResponse['mensagem'] ?? 
-                    'Erro na autenticação. Verifique seus dados.';
-        throw ApiException(msg);
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao autenticar. Verifique seus dados.',
+        );
       }
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw ApiException('Falha na comunicação ao tentar fazer login. Tente novamente mais tarde.');
     }
   }
 
@@ -41,14 +38,16 @@ class ServicesAuth extends BaseService {
         headers: defaultHeaders,
       );
 
-      if (response.statusCode != 200 && response.statusCode != 204) {
-        debugPrint('Aviso: Servidor retornou código ${response.statusCode} ao tentar logout.');
+      if (response.statusCode == 200) {
+        BaseService.sessionCookie = null;
+      } else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao sair. Verifique sua conexão.',
+        );
       }
     } catch (e) {
-      debugPrint('Aviso: Falha ao contatar servidor para logout: $e');
-    } finally {
-      BaseService.sessionCookie = null;
-      debugPrint('🗑️ Sessão limpa do aplicativo com sucesso.');
+      throw ApiException('Aviso: Falha ao contatar servidor para sair. Tente novamente mais tarde.');
     }
   }
 }

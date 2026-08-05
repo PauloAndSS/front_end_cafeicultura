@@ -10,31 +10,31 @@ class ServicesTalhao extends BaseService {
   Future<bool> cadastrar(Talhao talhao) async {
     try {
       final response = await http.post(
-        Uri.parse('$url'),
+        url,
         headers: defaultHeaders,
         body: jsonEncode(talhao.toJson()),
       );
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      
+      if (response.statusCode == 201) {
         return true;
-      } else if(response.statusCode == 400){
+      } else if (response.statusCode == 400) {
         throw ApiException('Erro ao cadastrar talhão. Verifique seus dados e tente novamente.');
-      }else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg =
-            jsonResponse['error'] ??
-            jsonResponse['mensagem'] ??
-            'Erro ao cadastrar talhão.';
-        throw ApiException(msg);
+      } else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao cadastrar talhão.',
+        );
       }
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw ApiException(
+        'Falha na comunicação ao cadastrar talhão. Tente novamente mais tarde.',
+      );
     }
   }
 
-  //getters
-Future<List<Talhao>> buscarTodosTalhoesPorPropriedade(
+  Future<List<Talhao>> buscarTodosTalhoesPorPropriedade(
     int idPropriedade, {
     int pagina = 1,
     int limite = 10,
@@ -63,17 +63,17 @@ Future<List<Talhao>> buscarTodosTalhoesPorPropriedade(
 
         return jsonList.map((json) => Talhao.fromJson(json)).toList();
       } else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg =
-            jsonResponse['error'] ??
-            jsonResponse['mensagem'] ??
-            'Erro ao buscar talhões da propriedade.';
-        throw ApiException(msg);
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao buscar talhões da propriedade.',
+        );
       }
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw ApiException(
+        'Falha na comunicação ao buscar talhões. Tente novamente mais tarde.',
+      );
     }
   }
 
@@ -83,27 +83,27 @@ Future<List<Talhao>> buscarTodosTalhoesPorPropriedade(
         Uri.parse('$url/variedades'),
         headers: defaultHeaders,
       );
+      
       if (response.statusCode == 200) {
         final List<dynamic> jsonList = jsonDecode(
           utf8.decode(response.bodyBytes),
         );
         return jsonList.map((json) => Variedade.fromJson(json)).toList();
       } else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg =
-            jsonResponse['error'] ??
-            jsonResponse['mensagem'] ??
-            'Erro ao buscar variedades.';
-        throw ApiException(msg);
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao buscar variedades.',
+        );
       }
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw ApiException(
+        'Falha na comunicação ao buscar variedades. Tente novamente mais tarde.',
+      );
     }
   }
 
-  //patch
   Future<bool> encerrarTalhao(int idTalhao, DateTime dataFim) async {
     try {
       final response = await http.patch(
@@ -112,20 +112,20 @@ Future<List<Talhao>> buscarTodosTalhoesPorPropriedade(
         body: jsonEncode({'dataFim': dataFim.toIso8601String()}),
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode == 200) {
         return true;
       } else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg =
-            jsonResponse['error'] ??
-            jsonResponse['mensagem'] ??
-            'Erro ao encerrar talhão.';
-        throw ApiException(msg);
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao encerrar talhão.',
+        );
       }
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw ApiException(
+        'Falha na comunicação ao encerrar talhão. Tente novamente mais tarde.',
+      );
     }
   }
 
@@ -136,22 +136,22 @@ Future<List<Talhao>> buscarTodosTalhoesPorPropriedade(
         headers: defaultHeaders,
       );
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode == 200) {
         return true;
-      } else if(response.statusCode == 403){
+      } else if (response.statusCode == 403) {
         throw ApiException('Talhão não pode ser excluído pois há atividades cadastradas nele.');
-      }else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg =
-            jsonResponse['error'] ??
-            jsonResponse['mensagem'] ??
-            'Erro ao excluir talhão.';
-        throw ApiException(msg);
+      } else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao excluir talhão.',
+        );
       }
     } on ApiException {
       rethrow;
     } catch (e) {
-      throw Exception('Falha na comunicação: $e');
+      throw ApiException(
+        'Falha na comunicação ao excluir talhão. Tente novamente mais tarde.',
+      );
     }
   }
 }

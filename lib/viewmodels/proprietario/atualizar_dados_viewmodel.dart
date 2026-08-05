@@ -6,7 +6,7 @@ import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/proprietario.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/session_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 
 class AtualizarDadosViewModel extends ChangeNotifier {
   bool _isLoading = false;
@@ -17,13 +17,9 @@ class AtualizarDadosViewModel extends ChangeNotifier {
 
   final ServicesProprietario _proprietarioService;
 
-  // Injeção de dependência opcional para manter a arquitetura limpa e testável
   AtualizarDadosViewModel({ServicesProprietario? service})
       : _proprietarioService = service ?? ServicesProprietario();
 
-  // ==========================================
-  // CARREGAR DADOS
-  // ==========================================
   Future<Proprietario?> carregarDadosProprietario(int idProprietario) async {
     _isLoading = true;
     _mensagemErro = null;
@@ -36,8 +32,7 @@ class AtualizarDadosViewModel extends ChangeNotifier {
       _mensagemErro = e.mensagem;
       return null;
     } catch (e) {
-      _mensagemErro = 'Erro de conexão. Tente novamente.';
-      debugPrint('Erro ao carregar dados: $e');
+      _mensagemErro = 'Ocorreu um erro interno no aplicativo. Tente novamente mais tarde.';
       return null;
     } finally {
       _isLoading = false;
@@ -45,9 +40,6 @@ class AtualizarDadosViewModel extends ChangeNotifier {
     }
   }
 
-  // ==========================================
-  // ATUALIZAR DADOS
-  // ==========================================
   Future<bool> atualizar({
     required Proprietario dadosOriginais,
     required SessionViewModel session,
@@ -63,6 +55,7 @@ class AtualizarDadosViewModel extends ChangeNotifier {
     required UF uf,
     String? inscEstadualDigitada,
     String? cnpjDigitado,
+    String? pais,
   }) async {
     _isLoading = true;
     _mensagemErro = null;
@@ -118,11 +111,13 @@ class AtualizarDadosViewModel extends ChangeNotifier {
         mudouEndereco = true;
       } else {
         final cepOrigNum = endOrig.cep.numero.replaceAll(RegExp(r'\D'), '');
+        // 2. Comparação segura lidando com nulos
         if (cepAtualNum != cepOrigNum ||
             logradouro.trim() != endOrig.logradouro ||
             bairro.trim() != endOrig.bairro ||
             cidade.trim() != endOrig.cidade ||
-            uf != endOrig.uf) {
+            uf != endOrig.uf ||
+            (pais?.trim() ?? '') != (endOrig.pais ?? '')) { 
           mudouEndereco = true;
         }
       }
@@ -135,6 +130,7 @@ class AtualizarDadosViewModel extends ChangeNotifier {
           cep: cepVo,
           logradouro: logradouro.trim(),
           uf: uf,
+          pais: pais?.trim(),
         );
         requisicoes.add(_proprietarioService.atualizarEndereco(idProprietario, novoEndereco));
       }
@@ -150,19 +146,11 @@ class AtualizarDadosViewModel extends ChangeNotifier {
       }
 
       return true;
-    } on ApiValidationException catch (e) {
-      _mensagemErro = e.mensagens.map((msg) => '• $msg').join('\n');
-      return false;
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
       return false;
-    } on ArgumentError catch (e) {
-      _mensagemErro = e.message;
-      debugPrint('Erro de validação (Domínio): ${e.message}');
-      return false;
     } catch (e) {
-      _mensagemErro = 'Falha ao salvar as alterações. Verifique sua conexão e tente novamente.';
-      debugPrint('Erro interno ao atualizar: $e');
+      _mensagemErro = 'Ocorreu um erro interno no aplicativo. Tente novamente mais tarde.';
       return false;
     } finally {
       _isLoading = false;

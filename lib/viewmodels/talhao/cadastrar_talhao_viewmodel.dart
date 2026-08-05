@@ -29,7 +29,7 @@ class CadastrarTalhaoViewModel extends ChangeNotifier {
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
     } catch (e) {
-      _mensagemErro = 'Erro ao carregar variedades.';
+      _mensagemErro = 'Ocorreu um erro interno ao carregar variedades. Tente novamente mais tarde.';
     } finally {
       _isLoadingVariedades = false;
       notifyListeners();
@@ -37,7 +37,7 @@ class CadastrarTalhaoViewModel extends ChangeNotifier {
   }
 
 
-  Future<bool?> cadastrarTalhao(Talhao talhao) async {
+  Future<bool> cadastrarTalhao(Talhao talhao) async {
     _isLoading = true;
     _mensagemErro = null;
     notifyListeners();
@@ -45,15 +45,12 @@ class CadastrarTalhaoViewModel extends ChangeNotifier {
     try {
       final resultado = await _talhaoService.cadastrar(talhao);
       return resultado;
-    } on ApiValidationException catch (e) {
-      _mensagemErro = e.mensagens.join('\n');
-      return null;
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
-      return null;
+      return false;
     } catch (e) {
-      _mensagemErro = 'Erro interno ao cadastrar talhão. Verifique os dados.';
-      return null;
+      _mensagemErro = 'Ocorreu um erro interno ao cadastrar talhão. Tente novamente mais tarde.';
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();

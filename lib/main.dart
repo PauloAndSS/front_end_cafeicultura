@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_propriedades_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/views/auth/first_acess.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'; 
-import 'viewmodels/navegacao_viewmodel.dart';
-import 'viewmodels/session_viewmodel.dart';
-import 'views/home/main_screen_view.dart';
+
+// ViewModels
+import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/pessoas_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_propriedades_viewmodel.dart'; 
+
+// Views
+import 'package:frond_end_cafeicultura_mobile/views/auth/first_acess.dart';
+import 'package:frond_end_cafeicultura_mobile/views/home/main_screen_view.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized(); 
@@ -15,20 +20,6 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SessionViewModel()),
-        ChangeNotifierProvider(create: (_) => NavegacaoViewModel()),
-        ChangeNotifierProvider(create: (context) {
-          final vm = PropriedadesUsuarioViewModel();
-          final session = context.read<SessionViewModel>();
-          vm.escutarIsLoggedIn(session);
-          return vm;
-        }),
-
-        ChangeNotifierProvider(create: (context) {
-          final vm = TalhoesViewModel();
-          final session = context.read<SessionViewModel>();
-          vm.escutarIsLoggedIn(session);
-          return vm;
-        }),
       ],
       child: const MeuApp(),
     ),
@@ -40,18 +31,36 @@ class MeuApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Cafeicultura',
-      localizationsDelegates: [
+      localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      supportedLocales: [
+      supportedLocales: const [
         Locale('pt', 'BR'),
       ],
-      home: AuthWrapper(), 
+      
+      builder: (context, child) {
+        final session = context.watch<SessionViewModel>();
+        
+        if (session.isLoggedIn) {
+          return MultiProvider(
+            providers: [
+              ChangeNotifierProvider(create: (_) => NavegacaoViewModel()),
+              ChangeNotifierProvider(create: (_) => PropriedadesUsuarioViewModel()),
+              ChangeNotifierProvider(create: (_) => PessoasViewModel()),
+              ChangeNotifierProvider(create: (_) => TalhoesViewModel()),
+            ],
+            child: child!,
+          );
+        }
+        
+        return child!;
+      },
+      home: const AuthWrapper(), 
     );
   }
 }
@@ -61,7 +70,7 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final session = Provider.of<SessionViewModel>(context);
+    final session = context.watch<SessionViewModel>();
 
     if (session.isInitializing) {
       return const Scaffold(

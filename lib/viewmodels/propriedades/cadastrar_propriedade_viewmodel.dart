@@ -4,7 +4,7 @@ import 'package:frond_end_cafeicultura_mobile/http/services/services_propriedade
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/model/propriedade.dart';
 import 'package:frond_end_cafeicultura_mobile/model/tamanho.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/session_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 
 class CadastrarPropriedadeViewModel extends ChangeNotifier {
   bool _isLoading = false;
@@ -53,16 +53,12 @@ class CadastrarPropriedadeViewModel extends ChangeNotifier {
 
       final resultado = await _propriedadeService.cadastrar(novaPropriedade);
       return resultado;
-    } on ApiValidationException catch (e) {
-      _mensagemErro = e.mensagens.join('\n');
-      return null;
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
-      return null;
+      return false;
     } catch (e) {
-      _mensagemErro = 'Erro interno ao cadastrar propriedade. Verifique os dados.';
-      print('Erro: $e');
-      return null;
+      _mensagemErro = 'Ocorreu um erro interno no aplicativo. Tente novamente mais tarde.';
+      return false;
     } finally {
       _isLoading = false;
       notifyListeners();

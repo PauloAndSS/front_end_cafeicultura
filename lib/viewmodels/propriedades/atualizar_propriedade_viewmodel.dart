@@ -26,7 +26,7 @@ class AtualizarPropriedadeViewModel extends ChangeNotifier {
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
     } catch (e) {
-      _mensagemErro = 'Erro ao carregar os dados da propriedade.';
+      _mensagemErro = 'Ocorreu um erro interno no aplicativo. Tente novamente mais tarde.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -55,7 +55,26 @@ class AtualizarPropriedadeViewModel extends ChangeNotifier {
       _mensagemErro = e.mensagem;
       return false;
     } catch (e) {
-      _mensagemErro = 'Falha ao atualizar a propriedade.';
+      _mensagemErro = 'Ocorreu um erro interno no aplicativo. Tente novamente mais tarde.';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> excluir(int id) async {
+    _isLoading = true;
+    _mensagemErro = null;
+    notifyListeners();
+    try {
+      await _service.excluir(id);
+      return true;
+    } on ApiException catch (e) {
+      _mensagemErro = e.mensagem;
+      return false;
+    } catch (e) {
+      _mensagemErro = 'Ocorreu um erro interno ao excluir. Tente novamente mais tarde.';
       return false;
     } finally {
       _isLoading = false;

@@ -1,4 +1,3 @@
-// lib/views/widgets/card_propriedade_widget.dart
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/propriedade.dart';
 
@@ -9,7 +8,7 @@ class CardPropriedadeWidget extends StatelessWidget {
   const CardPropriedadeWidget({
     super.key,
     required this.propriedade,
-    this.onTap, // Opcional: se não passar, ele não exibe setinha nem o efeito de clique
+    this.onTap,
   });
 
   @override

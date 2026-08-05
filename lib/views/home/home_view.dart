@@ -1,8 +1,10 @@
+// lib/views/home/home_view.dart
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_propriedades_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/talhao/cadastrar_talhao_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/propriedade_card.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/sessao_em_breve_widget.dart';
 import 'package:provider/provider.dart';
 
 class HomeView extends StatefulWidget {
@@ -12,24 +14,23 @@ class HomeView extends StatefulWidget {
   State<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeViewState extends State<HomeView> {
-  int? _ultimaPropriedadeCarregada;
+class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin {
+  
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
     final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
     final talhoesVM = context.read<TalhoesViewModel>();
 
     if (propriedadesVM.idPropriedadeSelecionada != null && 
-        propriedadesVM.idPropriedadeSelecionada != _ultimaPropriedadeCarregada) {
-      _ultimaPropriedadeCarregada = propriedadesVM.idPropriedadeSelecionada;
+        propriedadesVM.idPropriedadeSelecionada != talhoesVM.idPropriedadeAtual) {
+      
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        talhoesVM.carregarTalhoes(_ultimaPropriedadeCarregada!);
-      });
-    } else if (propriedadesVM.idPropriedadeSelecionada == null && _ultimaPropriedadeCarregada != null) {
-      _ultimaPropriedadeCarregada = null;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        talhoesVM.limparDados();
+        talhoesVM.carregarTalhoes(propriedadesVM.idPropriedadeSelecionada!);
       });
     }
 
@@ -82,6 +83,10 @@ class _HomeViewState extends State<HomeView> {
               CardPropriedadeWidget(
                 propriedade: propriedadeSelecionada,
               ),
+
+              const SizedBox(height: 24),
+
+              buildSecaoEmBreve('Atividades :'),
             ],
           ),
         ),

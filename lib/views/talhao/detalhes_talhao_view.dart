@@ -1,10 +1,11 @@
 // lib/views/talhao/detalhes_talhao_view.dart
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/talhao.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/detalhes_talhao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_propriedades_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/sessao_em_breve_widget.dart';
 import 'package:provider/provider.dart';
 
 class DetalhesTalhaoView extends StatefulWidget {
@@ -140,44 +141,6 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
         _onErro(_viewModel.mensagemErro ?? 'Erro ao excluir talhão.');
       }
     }
-  }
-
-  // 👇 Método reutilizável para seções que serão implementadas futuramente
-  Widget _buildSecaoEmBreve(String titulo) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          titulo,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            border: Border.all(color: Colors.black12),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: const Center(
-            child: Text(
-              'Em breve...',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.black45,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-      ],
-    );
   }
 
   @override
@@ -318,8 +281,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
 
                 const SizedBox(height: 32),
 
-                // 👇 Seção de Atividades do Talhão em breve
-                _buildSecaoEmBreve('Atividades :'),
+                buildSecaoEmBreve('Atividades :'),
               ],
             ),
           );

@@ -1,5 +1,6 @@
+// lib/views/eventos/talhao_view.dart (ou o diretório correto)
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_propriedades_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/talhao/cadastrar_talhao_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/talhao/detalhes_talhao_view.dart';
@@ -15,9 +16,12 @@ class TalhaoView extends StatefulWidget {
   State<TalhaoView> createState() => _TalhaoViewState();
 }
 
-class _TalhaoViewState extends State<TalhaoView> {
+class _TalhaoViewState extends State<TalhaoView> with AutomaticKeepAliveClientMixin {
+  
+  @override
+  bool get wantKeepAlive => true; 
+
   StatusTalhaoFiltro _filtroSelecionado = StatusTalhaoFiltro.ativos;
-  int? _ultimoIdPropriedade;
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -50,17 +54,18 @@ class _TalhaoViewState extends State<TalhaoView> {
     final talhoesVM = context.read<TalhoesViewModel>();
 
     if (propriedadesVM.idPropriedadeSelecionada != null &&
-        propriedadesVM.idPropriedadeSelecionada != _ultimoIdPropriedade) {
-      _ultimoIdPropriedade = propriedadesVM.idPropriedadeSelecionada;
-
+        propriedadesVM.idPropriedadeSelecionada != talhoesVM.idPropriedadeAtual) {
+      
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        talhoesVM.carregarTalhoes(_ultimoIdPropriedade!);
+        talhoesVM.carregarTalhoes(propriedadesVM.idPropriedadeSelecionada!);
       });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context); 
+
     final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
     final talhoesVM = context.watch<TalhoesViewModel>();
 
