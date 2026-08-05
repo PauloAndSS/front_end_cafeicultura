@@ -58,7 +58,7 @@ O projeto é separado em camadas para garantir o desacoplamento entre a interfac
 ## Fluxo de Trabalho (Git Flow)
 * Adotamos o modelo Git Flow para o controle de versão e organização do desenvolvimento
 * **main:** Código em produção (estável).
-* **develop:** IDE recomendada para simular o uso do aplicativo.
+* **develop:** Branch principal de integração para o desenvolvimento ativo.
 * **feature/...:** Branches criadas a partir da **develop:** para desenvolvimento de novas funcionalidades.
 * **fix/...:** Branches destinadas à correção de bugs.
 
