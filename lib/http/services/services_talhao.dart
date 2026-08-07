@@ -17,8 +17,8 @@ class ServicesTalhao extends BaseService {
       
       if (response.statusCode == 201) {
         return true;
-      } else if (response.statusCode == 400) {
-        throw ApiException('Erro ao cadastrar talhão. Verifique seus dados e tente novamente.');
+      } else if (response.statusCode == 409) {
+        throw ApiException('Erro ao cadastrar talhão. Talhão com esse mesmo nome já foi cadastrado e está ativo.');
       } else {
         tratarErroRequisicao(
           response.bodyBytes,
