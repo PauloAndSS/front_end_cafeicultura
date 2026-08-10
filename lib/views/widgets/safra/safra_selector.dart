@@ -1,0 +1,245 @@
+import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
+
+/// Widget de seleção de safra (dropdown), reutilizável em qualquer tela do
+/// sistema que precise deixar o usuário escolher a safra atual.
+///
+/// Por padrão (`mostrarAcoes: true`) ele também mostra, logo abaixo do
+/// select, os botões de "Nova safra" e "Encerrar/Reativar safra" — é o
+/// comportamento que já existia na tela de Safras e Relatórios. Para usar
+/// só o campo de seleção em outra parte do sistema (sem essas ações de
+/// cadastro/arquivamento), basta instanciar com `mostrarAcoes: false`; os
+/// callbacks de ação ficam ignorados nesse caso.
+///
+/// Exemplo de uso completo (com ações), igual à tela original:
+/// ```dart
+/// SafraSelectorWidget(
+///   safras: viewModel.safras,
+///   safraSelecionada: viewModel.safraSelecionada,
+///   onSelecionar: viewModel.selecionarSafra,
+///   isLoading: viewModel.isLoading,
+///   onNovaSafra: _mostrarDialogoNovaSafra,
+///   onEncerrarSafra: _encerrarSafraSelecionada,
+///   onReativarSafra: _reativarSafraSelecionada,
+/// )
+/// ```
+///
+/// Exemplo de uso só como select, em outra tela do sistema:
+/// ```dart
+/// SafraSelectorWidget(
+///   safras: viewModel.safras,
+///   safraSelecionada: viewModel.safraSelecionada,
+///   onSelecionar: viewModel.selecionarSafra,
+///   mostrarAcoes: false,
+/// )
+/// ```
+class SafraSelectorWidget extends StatelessWidget {
+  final List<Safra> safras;
+  final Safra? safraSelecionada;
+  final ValueChanged<Safra> onSelecionar;
+
+  /// Quando `true`, mostra os botões de nova/encerrar/reativar safra
+  /// abaixo do select. Quando `false`, mostra só o campo de seleção.
+  final bool mostrarAcoes;
+
+  final bool isLoading;
+  final String? titulo;
+  final String? subtitulo;
+
+  /// Obrigatório quando `mostrarAcoes` é `true`.
+  final VoidCallback? onNovaSafra;
+
+  /// Obrigatório quando `mostrarAcoes` é `true`.
+  final VoidCallback? onEncerrarSafra;
+
+  /// Obrigatório quando `mostrarAcoes` é `true`.
+  final VoidCallback? onReativarSafra;
+
+  const SafraSelectorWidget({
+    super.key,
+    required this.safras,
+    required this.safraSelecionada,
+    required this.onSelecionar,
+    this.mostrarAcoes = true,
+    this.isLoading = false,
+    this.titulo,
+    this.subtitulo,
+    this.onNovaSafra,
+    this.onEncerrarSafra,
+    this.onReativarSafra,
+  }) : assert(
+          !mostrarAcoes || onNovaSafra != null,
+          'Ao usar mostrarAcoes: true, informe onNovaSafra (e, se fizer '
+          'sentido nessa tela, onEncerrarSafra/onReativarSafra também).',
+        );
+
+  /// Ordena as safras em ordem cronológica crescente de início (a mais
+  /// antiga primeiro), para exibição no select.
+  List<Safra> get _safrasEmOrdem {
+    final ordenadas = List<Safra>.from(safras);
+    ordenadas.sort((a, b) {
+      final dataA = a.dataInicio ?? a.dataFim ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final dataB = b.dataInicio ?? b.dataFim ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final comparacaoData = dataA.compareTo(dataB);
+      if (comparacaoData != 0) {
+        return comparacaoData;
+      }
+      return (a.id ?? 0).compareTo(b.id ?? 0);
+    });
+    return ordenadas;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final safrasEmOrdem = _safrasEmOrdem;
+    final temSafraSelecionadaValida = safras.any((s) => s == safraSelecionada);
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (titulo != null) ...[
+              Text(
+                titulo!,
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF67835C)),
+              ),
+              const SizedBox(height: 8),
+            ],
+            if (subtitulo != null) ...[
+              Text(subtitulo!, style: const TextStyle(color: Colors.grey)),
+              const SizedBox(height: 12),
+            ],
+            DropdownButtonFormField<Safra>(
+              value: temSafraSelecionadaValida ? safraSelecionada : null,
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade400),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.grey.shade400),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Color(0xFF67835C), width: 2),
+                ),
+                labelStyle: const TextStyle(color: Color(0xFF67835C)),
+                floatingLabelStyle: const TextStyle(color: Color(0xFF67835C)),
+                labelText: 'Safra selecionada',
+              ),
+              selectedItemBuilder: (context) {
+                return safrasEmOrdem.map((safra) {
+                  final nomeSafra = safra.nomeExibicao;
+                  return Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      safra.isEncerrada ? '$nomeSafra (Encerrada)' : nomeSafra,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                }).toList();
+              },
+              items: safrasEmOrdem
+                  .map(
+                    (safra) => DropdownMenuItem<Safra>(
+                      value: safra,
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(safra.nomeExibicao),
+                          ),
+                          if (safra.isEncerrada)
+                            Container(
+                              margin: const EdgeInsets.only(left: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade200,
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Text('Encerrada', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                            )
+                          else
+                            Container(
+                              margin: const EdgeInsets.only(left: 8),
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF8FA67E).withOpacity(0.15),
+                                borderRadius: BorderRadius.circular(999),
+                              ),
+                              child: const Text('Ativa', style: TextStyle(fontSize: 11, color: Color(0xFF67835C))),
+                            ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+              onChanged: safras.isEmpty
+                  ? null
+                  : (Safra? safra) {
+                      if (safra != null) {
+                        onSelecionar(safra);
+                      }
+                    },
+            ),
+            if (mostrarAcoes) ...[
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: isLoading ? null : onNovaSafra,
+                      icon: const Icon(Icons.add_circle_outline),
+                      label: const Text('Nova safra'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF8FA67E),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: (safraSelecionada?.isEncerrada ?? false)
+                        ? OutlinedButton.icon(
+                            onPressed: isLoading ? null : onReativarSafra,
+                            icon: const Icon(Icons.restart_alt),
+                            label: const Text('Reativar safra'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: const Color(0xFF67835C),
+                              side: const BorderSide(color: Color(0xFF8FA67E)),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          )
+                        : OutlinedButton.icon(
+                            onPressed: isLoading || safraSelecionada == null ? null : onEncerrarSafra,
+                            icon: const Icon(Icons.stop_circle_outlined),
+                            label: const Text('Encerrar safra'),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.red.shade700,
+                              side: BorderSide(color: Colors.red.shade300),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                  ),
+                ],
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}

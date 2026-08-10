@@ -73,6 +73,22 @@ class Safra {
 
   bool get isEncerrada => !ativa;
 
+  /// Nome de exibição da safra: se houver um nome cadastrado, usa ele;
+  /// senão, gera automaticamente no formato "Safra 2026/2027" a partir do
+  /// ano de início (o ano seguinte representa o fechamento do ciclo).
+  String get nomeExibicao {
+    if (nome.isNotEmpty) {
+      return nome;
+    }
+
+    final anoBase = dataInicio?.year ?? dataFim?.year;
+    if (anoBase != null) {
+      return 'Safra $anoBase/${anoBase + 1}';
+    }
+
+    return 'Safra ${id ?? 'sem identificador'}';
+  }
+
   String get periodoTexto {
     if (dataInicio == null && dataFim == null) {
       return 'Período não informado';
@@ -129,48 +145,239 @@ class Safra {
   int get hashCode => id?.hashCode ?? super.hashCode;
 }
 
+/// Representa um evento de relatório vindo da rota de relatório da safra.
+/// A API retorna cada evento como `{ "modulo": "TRATO_CULTURAL", "dados": {...} }`.
+/// Hoje só existe o módulo TRATO_CULTURAL, mas a estrutura já é preparada
+/// para outros módulos no futuro (ex: financeiro, colheita).
 class SafraEvento {
   final int? id;
+  final String modulo;
+  final String tipoTrato;
   final String descricao;
-  final String tipo;
-  final String data;
-  final String status;
-  final String responsavel;
-  final String valor;
-  final String quantidade;
-  final String observacao;
+  final DateTime? dataInicio;
+  final DateTime? dataFim;
+  final DateTime? dataCadastro;
+  final int? idTalhao;
+  final bool confirmado;
+  final List<ResponsavelEvento> responsaveis;
+  final List<InsumoUtilizado> insumosUtilizados;
+  final List<TransacaoFinanceira> transacoesFinanceiras;
 
   const SafraEvento({
     this.id,
+    this.modulo = '',
+    this.tipoTrato = '',
     this.descricao = '',
-    this.tipo = '',
-    this.data = '',
-    this.status = '',
-    this.responsavel = '',
-    this.valor = '',
-    this.quantidade = '',
-    this.observacao = '',
+    this.dataInicio,
+    this.dataFim,
+    this.dataCadastro,
+    this.idTalhao,
+    this.confirmado = false,
+    this.responsaveis = const [],
+    this.insumosUtilizados = const [],
+    this.transacoesFinanceiras = const [],
   });
 
   factory SafraEvento.fromJson(Map<String, dynamic> json) {
+    final modulo = json['modulo']?.toString() ?? '';
+    final dadosRaw = json['dados'];
+    final dados = dadosRaw is Map ? Map<String, dynamic>.from(dadosRaw) : <String, dynamic>{};
+
+    final responsaveisRaw = dados['responsaveis'];
+    final responsaveis = <ResponsavelEvento>[];
+    if (responsaveisRaw is List) {
+      for (final item in responsaveisRaw) {
+        if (item is Map) {
+          responsaveis.add(ResponsavelEvento.fromJson(Map<String, dynamic>.from(item)));
+        }
+      }
+    }
+
+    final insumosRaw = dados['insumosUtilizados'];
+    final insumos = <InsumoUtilizado>[];
+    if (insumosRaw is List) {
+      for (final item in insumosRaw) {
+        if (item is Map) {
+          insumos.add(InsumoUtilizado.fromJson(Map<String, dynamic>.from(item)));
+        }
+      }
+    }
+
+    final rawIdTalhao = dados['idTalhao'];
+
+    final transacoesRaw = dados['transacoesFinanceiras'];
+    final transacoes = <TransacaoFinanceira>[];
+    if (transacoesRaw is List) {
+      for (final item in transacoesRaw) {
+        if (item is Map) {
+          transacoes.add(TransacaoFinanceira.fromJson(Map<String, dynamic>.from(item)));
+        }
+      }
+    }
+
     return SafraEvento(
-      id: json['id'] is num ? (json['id'] as num).toInt() : null,
-      descricao: _readString(json['descricao']) ?? _readString(json['nome']) ?? _readString(json['titulo']) ?? '',
-      tipo: _readString(json['tipo']) ?? _readString(json['categoria']) ?? '',
-      data: _readString(json['data']) ?? _readString(json['dataEvento']) ?? _readString(json['createdAt']) ?? '',
-      status: _readString(json['status']) ?? _readString(json['situacao']) ?? '',
-      responsavel: _readString(json['responsavel']) ?? _readString(json['responsavelNome']) ?? _readString(json['usuario']) ?? '',
-      valor: _readString(json['valor']) ?? _readString(json['valorTotal']) ?? _readString(json['valorFinanceiro']) ?? '',
-      quantidade: _readString(json['quantidade']) ?? _readString(json['qtd']) ?? _readString(json['quantidadeUtilizada']) ?? '',
-      observacao: _readString(json['observacao']) ?? _readString(json['detalhes']) ?? _readString(json['observacoes']) ?? '',
+      id: dados['id'] is num ? (dados['id'] as num).toInt() : null,
+      modulo: modulo,
+      tipoTrato: dados['tipoTrato']?.toString() ?? '',
+      descricao: dados['descricao']?.toString() ?? '',
+      dataInicio: _parseDate(dados['dataInicio']),
+      dataFim: _parseDate(dados['dataFim']),
+      dataCadastro: _parseDate(dados['dataCadastro']),
+      idTalhao: rawIdTalhao is num ? rawIdTalhao.toInt() : int.tryParse(rawIdTalhao?.toString() ?? ''),
+      confirmado: dados['confirmado'] == true,
+      responsaveis: responsaveis,
+      insumosUtilizados: insumos,
+      transacoesFinanceiras: transacoes,
     );
   }
 
-  static String? _readString(dynamic value) {
+  /// Título amigável do evento: usa o tipo de trato quando disponível
+  /// (ex: "Adubação"), senão cai no nome do módulo.
+  String get tituloExibicao {
+    if (tipoTrato.isNotEmpty) {
+      return tipoTrato;
+    }
+    return _nomeAmigavelModulo(modulo);
+  }
+
+  static String _nomeAmigavelModulo(String modulo) {
+    switch (modulo) {
+      case 'TRATO_CULTURAL':
+        return 'Trato cultural';
+      default:
+        return modulo.isEmpty ? 'Evento' : modulo;
+    }
+  }
+
+  static DateTime? _parseDate(dynamic value) {
     if (value == null) {
       return null;
     }
+    if (value is DateTime) {
+      return value;
+    }
+    if (value is String) {
+      return DateTime.tryParse(value);
+    }
+    return null;
+  }
+}
 
-    return value.toString();
+class ResponsavelEvento {
+  final int? id;
+  final String razaoSocial;
+  final String cnpj;
+
+  const ResponsavelEvento({this.id, this.razaoSocial = '', this.cnpj = ''});
+
+  factory ResponsavelEvento.fromJson(Map<String, dynamic> json) {
+    return ResponsavelEvento(
+      id: json['id'] is num ? (json['id'] as num).toInt() : null,
+      razaoSocial: json['razaoSocial']?.toString() ?? json['nome']?.toString() ?? '',
+      cnpj: json['cnpj']?.toString() ?? '',
+    );
+  }
+}
+
+class InsumoUtilizado {
+  final int? id;
+  final String descricao;
+  final String medida;
+  final num quantidade;
+
+  const InsumoUtilizado({
+    this.id,
+    this.descricao = '',
+    this.medida = '',
+    this.quantidade = 0,
+  });
+
+  factory InsumoUtilizado.fromJson(Map<String, dynamic> json) {
+    final insumoRaw = json['insumo'];
+    final insumo = insumoRaw is Map ? Map<String, dynamic>.from(insumoRaw) : <String, dynamic>{};
+    final qtdRaw = json['qtdUsada'];
+
+    return InsumoUtilizado(
+      id: insumo['id'] is num ? (insumo['id'] as num).toInt() : null,
+      descricao: insumo['descricao']?.toString() ?? '',
+      medida: insumo['medida']?.toString() ?? '',
+      quantidade: qtdRaw is num ? qtdRaw : (num.tryParse(qtdRaw?.toString() ?? '') ?? 0),
+    );
+  }
+
+  String get textoQuantidade {
+    final qtdTexto = quantidade == quantidade.roundToDouble()
+        ? quantidade.toInt().toString()
+        : quantidade.toString();
+    return medida.isNotEmpty ? '$qtdTexto $medida' : qtdTexto;
+  }
+}
+
+/// Representa um lançamento financeiro associado a um evento da safra
+/// (`dados.transacoesFinanceiras` no relatório geral).
+///
+/// ATENÇÃO: no exemplo de payload recebido até agora esse array veio vazio,
+/// então os nomes de campo abaixo (`valor`, `tipo`, `categoria`, `data`)
+/// são um "melhor palpite" baseado em convenções comuns da API — cada
+/// campo tenta algumas variações plausíveis de nome. Assim que houver um
+/// exemplo real com uma transação preenchida, é só confirmar/ajustar os
+/// nomes usados em `fromJson` abaixo.
+class TransacaoFinanceira {
+  final int? id;
+  final String tipo; // ex: "RECEITA" / "DESPESA" (ou "ENTRADA" / "SAIDA")
+  final String categoria; // ex: "Fertilizantes", "Mão de obra", "Combustível"
+  final String descricao;
+  final num valor;
+  final DateTime? data;
+
+  const TransacaoFinanceira({
+    this.id,
+    this.tipo = '',
+    this.categoria = '',
+    this.descricao = '',
+    this.valor = 0,
+    this.data,
+  });
+
+  factory TransacaoFinanceira.fromJson(Map<String, dynamic> json) {
+    final rawId = json['id'];
+    final rawValor = json['valor'] ?? json['montante'] ?? json['amount'] ?? json['valorTotal'];
+    final rawData = json['data'] ??
+        json['dataTransacao'] ??
+        json['dataLancamento'] ??
+        json['dataCadastro'] ??
+        json['createdAt'];
+
+    return TransacaoFinanceira(
+      id: rawId is num ? rawId.toInt() : int.tryParse(rawId?.toString() ?? ''),
+      tipo: (json['tipo'] ?? json['tipoTransacao'] ?? json['natureza'])?.toString() ?? '',
+      categoria: (json['categoria'] ?? json['tipoGasto'] ?? json['classificacao'])?.toString() ?? '',
+      descricao: json['descricao']?.toString() ?? '',
+      valor: rawValor is num ? rawValor : (num.tryParse(rawValor?.toString() ?? '') ?? 0),
+      data: _parseDataTransacao(rawData),
+    );
+  }
+
+  /// Considera receita quando o tipo indicar entrada de dinheiro. Qualquer
+  /// outro valor (inclusive vazio/desconhecido) é tratado como despesa por
+  /// segurança, para não inflar receita indevidamente em somatórios.
+  bool get isReceita {
+    final tipoNormalizado = tipo.toUpperCase();
+    return tipoNormalizado.contains('RECEITA') || tipoNormalizado.contains('ENTRADA');
+  }
+
+  bool get isDespesa => !isReceita;
+
+  static DateTime? _parseDataTransacao(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+    if (value is DateTime) {
+      return value;
+    }
+    if (value is String) {
+      return DateTime.tryParse(value);
+    }
+    return null;
   }
 }

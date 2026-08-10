@@ -20,6 +20,16 @@ class SafraViewModel extends ChangeNotifier {
   int? _propriedadeIdAtual;
   bool _dadosCarregados = false;
 
+  /// Cache em memória (dura enquanto o app estiver aberto/a sessão do
+  /// usuário estiver ativa) das safras já carregadas por propriedade.
+  /// Evita bater na API de novo toda vez que o usuário volta para a tela
+  /// de safras ou alterna entre propriedades já visitadas na sessão.
+  final Map<int, List<Safra>> _cacheSafrasPorPropriedade = {};
+
+  /// Guarda também qual era a safra selecionada em cada propriedade, para
+  /// restaurar a seleção certa ao voltar para uma propriedade já visitada.
+  final Map<int, int?> _cacheSafraSelecionadaPorPropriedade = {};
+
   bool get isLoading => _isLoading;
   bool get isLoadingRelatorio => _isLoadingRelatorio;
   String? get mensagemErro => _mensagemErro;
@@ -29,8 +39,39 @@ class SafraViewModel extends ChangeNotifier {
   int? get propriedadeIdAtual => _propriedadeIdAtual;
   bool get dadosCarregados => _dadosCarregados;
 
-  Future<void> carregarDadosDaPropriedade(int idPropriedade) async {
-    if (_propriedadeIdAtual == idPropriedade && _dadosCarregados) {
+  /// Carrega as safras da propriedade informada.
+  ///
+  /// Por padrão, se essa propriedade já tiver sido carregada nesta sessão
+  /// (o app segue aberto, mesmo que o usuário tenha navegado para outra
+  /// tela e voltado), os dados são restaurados direto do cache em memória,
+  /// sem nova chamada à API. Use [forcarAtualizacao] para ignorar o cache
+  /// (ex: pull-to-refresh) e buscar novamente na API.
+  Future<void> carregarDadosDaPropriedade(
+    int idPropriedade, {
+    bool forcarAtualizacao = false,
+  }) async {
+    // Já é a propriedade atual e os dados já estão carregados: nada a fazer.
+    if (!forcarAtualizacao && _propriedadeIdAtual == idPropriedade && _dadosCarregados) {
+      return;
+    }
+
+    // Propriedade já visitada nesta sessão: restaura do cache em memória
+    // em vez de ir buscar tudo de novo na API.
+    if (!forcarAtualizacao && _cacheSafrasPorPropriedade.containsKey(idPropriedade)) {
+      _propriedadeIdAtual = idPropriedade;
+      _mensagemErro = null;
+      _restaurarSafrasDoCache(idPropriedade);
+      _dadosCarregados = true;
+      notifyListeners();
+
+      // Garante que o relatório da safra selecionada esteja carregado
+      // (o relatório em si não é persistido no cache de sessão).
+      if (_safraSelecionada?.id != null) {
+        await carregarRelatorioDaSafra(
+          idPropriedade: idPropriedade,
+          idSafra: _safraSelecionada!.id!,
+        );
+      }
       return;
     }
 
@@ -44,9 +85,11 @@ class SafraViewModel extends ChangeNotifier {
 
       if (safrasCarregadas.isNotEmpty) {
         _safras = _ordenarSafras(safrasCarregadas);
+        _salvarSafrasNoCache(idPropriedade, _safras);
 
         if (_safras.isNotEmpty) {
           _safraSelecionada = _safras.first;
+          _cacheSafraSelecionadaPorPropriedade[idPropriedade] = _safraSelecionada!.id;
           await carregarRelatorioDaSafra(
             idPropriedade: idPropriedade,
             idSafra: _safraSelecionada!.id!,
@@ -59,6 +102,7 @@ class SafraViewModel extends ChangeNotifier {
         _safras = [];
         _safraSelecionada = null;
         _relatorio = [];
+        _salvarSafrasNoCache(idPropriedade, _safras);
       }
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
@@ -70,6 +114,46 @@ class SafraViewModel extends ChangeNotifier {
       _dadosCarregados = true;
       notifyListeners();
     }
+  }
+
+  /// Restaura, a partir do cache de sessão, a lista de safras e a safra
+  /// selecionada de uma propriedade já visitada anteriormente.
+  void _restaurarSafrasDoCache(int idPropriedade) {
+    _safras = List<Safra>.from(_cacheSafrasPorPropriedade[idPropriedade] ?? const []);
+
+    final idSelecionadaCache = _cacheSafraSelecionadaPorPropriedade[idPropriedade];
+    Safra? safraRestaurada;
+    if (idSelecionadaCache != null) {
+      for (final safra in _safras) {
+        if (safra.id == idSelecionadaCache) {
+          safraRestaurada = safra;
+          break;
+        }
+      }
+    }
+    _safraSelecionada = safraRestaurada ?? (_safras.isNotEmpty ? _safras.first : null);
+  }
+
+  void _salvarSafrasNoCache(int idPropriedade, List<Safra> safras) {
+    _cacheSafrasPorPropriedade[idPropriedade] = List<Safra>.from(safras);
+  }
+
+  /// Limpa o cache de sessão de todas as propriedades (ex: no logout do
+  /// usuário) ou apenas de uma propriedade específica, se [idPropriedade]
+  /// for informado.
+  void limparCacheSessao({int? idPropriedade}) {
+    if (idPropriedade != null) {
+      _cacheSafrasPorPropriedade.remove(idPropriedade);
+      _cacheSafraSelecionadaPorPropriedade.remove(idPropriedade);
+      if (_propriedadeIdAtual == idPropriedade) {
+        _dadosCarregados = false;
+      }
+    } else {
+      _cacheSafrasPorPropriedade.clear();
+      _cacheSafraSelecionadaPorPropriedade.clear();
+      _dadosCarregados = false;
+    }
+    notifyListeners();
   }
 
   Future<void> selecionarSafra(Safra safra) async {
@@ -84,6 +168,8 @@ class SafraViewModel extends ChangeNotifier {
     if (_propriedadeIdAtual == null || safra.id == null) {
       return;
     }
+
+    _cacheSafraSelecionadaPorPropriedade[_propriedadeIdAtual!] = safra.id;
 
     await carregarRelatorioDaSafra(
       idPropriedade: _propriedadeIdAtual!,
@@ -219,17 +305,63 @@ class SafraViewModel extends ChangeNotifier {
     return false;
   }
 
+  Future<bool> reativarSafra({
+    required int idPropriedade,
+    required int idSafra,
+  }) async {
+    if (idSafra <= 0) {
+      _mensagemErro = 'Selecione uma safra válida para reativar.';
+      notifyListeners();
+      return false;
+    }
+
+    _isLoading = true;
+    _mensagemErro = null;
+    notifyListeners();
+
+    try {
+      final response = await http.patch(
+        Uri.parse('${_service.baseUrl}/safras/$idSafra/reativar'),
+        headers: _service.defaultHeaders,
+      );
+
+      debugPrint('PATCH reativar safra status=${response.statusCode} body=${response.body}');
+
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        await _refreshSafrasAfterMutation(idPropriedade);
+        return true;
+      }
+
+      throw ApiException(_extractErrorMessage(response.body));
+    } on ApiException catch (e) {
+      _mensagemErro = e.mensagem;
+    } catch (e) {
+      _mensagemErro = 'Erro ao reativar a safra.';
+      debugPrint('Erro ao reativar safra: $e');
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+
+    return false;
+  }
+
   Future<void> _refreshSafrasAfterMutation(int idPropriedade) async {
     try {
       final novasSafras = await _buscarSafrasDaPropriedade(idPropriedade);
       _safras = _ordenarSafras(novasSafras);
+      // Mutação (criar/encerrar/reativar) sempre atualiza o cache de sessão
+      // dessa propriedade, já que os dados no servidor mudaram.
+      _salvarSafrasNoCache(idPropriedade, _safras);
 
       if (novasSafras.isEmpty) {
         _safraSelecionada = null;
         _relatorio = [];
+        _cacheSafraSelecionadaPorPropriedade.remove(idPropriedade);
       } else if (_safraSelecionada == null ||
           !novasSafras.any((safra) => safra.id == _safraSelecionada?.id)) {
         _safraSelecionada = _safras.first;
+        _cacheSafraSelecionadaPorPropriedade[idPropriedade] = _safraSelecionada!.id;
         await carregarRelatorioDaSafra(
           idPropriedade: idPropriedade,
           idSafra: _safraSelecionada!.id!,
@@ -240,6 +372,7 @@ class SafraViewModel extends ChangeNotifier {
           orElse: () => _safraSelecionada!,
         );
         _safraSelecionada = safraAtualizada;
+        _cacheSafraSelecionadaPorPropriedade[idPropriedade] = safraAtualizada.id;
         await carregarRelatorioDaSafra(
           idPropriedade: idPropriedade,
           idSafra: safraAtualizada.id!,
