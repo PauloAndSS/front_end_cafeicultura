@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_app_bar.dart';
+import 'package:frond_end_cafeicultura_mobile/views/talhao/talhao_view.dart';
 import 'package:provider/provider.dart';
-
 import 'financeiro_view.dart';
-import 'eventos/talhao_view.dart';
-import 'safra/safra_view_page.dart';
+import 'package:frond_end_cafeicultura_mobile/views/safra/safra_view_page.dart';
 
 import '../viewmodels/navegacao_viewmodel.dart';
 

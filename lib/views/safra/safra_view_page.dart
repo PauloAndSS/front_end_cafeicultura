@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_relatorio.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_selector.dart'; 
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_summary.dart';  
 import 'package:provider/provider.dart';
-
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 /// Tela de Safras e Relatórios.
 ///
 /// Depois da modularização, essa página só cuida de: carregar os dados da
