@@ -34,15 +34,46 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
       });
     }
 
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: SafeArea(
-        child: _buildBody(propriedadesVM, context),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        backgroundColor: const Color(0xFFF5F5F5),
+        body: SafeArea(
+          child: Column(
+            children: [
+              Container(
+                color: Colors.white, 
+                child: const TabBar(
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start, 
+                  labelColor: Color(0xFF67835C),
+                  unselectedLabelColor: Colors.grey,
+                  indicatorColor: Color(0xFF67835C),
+                  indicatorWeight: 3.0,
+                  dividerColor: Colors.transparent, 
+                  tabs: [
+                    Tab(text: 'Início'),
+                    Tab(text: 'Dashboard'),
+                  ],
+                ),
+              ),
+              // Conteúdo das abas
+              Expanded(
+                child: TabBarView(
+                  children: [
+                    _buildInicioTab(propriedadesVM, context),
+                    _buildDashboardTab(),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildBody(PropriedadesUsuarioViewModel propriedadesVM, BuildContext context) {
+  Widget _buildInicioTab(PropriedadesUsuarioViewModel propriedadesVM, BuildContext context) {
     if (propriedadesVM.isLoading && propriedadesVM.propriedades.isEmpty) {
       return const Center(child: CircularProgressIndicator(color: Color(0xFF67835C)));
     }
@@ -128,6 +159,12 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDashboardTab() {
+    return Container(
+      color: const Color(0xFFF5F5F5), 
     );
   }
 }
