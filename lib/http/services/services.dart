@@ -1,10 +1,30 @@
 import 'dart:convert';
 
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 abstract class BaseService {
-  final String baseUrl = 'http://10.0.2.2:3333/api/v1';
+  static String resolveBaseUrl({
+    required bool isWeb,
+    required TargetPlatform platform,
+  }) {
+    if (isWeb) {
+      return 'http://localhost:3333/api/v1';
+    }
+
+    if (platform == TargetPlatform.android) {
+      return 'http://10.0.2.2:3333/api/v1';
+    }
+
+    return 'http://localhost:3333/api/v1';
+  }
+
+  String get baseUrl => resolveBaseUrl(
+        isWeb: kIsWeb,
+        platform: defaultTargetPlatform,
+      );
+
   static String? sessionCookie;
 
   Map<String, String> get defaultHeaders {
