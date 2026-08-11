@@ -33,7 +33,6 @@ class _MainScreenViewState extends State<MainScreenView> {
     final telas = [
       const SizedBox.shrink(),   // 0: Home 
       const SizedBox.shrink(),  // Atividades (Eventos)
-      const SafraViewPage(),
       const TalhaoView(),  
       const SizedBox.shrink(), // Armazém
       const FinanceiroView(), // Financeiro
@@ -97,11 +96,7 @@ class _MainScreenViewState extends State<MainScreenView> {
                   selectedIcon: Icon(Icons.coffee),
                   label: 'Atividades',
                 ),
-                NavigationDestination(
-                  icon: Icon(Icons.grass_outlined),
-                  selectedIcon: Icon(Icons.grass),
-                  label: 'Safras',
-                ),
+               
                 NavigationDestination(
                   icon: Icon(Icons.agriculture_outlined),
                   selectedIcon: Icon(Icons.agriculture),
