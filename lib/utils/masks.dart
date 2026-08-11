@@ -24,6 +24,12 @@ class AppMasks {
   
   static final inteiroMilhar = ThousandsSeparatorInputFormatter();
   static final decimal = DecimalInputFormatter(casasDecimais: 2);
+
+  /// Desfaz a máscara pt-BR (milhar com ponto, decimal com vírgula) e devolve
+  /// o número. `null` se o texto não for numérico.
+  static double? paraDouble(String texto) {
+    return double.tryParse(texto.replaceAll('.', '').replaceAll(',', '.'));
+  }
 }
 
 //máscara para decimais

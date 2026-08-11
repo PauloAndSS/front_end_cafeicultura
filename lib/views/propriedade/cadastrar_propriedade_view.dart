@@ -34,6 +34,16 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
   final _cidadeController = TextEditingController();
   UF? _ufSelecionada;
 
+  bool get _houveAlteracoes {
+    return _nomeController.text.isNotEmpty ||
+        _tamanhoValorController.text.isNotEmpty ||
+        _cepController.text.isNotEmpty ||
+        _logradouroController.text.isNotEmpty ||
+        _bairroController.text.isNotEmpty ||
+        _cidadeController.text.isNotEmpty ||
+        _ufSelecionada != null;
+  }
+
   @override
   void dispose() {
     _nomeController.dispose();
@@ -71,7 +81,7 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
       if (resultado == true && mounted) {
         Provider.of<PropriedadesUsuarioViewModel>(context, listen: false)
             .carregarPropriedades();
- 
+
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Propriedade cadastrada com sucesso!'),
@@ -114,16 +124,14 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
           ),
           actions: [
             TextButton(
-              onPressed: () =>
-                  Navigator.of(context).pop(false),
+              onPressed: () => Navigator.of(context).pop(false),
               child: const Text(
                 'Cancelar',
                 style: TextStyle(color: Colors.grey),
               ),
             ),
             TextButton(
-              onPressed: () =>
-                  Navigator.of(context).pop(true),
+              onPressed: () => Navigator.of(context).pop(true),
               child: const Text(
                 'Sair',
                 style: TextStyle(
@@ -144,6 +152,13 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
+
+        if (!_houveAlteracoes) {
+          if (context.mounted) {
+            Navigator.of(context).pop();
+          }
+          return;
+        }
 
         final querSair = await _mostrarDialogoConfirmacao();
 

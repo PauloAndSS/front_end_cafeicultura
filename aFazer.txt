@@ -1,1 +1,23 @@
-ao clicar em voltar na página de pessoas, clicou 2 vezes e saiu do app. Não tem como configurar para em caso de clicar em voltar, voltar para a página inicial?
+###############################################################################################################################
+AGUARDANDO RETORNO
+###############################################################################################################################
+-> refatorar tela de cadastro de trato -> insumos. Ao cadastrar/editar insumos, deverá ir para um widget de cadastro de insumos.
+
+-> adicionar despesa ao registrar uma atividade (aguardando Kaik finalizar despesa).
+
+-> botão de cadastro de qualquer atividade só deve ser possível se houver alguma safra ativa (sem data fim). avisar ao usuário e redirecionar para a página de criar safra (aguardando Karllos finalizar safra).
+
+-> Ao registrar uma atividade, deve-se conferir as safras ativas. Se só houver 1, não mostra o select de qual safra essa atividade é referente. Se houver 2, select de qual das 2 safras essa atividade é referente (aguardando Karllos finalizar safra).
+-> Reaproveitar as telas de trato cultural (cadastro, view, edição) para as demais atividades.
+
+
+###############################################################################################################################
+A FAZER
+###############################################################################################################################
+-> Relatórios nas telas de safra
+
+-> Olhar model (insumos), view, services e VMs e refatorá-los se necessário
+
+-> ao clicar em voltar na página de pessoas, clicou 2 vezes e saiu do app. Não tem como configurar para em caso de clicar em voltar, voltar para a página inicial?
+
+-> conversar com kaik e pedro regra de negócio de dataFim/confirmação evento

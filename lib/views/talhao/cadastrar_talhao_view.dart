@@ -31,7 +31,6 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
 
   final _viewModel = CadastrarTalhaoViewModel();
 
-  // Apenas Conilon e Arábica para a espécie do talhão
   final List<String> _opcoesEspecie = ['Conilon', 'Arábica'];
 
   @override
@@ -55,7 +54,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
       context: context,
       initialDate: _dataInicio ?? hoje,
       firstDate: DateTime(2000),
-      lastDate: hoje, // Data de início limitada até a data atual
+      lastDate: hoje,
       helpText: 'Selecione a data de início do talhão',
       builder: (context, child) {
         return Theme(

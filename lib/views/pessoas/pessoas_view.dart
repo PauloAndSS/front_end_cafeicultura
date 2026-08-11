@@ -10,7 +10,7 @@ import 'package:frond_end_cafeicultura_mobile/views/pessoas/detalhes_pessoa_view
 import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_bottom_navbar.dart';
 import 'package:provider/provider.dart';
 
-import 'package:frond_end_cafeicultura_mobile/views/widgets/pessoas_card_widget.dart';
+import 'package:frond_end_cafeicultura_mobile/views/pessoas/widgets/pessoas_card_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/titulo_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_app_bar.dart';
 

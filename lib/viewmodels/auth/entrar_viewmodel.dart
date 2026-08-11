@@ -16,7 +16,6 @@ class EntrarViewmodel extends ChangeNotifier {
 
   EntrarViewmodel({required ServicesAuth service}) : _service = service;
 
-  // 👇 ASSINATURA CORRIGIDA: Apenas 3 argumentos (entradaBruta, senha, session)
   Future<bool> fazerLogin(String entradaBruta, String senha, SessionViewModel session) async {
     _isLoading = true;
     _mensagemErro = null;
@@ -39,7 +38,6 @@ class EntrarViewmodel extends ChangeNotifier {
         throw Exception("ID do usuário não retornado pelo servidor.");
       }
 
-      // Salva a sessão, o AuthWrapper vai notar isso e jogar o usuário para a MainScreenView
       await session.login(id, nome);
 
       return true;

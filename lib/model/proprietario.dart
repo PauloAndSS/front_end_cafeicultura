@@ -11,6 +11,7 @@ class Proprietario extends Usuario {
     required super.telefone,
     required super.pessoa,
   });
+  
   factory Proprietario.fromJson(Map<String, dynamic> json) {
     Endereco? enderecoObj;
     if (json['endereco'] != null) {
