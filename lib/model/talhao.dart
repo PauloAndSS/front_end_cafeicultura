@@ -1,5 +1,6 @@
 import 'package:intl/intl.dart';
 import 'package:frond_end_cafeicultura_mobile/model/tamanho.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/formatadores.dart';
 
 class Variedade {
   final int id;
@@ -85,12 +86,12 @@ class Talhao {
   }
 
   String get dataInicioFormatada {
-    return DateFormat('dd/MM/yyyy').format(dataInicio);
+    return formatarDataBr(dataInicio);
   }
 
   String? get dataFimFormatada {
     if (dataFim == null) return null;
-    return DateFormat('dd/MM/yyyy').format(dataFim!);
+    return formatarDataBr(dataFim!);
   }
 
   String get variedadesTexto {
@@ -100,6 +101,13 @@ class Talhao {
     return variedadesCafe!.map((v) => v.descricao).join(', ');
   }
 
+String get nomeExibicao {
+    if (nome.isEmpty) return 'Talhão sem nome';
+    
+    final dataFormatada = formatarAnoMes(dataInicio);
+    return '$nome $dataFormatada';
+  }
+  
   factory Talhao.fromJson(Map<String, dynamic> json) {
     return Talhao(
       id: json['id'],

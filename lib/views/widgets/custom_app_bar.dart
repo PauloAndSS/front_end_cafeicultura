@@ -28,7 +28,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     );
   }
 
-  /// Para formulários ou telas secundárias (ex: Cadastrar/Atualizar), usa push normal
   void _navegarFormulario(BuildContext context, Widget novaTela) {
     Navigator.push(
       context,
@@ -148,14 +147,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           tooltip: 'Perfil',
           offset: const Offset(0, 45),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          onSelected: (String escolha) async {
+          onSelected: (String escolha) {
             if (escolha == 'atualizar') {
               _navegarFormulario(context, const AtualizarDadosView());
-            } else if (escolha == 'sair') {
-              await session.logout();
-              if (context.mounted) {
-                Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
-              }
             }
           },
           itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -168,16 +162,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 visualDensity: VisualDensity.compact,
               ),
             ),
-            const PopupMenuDivider(),
-            const PopupMenuItem<String>(
-              value: 'sair',
-              child: ListTile(
-                leading: Icon(Icons.logout, color: Colors.red),
-                title: Text('Encerrar Sessão', style: TextStyle(color: Colors.red)),
-                contentPadding: EdgeInsets.zero,
-                visualDensity: VisualDensity.compact,
-              ),
-            ),
           ],
         ),
         
@@ -186,9 +170,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           tooltip: 'Menu',
           offset: const Offset(0, 45),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          onSelected: (String escolha) {
+          onSelected: (String escolha) async {
             if (escolha == 'pessoas') {
               _navegarSubstituindo(context, const PessoasView());
+            } else if (escolha == 'sair') {
+              await session.logout();
+              if (context.mounted) {
+                Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+              }
             }
           },
           itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
@@ -197,6 +186,16 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               child: ListTile(
                 leading: Icon(Icons.groups_outlined, color: Colors.black87),
                 title: Text('Pessoas Cadastradas'),
+                contentPadding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+            const PopupMenuDivider(),
+            const PopupMenuItem<String>(
+              value: 'sair',
+              child: ListTile(
+                leading: Icon(Icons.logout, color: Colors.red),
+                title: Text('Encerrar Sessão', style: TextStyle(color: Colors.red)),
                 contentPadding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
               ),

@@ -1,6 +1,7 @@
 // lib/views/main_screen_view.dart
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/home/atividades/atividades_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_app_bar.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_bottom_navbar.dart';
 import 'package:provider/provider.dart';
@@ -65,7 +66,7 @@ class _MainScreenViewState extends State<MainScreenView> {
   Widget build(BuildContext context) {
     final telas = [
       const HomeView(), 
-      const SizedBox.shrink(),  // Atividades (Eventos)
+      const AtividadesView(),
       const TalhaoView(),  
       const SizedBox.shrink(), // Armazém
       const FinanceiroView(), // Financeiro

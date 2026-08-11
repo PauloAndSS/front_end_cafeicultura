@@ -4,7 +4,7 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedad
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_propriedades_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/talhao/cadastrar_talhao_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/talhao/detalhes_talhao_view.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/talhao_card.dart';
+import 'package:frond_end_cafeicultura_mobile/views/talhao/widgets/talhao_card.dart';
 import 'package:provider/provider.dart';
 
 enum StatusTalhaoFiltro { ativos, encerrados }
@@ -85,7 +85,7 @@ class _TalhaoViewState extends State<TalhaoView> with AutomaticKeepAliveClientMi
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           if (propriedadesVM.idPropriedadeSelecionada == null) {

@@ -1,11 +1,18 @@
 // lib/views/talhao/detalhes_talhao_view.dart
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
+import 'package:frond_end_cafeicultura_mobile/model/eventos/tipo_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/model/talhao.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/tratos_culturais_do_talhao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/detalhes_talhao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_propriedades_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/home/atividades/registro_atividades.dart';
+import 'package:frond_end_cafeicultura_mobile/views/home/atividades/trato_cultural/detalhes_trato_cultural_view.dart';
+import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/atividade_card.dart';
+import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/filtro_status_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/talhao/widgets/seletor_tipo_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/sessao_em_breve_widget.dart';
 import 'package:provider/provider.dart';
 
 class DetalhesTalhaoView extends StatefulWidget {
@@ -19,6 +26,78 @@ class DetalhesTalhaoView extends StatefulWidget {
 
 class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
   final _viewModel = DetalhesTalhaoViewModel();
+
+  /// ViewModel próprio para as atividades: o `isLoading` de [_viewModel] já
+  /// desabilita os botões de encerrar/excluir, e recarregar a lista não pode
+  /// bloquear essas ações.
+  final _atividadesViewModel = TratosCulturaisDoTalhaoViewModel();
+
+  TipoAtividade _tipoAtividade = TipoAtividade.tratosCulturais;
+
+  StatusAtividadeFiltro _filtroAtividades = StatusAtividadeFiltro.emAndamento;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // carregar notifica de forma síncrona: chamar aqui direto dispararia
+    // rebuild no meio do primeiro frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _carregarAtividades();
+    });
+  }
+
+  @override
+  void dispose() {
+    _atividadesViewModel.dispose();
+    super.dispose();
+  }
+
+  /// Gancho de extensão do select: cada tipo novo entra como um `case`. Os
+  /// ainda não implementados não disparam requisição — é o que mantém a
+  /// abertura da tela barata.
+  void _carregarTipoSelecionado({bool forcar = false}) {
+    switch (_tipoAtividade) {
+      case TipoAtividade.tratosCulturais:
+        _carregarAtividades(forcar: forcar);
+      case TipoAtividade.colheitas:
+      case TipoAtividade.preSecagens:
+      case TipoAtividade.despolpagens:
+      case TipoAtividade.fermentacoes:
+      case TipoAtividade.secagens:
+      case TipoAtividade.pilagens:
+        break;
+    }
+  }
+
+  void _carregarAtividades({bool forcar = false}) {
+    final idPropriedade = context
+        .read<PropriedadesUsuarioViewModel>()
+        .idPropriedadeSelecionada;
+    final idTalhao = widget.talhao.id;
+
+    if (idPropriedade == null || idTalhao == null) return;
+
+    _atividadesViewModel.carregar(idPropriedade, idTalhao, forcar: forcar);
+  }
+
+  Future<void> _abrirDetalhesTrato(TratoCultural trato) async {
+    final alterou = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => DetalhesTratoCulturalView(
+          trato: trato,
+          nomeTalhao: widget.talhao.nomeExibicao,
+        ),
+      ),
+    );
+
+    // forcar: o trato pode ter sido finalizado ou editado lá dentro, então o
+    // cache está velho.
+    if (alterou == true && mounted) {
+      _carregarAtividades(forcar: true);
+    }
+  }
 
   void _onSucesso(String mensagem) {
     final propriedadesVM = context.read<PropriedadesUsuarioViewModel>();
@@ -78,7 +157,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
       builder: (context) => AlertDialog(
         title: const Text('Encerrar Talhão'),
         content: Text(
-          'Deseja realmente encerrar o talhão "${widget.talhao.nome}" na data ${dataFimEscolhida.day.toString().padLeft(2, '0')}/${dataFimEscolhida.month.toString().padLeft(2, '0')}/${dataFimEscolhida.year}?',
+          'Deseja realmente encerrar o talhão "${widget.talhao.nomeExibicao}" na data ${dataFimEscolhida.day.toString().padLeft(2, '0')}/${dataFimEscolhida.month.toString().padLeft(2, '0')}/${dataFimEscolhida.year}?',
         ),
         actions: [
           TextButton(
@@ -115,7 +194,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
       builder: (context) => AlertDialog(
         title: const Text('Excluir Talhão'),
         content: Text(
-          'Tem certeza que deseja excluir permanentemente o talhão "${widget.talhao.nome}"?\n\nEsta ação não poderá ser desfeita.',
+          'Tem certeza que deseja excluir permanentemente o talhão "${widget.talhao.nomeExibicao}"?\n\nEsta ação não poderá ser desfeita.',
         ),
         actions: [
           TextButton(
@@ -151,7 +230,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
         title: Text(
-          widget.talhao.nome,
+          widget.talhao.nomeExibicao,
           style: const TextStyle(color: Colors.white),
         ),
         backgroundColor: const Color(0xFF67835C),
@@ -208,7 +287,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
                         ],
                       ),
                       const Divider(height: 24),
-                      _buildInfoRow('Nome:', widget.talhao.nome),
+                      _buildInfoRow('Nome:', widget.talhao.nomeExibicao),
                       const SizedBox(height: 12),
                       _buildInfoRow('Espécie:', widget.talhao.especieFormatada),
                       const SizedBox(height: 12),
@@ -281,11 +360,148 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
 
                 const SizedBox(height: 32),
 
-                buildSecaoEmBreve('Atividades :'),
+                _construirSecaoAtividades(),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+
+  /// ListenableBuilder próprio: alternar o filtro ou recarregar a lista não
+  /// deve reconstruir o cartão de informações nem os botões acima.
+  Widget _construirSecaoAtividades() {
+    return ListenableBuilder(
+      listenable: _atividadesViewModel,
+      builder: (context, child) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Atividades',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            SeletorTipoAtividade(
+              selecionado: _tipoAtividade,
+              onSelecionar: (novoTipo) {
+                setState(() {
+                  _tipoAtividade = novoTipo;
+                });
+                _carregarTipoSelecionado();
+              },
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: FiltroStatusAtividade(
+                selecionado: _filtroAtividades,
+                onSelecionar: (novoFiltro) {
+                  setState(() {
+                    _filtroAtividades = novoFiltro;
+                  });
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+            _construirCorpoAtividades(),
+            const SizedBox(height: 24),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _construirCorpoAtividades() {
+    // Antes da cascata de estado: sem esta guarda, o spinner e o erro dos
+    // tratos culturais vazariam para os tipos ainda não implementados.
+    if (!atividadeImplementada(_tipoAtividade)) {
+      return _construirTipoEmDesenvolvimento();
+    }
+
+    if (_atividadesViewModel.isLoading) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: CircularProgressIndicator(color: Color(0xFF67835C)),
+        ),
+      );
+    }
+
+    if (_atividadesViewModel.mensagemErro != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+        child: Center(
+          child: Text(
+            _atividadesViewModel.mensagemErro!,
+            style: const TextStyle(color: Colors.red),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
+    final emAndamento = _filtroAtividades == StatusAtividadeFiltro.emAndamento;
+
+    final tratosFiltrados = emAndamento
+        ? _atividadesViewModel.emAndamento
+        : _atividadesViewModel.finalizadas;
+
+    if (tratosFiltrados.isEmpty) {
+      return _construirAtividadesVazias(emAndamento);
+    }
+
+    // Column em vez de ListView: a tela inteira já está num
+    // SingleChildScrollView, e um ListView aninhado perderia a virtualização
+    // de qualquer forma por causa do shrinkWrap.
+    return Column(
+      children: tratosFiltrados
+          .map(
+            (trato) => AtividadeCard(
+              atividade: trato,
+              nomeTalhao: widget.talhao.nomeExibicao,
+              icone: Icons.grass,
+              onTap: () => _abrirDetalhesTrato(trato),
+            ),
+          )
+          .toList(),
+    );
+  }
+
+  Widget _construirTipoEmDesenvolvimento() {
+    return _construirCaixaAviso('${_tipoAtividade.rotulo} em desenvolvimento.');
+  }
+
+  Widget _construirAtividadesVazias(bool emAndamento) {
+    final statusTexto = emAndamento ? 'em andamento' : 'finalizada';
+
+    return _construirCaixaAviso(
+      'Nenhuma atividade $statusTexto neste talhão.',
+    );
+  }
+
+  /// Caixa neutra usada tanto para lista vazia quanto para tipo ainda não
+  /// implementado — mesma moldura, só muda o texto.
+  Widget _construirCaixaAviso(String mensagem) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: Colors.black12),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: Text(
+          mensagem,
+          style: const TextStyle(fontSize: 14, color: Colors.black45),
+          textAlign: TextAlign.center,
+        ),
       ),
     );
   }
