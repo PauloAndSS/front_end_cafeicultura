@@ -12,7 +12,7 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_proprieda
 // Views
 import 'package:frond_end_cafeicultura_mobile/views/auth/first_acess.dart';
 import 'package:frond_end_cafeicultura_mobile/views/home/main_screen_view.dart';
-
+import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized(); 
 
@@ -20,6 +20,8 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SessionViewModel()),
+        ChangeNotifierProvider(create: (_) => SafraViewModel()),
+        ChangeNotifierProvider(create: (_) => TalhoesViewModel()),
       ],
       child: const MeuApp(),
     ),
