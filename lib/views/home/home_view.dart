@@ -7,6 +7,13 @@ import 'package:frond_end_cafeicultura_mobile/views/propriedade/widgets/propried
 import 'package:frond_end_cafeicultura_mobile/views/widgets/sessao_em_breve_widget.dart';
 import 'package:provider/provider.dart';
 
+// TODO: Certifique-se de realizar os imports corretos dos componentes de safra abaixo:
+
+import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_selector.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_summary.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_relatorio.dart';
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
 
@@ -18,20 +25,33 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
   
   @override
   bool get wantKeepAlive => true;
-
-  @override
+@override
   Widget build(BuildContext context) {
     super.build(context);
 
     final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
     final talhoesVM = context.read<TalhoesViewModel>();
+    
+    // 1. Adicione a leitura do SafraViewModel aqui
+    final safraVM = context.read<SafraViewModel>(); 
 
-    if (propriedadesVM.idPropriedadeSelecionada != null && 
-        propriedadesVM.idPropriedadeSelecionada != talhoesVM.idPropriedadeAtual) {
-      
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        talhoesVM.carregarTalhoes(propriedadesVM.idPropriedadeSelecionada!);
-      });
+    if (propriedadesVM.idPropriedadeSelecionada != null) {
+      final idPropriedade = propriedadesVM.idPropriedadeSelecionada!;
+
+      // Gatilho original dos Talhões
+      if (idPropriedade != talhoesVM.idPropriedadeAtual) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          talhoesVM.carregarTalhoes(idPropriedade);
+        });
+      }
+
+      // 2. NOVO GATILHO: Carrega os dados da Safra quando a propriedade for selecionada ou mudar
+      // Ele verifica se a propriedade mudou ou se os dados ainda não foram carregados
+      if (idPropriedade != safraVM.propriedadeIdAtual || !safraVM.dadosCarregados) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          safraVM.carregarDadosDaPropriedade(idPropriedade);
+        });
+      }
     }
 
     return DefaultTabController(
@@ -62,7 +82,8 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
                 child: TabBarView(
                   children: [
                     _buildInicioTab(propriedadesVM, context),
-                    _buildDashboardTab(),
+                    // Passamos o context para ter acesso aos Providers no Dashboard
+                    _buildDashboardTab(context),
                   ],
                 ),
               ),
@@ -162,9 +183,61 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
     );
   }
 
-  Widget _buildDashboardTab() {
+  Widget _buildDashboardTab(BuildContext context) {
+    final safraVM = context.watch<SafraViewModel>();
+
+    // Mostra um indicador de carregamento caso esteja buscando as safras pela primeira vez
+    if (safraVM.isLoading && safraVM.safras.isEmpty) {
+      return const Center(child: CircularProgressIndicator(color: Color(0xFF67835C)));
+    }
+
+    // Caso a requisição retorne erro
+    if (safraVM.mensagemErro != null && safraVM.safras.isEmpty) {
+       return Center(
+         child: Text(
+           safraVM.mensagemErro!, 
+           style: const TextStyle(color: Colors.red),
+           textAlign: TextAlign.center,
+         )
+       );
+    }
+
     return Container(
-      color: const Color(0xFFF5F5F5), 
+      color: const Color(0xFFF5F5F5),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            
+            // 1. Selecionador de Safra devidamente conectado
+            SafraSelectorWidget(
+              safras: safraVM.safras, 
+              safraSelecionada: safraVM.safraSelecionada, 
+              onSelecionar: (safra) {
+                safraVM.selecionarSafra(safra);
+              },
+              mostrarAcoes: false, 
+            ),
+            
+            const SizedBox(height: 16),
+
+            // 2. Resumo da Safra atual conectado
+            if (safraVM.safraSelecionada != null) ...[
+              SafraSummaryCard(safra: safraVM.safraSelecionada!),
+              const SizedBox(height: 16),
+            ],
+            
+            // 3. Gráficos, Paineis Financeiros e Listagem de Eventos conectados
+            SafraRelatorioWidget(
+              eventos: safraVM.relatorio, 
+              isLoading: safraVM.isLoadingRelatorio, 
+              mostrarTitulo: false, 
+            ),
+          
+          ],
+        ),
+      ),
     );
   }
 }
