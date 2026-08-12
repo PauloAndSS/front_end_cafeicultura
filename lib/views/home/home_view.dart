@@ -1,4 +1,3 @@
-// lib/views/home/home_view.dart
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_propriedades_viewmodel.dart';
@@ -7,9 +6,6 @@ import 'package:frond_end_cafeicultura_mobile/views/propriedade/widgets/propried
 import 'package:frond_end_cafeicultura_mobile/views/widgets/sessao_em_breve_widget.dart';
 import 'package:provider/provider.dart';
 
-// TODO: Certifique-se de realizar os imports corretos dos componentes de safra abaixo:
-
-import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_selector.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_summary.dart';
@@ -32,21 +28,17 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
     final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
     final talhoesVM = context.read<TalhoesViewModel>();
     
-    // 1. Adicione a leitura do SafraViewModel aqui
     final safraVM = context.read<SafraViewModel>(); 
 
     if (propriedadesVM.idPropriedadeSelecionada != null) {
       final idPropriedade = propriedadesVM.idPropriedadeSelecionada!;
 
-      // Gatilho original dos Talhões
       if (idPropriedade != talhoesVM.idPropriedadeAtual) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           talhoesVM.carregarTalhoes(idPropriedade);
         });
       }
 
-      // 2. NOVO GATILHO: Carrega os dados da Safra quando a propriedade for selecionada ou mudar
-      // Ele verifica se a propriedade mudou ou se os dados ainda não foram carregados
       if (idPropriedade != safraVM.propriedadeIdAtual || !safraVM.dadosCarregados) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           safraVM.carregarDadosDaPropriedade(idPropriedade);
@@ -82,7 +74,6 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
                 child: TabBarView(
                   children: [
                     _buildInicioTab(propriedadesVM, context),
-                    // Passamos o context para ter acesso aos Providers no Dashboard
                     _buildDashboardTab(context),
                   ],
                 ),
@@ -186,12 +177,10 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
   Widget _buildDashboardTab(BuildContext context) {
     final safraVM = context.watch<SafraViewModel>();
 
-    // Mostra um indicador de carregamento caso esteja buscando as safras pela primeira vez
     if (safraVM.isLoading && safraVM.safras.isEmpty) {
       return const Center(child: CircularProgressIndicator(color: Color(0xFF67835C)));
     }
 
-    // Caso a requisição retorne erro
     if (safraVM.mensagemErro != null && safraVM.safras.isEmpty) {
        return Center(
          child: Text(
@@ -210,7 +199,6 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             
-            // 1. Selecionador de Safra devidamente conectado
             SafraSelectorWidget(
               safras: safraVM.safras, 
               safraSelecionada: safraVM.safraSelecionada, 
@@ -222,13 +210,11 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
             
             const SizedBox(height: 16),
 
-            // 2. Resumo da Safra atual conectado
             if (safraVM.safraSelecionada != null) ...[
               SafraSummaryCard(safra: safraVM.safraSelecionada!),
               const SizedBox(height: 16),
             ],
             
-            // 3. Gráficos, Paineis Financeiros e Listagem de Eventos conectados
             SafraRelatorioWidget(
               eventos: safraVM.relatorio, 
               isLoading: safraVM.isLoadingRelatorio, 
