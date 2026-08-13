@@ -96,7 +96,38 @@ abstract class BaseService {
     if (jsonResponse is Map<String, dynamic>) {
       return jsonResponse;
     }
-    
+
     throw ApiException('Formato de resposta inválido para paginação.');
+  }
+
+  /// Lista de uma rota **sem paginação**, sob a chave nomeada pelo recurso.
+  ///
+  /// As rotas de atividade devolvem o mesmo envelope do caso paginado menos os
+  /// contadores — `{ "tratos": [...] }`, `{ "eventos": [...] }`. Passar isso por
+  /// [ResultadoPaginadoDTO] só para descartar `total`/`totalPaginas` inventaria
+  /// uma paginação que a rota não tem.
+  ///
+  /// Aceita também o envelope `{ "data": [...] }` do resto da API e o array cru:
+  /// a chave nomeada é a forma conferida hoje, as outras duas são a degradação
+  /// segura caso o backend uniformize os envelopes depois.
+  List<T> extrairListaNomeada<T>(
+    List<int> bodyBytes,
+    String chave,
+    T Function(Map<String, dynamic>) fromJson,
+  ) {
+    final jsonResponse = jsonDecode(utf8.decode(bodyBytes));
+
+    final lista = jsonResponse is Map<String, dynamic>
+        ? (jsonResponse[chave] ?? jsonResponse['data'])
+        : jsonResponse;
+
+    if (lista is! List) {
+      throw ApiException('Formato de resposta inválido para "$chave".');
+    }
+
+    return lista
+        .whereType<Map<String, dynamic>>()
+        .map((item) => fromJson(item))
+        .toList();
   }
 } 

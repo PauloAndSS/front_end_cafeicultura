@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/status_evento.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/agenda_tratos_culturais_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/tratos_culturais_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/base/lista_atividades_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/trato_cultural/cadastrar_trato_cultural_view.dart';
@@ -14,11 +15,18 @@ class TratoCulturalView extends StatefulWidget {
 }
 
 class _TratoCulturalViewState extends State<TratoCulturalView> {
+  /// Listagem paginada por status.
   final _viewModel = TratosCulturaisViewModel();
+
+  /// Calendário do topo. Instância separada porque as duas metades da tela vêm
+  /// de contratos diferentes da mesma rota: esta busca o mês inteiro sem
+  /// paginação, aquela busca uma página de um status.
+  final _agendaViewModel = AgendaTratosCulturaisViewModel();
 
   @override
   void dispose() {
     _viewModel.dispose();
+    _agendaViewModel.dispose();
     super.dispose();
   }
 
@@ -26,6 +34,7 @@ class _TratoCulturalViewState extends State<TratoCulturalView> {
   Widget build(BuildContext context) {
     return ListaAtividadesView<TratoCultural>(
       viewModel: _viewModel,
+      agendaViewModel: _agendaViewModel,
       rotuloCadastrar: 'Novo Trato',
       construirMensagemVazia: (status, nomePropriedade) =>
           'Você não tem tratos culturais ${_descricaoDoStatus(status)} '

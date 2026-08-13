@@ -1,48 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/lista_atividades_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/agenda_mensal_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/lista_atividades_paginada_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/atividade_card.dart';
-import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/corpo_com_estado.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/atividades_do_dia_sheet.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/blocos_detalhes_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/filtro_status_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/calendario/calendario_atividades.dart';
 import 'package:provider/provider.dart';
 
 const _verdePrimario = Color(0xFF67835C);
 
-/// Aba de listagem de um tipo de atividade agrícola.
-///
-/// A tela concreta entrega o ViewModel e os rótulos; toda a coreografia —
-/// escopo da propriedade, filtro por status, recarga após cadastro ou edição —
-/// mora aqui.
-///
-/// O ViewModel é criado e descartado pela tela concreta: esta é `stateful` só
-/// pelo filtro e pelo `AutomaticKeepAliveClientMixin`, que preserva a lista ao
-/// trocar de aba.
-class ListaAtividadesView<T extends EventoAgricola>
-    extends StatefulWidget {
-  final ListaAtividadesDaPropriedadeViewModel<T> viewModel;
+/// Distância do fim da lista em que a próxima página começa a ser buscada.
+/// Sobra de cerca de dois cards: pedir só ao encostar no fim mostraria o
+/// indicador em toda rolagem.
+const _margemParaProximaPagina = 300.0;
 
-  /// 'Novo Trato' — rótulo do botão flutuante.
+/// Aba de um tipo de atividade: calendário do mês no topo, listagem por status
+/// embaixo.
+///
+/// As duas metades são independentes **e têm fontes de dados diferentes**, o que
+/// é a razão de esta tela receber dois ViewModels. O calendário é uma visão do
+/// tempo: pede à [agendaViewModel] o mês aberto, com a cor do marcador dizendo o
+/// status, e o toque num dia abre o painel daquele dia. A listagem é a varredura
+/// por status, sem recorte de tempo: o segmentado escolhe o status, o servidor
+/// devolve em páginas de 25 e a rolagem pede a seguinte.
+///
+/// Antes as duas liam a mesma lista em memória. Não dá mais: com o status virando
+/// filtro do servidor, "o que está carregado" passou a ser uma fatia de um status
+/// só, e o calendário ficaria sem os marcadores dos outros dois.
+class ListaAtividadesView<T extends EventoAgricola> extends StatefulWidget {
+  /// Listagem paginada por status.
+  final ListaAtividadesPaginadaViewModel<T> viewModel;
+
+  /// Calendário mensal — cache próprio, por mês.
+  final AgendaMensalViewModel<T> agendaViewModel;
+
   final String rotuloCadastrar;
 
-  /// Frase do estado vazio. É a atividade que a escreve, e não a base, por
-  /// concordância: 'tratos culturais finalizados' e 'colheitas finalizadas'
-  /// não saem do mesmo molde.
   final String Function(StatusEvento status, String nomePropriedade)
       construirMensagemVazia;
 
   final IconData iconeCard;
 
-  /// Tela de cadastro. Deve devolver `true` no pop quando cadastrar.
   final WidgetBuilder construirTelaCadastro;
 
-  /// Tela de detalhes. Deve devolver `true` no pop quando algo mudar.
   final Widget Function(BuildContext context, T atividade, String nomeTalhao)
       construirTelaDetalhes;
 
   const ListaAtividadesView({
     super.key,
     required this.viewModel,
+    required this.agendaViewModel,
     required this.rotuloCadastrar,
     required this.construirMensagemVazia,
     required this.iconeCard,
@@ -59,9 +70,30 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
   @override
   bool get wantKeepAlive => true;
 
-  StatusEvento _filtroSelecionado = StatusEvento.emAndamento;
+  final _controladorDeRolagem = ScrollController();
 
-  ListaAtividadesDaPropriedadeViewModel<T> get _viewModel => widget.viewModel;
+  /// Dia aceso na grade. Estado só do calendário — a listagem abaixo não o lê.
+  DateTime? _diaSelecionado;
+
+  /// Última propriedade para a qual a agenda foi carregada. É o que distingue
+  /// "trocou de propriedade" de um rebuild qualquer.
+  int? _idPropriedadeDaAgenda;
+
+  ListaAtividadesPaginadaViewModel<T> get _viewModel => widget.viewModel;
+  AgendaMensalViewModel<T> get _agendaViewModel => widget.agendaViewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _controladorDeRolagem.addListener(_aoRolar);
+  }
+
+  @override
+  void dispose() {
+    _controladorDeRolagem.removeListener(_aoRolar);
+    _controladorDeRolagem.dispose();
+    super.dispose();
+  }
 
   @override
   void didChangeDependencies() {
@@ -71,12 +103,40 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
 
     if (idPropriedade == null) return;
 
-    // `carregar` notifica de forma síncrona: chamar durante a resolução de
-    // dependências dispararia rebuild no meio do frame. A guarda de escopo do
-    // ViewModel é que evita a rebusca quando a propriedade não mudou.
+    final trocouDePropriedade =
+        _idPropriedadeDaAgenda != null && _idPropriedadeDaAgenda != idPropriedade;
+    final precisaCarregarAgenda = _idPropriedadeDaAgenda != idPropriedade;
+
+    _idPropriedadeDaAgenda = idPropriedade;
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // A própria listagem detecta a troca de propriedade e descarta os três
+      // status; o calendário precisa que alguém esvazie o cache de meses, que é
+      // da propriedade anterior.
+      if (trocouDePropriedade) _agendaViewModel.limparCache();
+
       _viewModel.carregar(idPropriedade);
+      if (precisaCarregarAgenda) {
+        _agendaViewModel.carregarMes(idPropriedade, hoje());
+      }
     });
+  }
+
+  /// Pede a próxima página quando a rolagem se aproxima do fim. O ViewModel
+  /// ignora a chamada se já estiver buscando ou se não houver mais página, então
+  /// o disparo repetido durante o arrasto não vira requisição repetida.
+  void _aoRolar() {
+    if (!_controladorDeRolagem.hasClients) return;
+
+    // Com erro pendente no rodapé, quem retenta é o botão. Sem esta guarda, uma
+    // rota fora do ar viraria uma requisição por quadro de rolagem.
+    if (_viewModel.mensagemErro != null) return;
+
+    final posicao = _controladorDeRolagem.position;
+
+    if (posicao.pixels >= posicao.maxScrollExtent - _margemParaProximaPagina) {
+      _viewModel.carregarMaisPagina();
+    }
   }
 
   Future<void> _abrirCadastro() async {
@@ -112,14 +172,39 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
     if (alterou == true && mounted) _recarregar();
   }
 
-  void _recarregar() {
-    final idPropriedade = context
-        .read<PropriedadesUsuarioViewModel>()
-        .idPropriedadeSelecionada;
+  /// Recarrega as duas metades. Confirmar uma atividade muda o status dela e a
+  /// cor do marcador no mesmo movimento — atualizar só uma deixaria a outra
+  /// mentindo.
+  Future<void> _recarregar() {
+    return Future.wait([
+      _viewModel.recarregar(),
+      _agendaViewModel.recarregarMesVisivel(),
+    ]);
+  }
 
-    if (idPropriedade != null) {
-      _viewModel.carregar(idPropriedade, forcar: true);
-    }
+  /// Toque num dia do calendário abre o painel daquele dia — o mesmo da home.
+  /// A listagem abaixo fica onde está: quem tocou o dia quis ver o dia, não
+  /// refazer o filtro da tela.
+  void _abrirAtividadesDoDia(DateTime dia, List<T> doDia) {
+    setState(() => _diaSelecionado = dia);
+
+    mostrarAtividadesDoDia<T>(
+      context: context,
+      dia: dia,
+      atividades: doDia,
+      nomeDoTalhao: _agendaViewModel.nomeDoTalhao,
+      aoTocar: _abrirDetalhes,
+    );
+  }
+
+  void _mudarMes(DateTime mes) {
+    // O dia aceso é do mês que acabou de sair de vista.
+    setState(() => _diaSelecionado = null);
+
+    final idPropriedade = _idPropriedadeDaAgenda;
+    if (idPropriedade == null) return;
+
+    _agendaViewModel.carregarMes(idPropriedade, mes);
   }
 
   @override
@@ -141,67 +226,246 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
         ),
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 0.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: FiltroStatusAtividade(
-                  selecionado: _filtroSelecionado,
-                  onSelecionar: (novoFiltro) =>
-                      setState(() => _filtroSelecionado = novoFiltro),
-                ),
+        child: ListenableBuilder(
+          // Os dois ViewModels desenham partes diferentes da mesma tela.
+          listenable: Listenable.merge([_viewModel, _agendaViewModel]),
+          builder: (context, _) {
+            return _construirCorpo(_nomeDaPropriedade(propriedadesVM));
+          },
+        ),
+      ),
+    );
+  }
+
+  /// Sem `CorpoComEstado` aqui, ao contrário das outras telas de atividade:
+  /// aquele widget decide carregando/erro/vazio pela tela inteira, e esta tem
+  /// duas metades alimentadas por requisições diferentes. Deixá-lo mandando
+  /// fazia o toque num segmento apagar o calendário — e o próprio segmentado —
+  /// enquanto a primeira página daquele status vinha.
+  ///
+  /// Cada metade cuida do seu estado: o calendário no cabeçalho da grade
+  /// (`CalendarioAtividades.carregando`), a listagem em
+  /// [_construirSliverDaListagem].
+  Widget _construirCorpo(String nomePropriedade) {
+    // Slivers, e não um `SingleChildScrollView` com os cards num `Column`: a
+    // lista cresce a cada página e montar todos os cards de uma vez desfaria a
+    // preguiça do `SliverList.builder`. O calendário e o filtro rolam junto
+    // porque são cabeçalho da mesma tela, não uma barra fixa.
+    return RefreshIndicator(
+      color: _verdePrimario,
+      onRefresh: _recarregar,
+      child: CustomScrollView(
+        controller: _controladorDeRolagem,
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(24, 24, 24, 0),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _construirCalendario(),
+                  const SizedBox(height: 24),
+                  FiltroStatusAtividade(
+                    selecionado: _viewModel.statusAtual,
+                    onSelecionar: _viewModel.selecionarStatus,
+                  ),
+                  const SizedBox(height: 24),
+                ],
               ),
             ),
-            Expanded(
-              child: ListenableBuilder(
-                listenable: _viewModel,
-                builder: (context, _) {
-                  return _construirCorpo(_nomeDaPropriedade(propriedadesVM));
-                },
+          ),
+          SliverPadding(
+            // Folga generosa embaixo: o FAB flutua sobre o fim da lista.
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 96),
+            sliver: _construirSliverDaListagem(nomePropriedade),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Cascata de estados **da listagem** — a mesma ordem do `CorpoComEstado`
+  /// (carregando → erro → vazio → conteúdo), só que ocupando a região dos cards
+  /// em vez da tela.
+  Widget _construirSliverDaListagem(String nomePropriedade) {
+    if (_viewModel.isLoading) return _construirCarregandoListagem();
+
+    final atividades = _viewModel.atividades;
+
+    if (atividades.isEmpty) {
+      final erro = _viewModel.mensagemErro;
+
+      return SliverToBoxAdapter(
+        child: erro != null
+            ? _construirErroDaListagem(erro)
+            : _construirListaVazia(nomePropriedade),
+      );
+    }
+
+    // Com cards na tela, um erro de página seguinte não chega aqui: vai para o
+    // rodapé, sem apagar o que já foi carregado.
+    return SliverList.builder(
+      // O item extra é o rodapé de "carregando mais".
+      itemCount: atividades.length + 1,
+      itemBuilder: (context, indice) => indice < atividades.length
+          ? _construirCard(atividades[indice])
+          : _construirRodapeDaLista(),
+    );
+  }
+
+  /// Primeira página do status. Altura fixa de propósito: se o bloco encolhesse
+  /// para o tamanho do spinner, a rolagem saltaria a cada troca de segmento e
+  /// levaria o calendário junto.
+  Widget _construirCarregandoListagem() {
+    return const SliverToBoxAdapter(
+      child: SizedBox(
+        height: 160,
+        child: Center(
+          child: CircularProgressIndicator(color: _verdePrimario),
+        ),
+      ),
+    );
+  }
+
+  /// Erro no lugar dos cards, na mesma moldura do erro do calendário. Retentar
+  /// pede só a página que falhou — o calendário acima não é refeito.
+  Widget _construirErroDaListagem(String mensagem) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 32.0),
+      child: Column(
+        children: [
+          Text(
+            mensagem,
+            style: const TextStyle(color: Colors.red),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: _viewModel.tentarNovamente,
+            child: const Text(
+              'Tentar novamente',
+              style: TextStyle(color: _verdePrimario),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// A grade recebe **todas** as atividades do mês, sem passar pelo filtro de
+  /// status: filtrar deixaria todos os marcadores visíveis da mesma cor, e a cor
+  /// é justamente o que informa o status ali.
+  Widget _construirCalendario() {
+    final erro = _agendaViewModel.mensagemErro;
+
+    if (erro != null) return _construirErroDoCalendario(erro);
+
+    return CalendarioAtividades<T>(
+      atividades: _agendaViewModel.atividadesDoMes,
+      mesInicial: _agendaViewModel.mesVisivel,
+      diaSelecionado: _diaSelecionado,
+      carregando: _agendaViewModel.isLoading,
+      corDoMarcador: (atividade) => corDoStatus(atividade.status),
+      aoMudarMes: _mudarMes,
+      aoSelecionarDia: _abrirAtividadesDoDia,
+    );
+  }
+
+  /// Erro do calendário no lugar da grade, e não na tela inteira: a listagem
+  /// abaixo vem de outra requisição e pode estar perfeitamente carregada.
+  Widget _construirErroDoCalendario(String mensagem) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.all(24),
+      child: Column(
+        children: [
+          Text(
+            mensagem,
+            style: const TextStyle(color: Colors.red),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: _agendaViewModel.recarregarMesVisivel,
+            child: const Text(
+              'Tentar novamente',
+              style: TextStyle(color: _verdePrimario),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Rodapé da rolagem infinita: indicador da próxima página ou o erro de quem
+  /// falhou ao buscá-la. Ocupa altura zero quando não há nem um nem outro, para
+  /// não abrir um vão no fim da lista.
+  Widget _construirRodapeDaLista() {
+    if (_viewModel.isCarregandoMais) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(
+          child: SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              color: _verdePrimario,
+            ),
+          ),
+        ),
+      );
+    }
+
+    final erro = _viewModel.mensagemErro;
+
+    // Com cards na tela, o erro é desta página só — mora no fim da lista, e
+    // retentar pede a mesma página de novo em vez de recarregar tudo.
+    if (erro != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 24),
+        child: Column(
+          children: [
+            Text(
+              erro,
+              style: const TextStyle(color: Colors.red),
+              textAlign: TextAlign.center,
+            ),
+            TextButton(
+              onPressed: _viewModel.tentarNovamente,
+              child: const Text(
+                'Tentar novamente',
+                style: TextStyle(color: _verdePrimario),
               ),
             ),
           ],
         ),
-      ),
+      );
+    }
+
+    return const SizedBox.shrink();
+  }
+
+  Widget _construirCard(T atividade) {
+    return AtividadeCard(
+      atividade: atividade,
+      nomeTalhao: _viewModel.nomeDoTalhao(atividade.idTalhao),
+      icone: widget.iconeCard,
+      onTap: () => _abrirDetalhes(atividade),
     );
   }
 
-  Widget _construirCorpo(String nomePropriedade) {
-    final filtradas = _viewModel.porStatus(_filtroSelecionado);
-
-    return CorpoComEstado(
-      isLoading: _viewModel.isLoading,
-      mensagemErro: _viewModel.mensagemErro,
-      vazio: filtradas.isEmpty,
-      construirVazio: (_) => _construirEstadoVazio(nomePropriedade),
-      construirConteudo: (_) => ListView.builder(
-        padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 80.0),
-        itemCount: filtradas.length,
-        itemBuilder: (context, index) {
-          final atividade = filtradas[index];
-
-          return AtividadeCard(
-            atividade: atividade,
-            nomeTalhao: _viewModel.nomeDoTalhao(atividade.idTalhao),
-            icone: widget.iconeCard,
-            onTap: () => _abrirDetalhes(atividade),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _construirEstadoVazio(String nomePropriedade) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32.0),
-        child: Text(
-          widget.construirMensagemVazia(_filtroSelecionado, nomePropriedade),
-          style: const TextStyle(fontSize: 16, color: Colors.black54),
-          textAlign: TextAlign.center,
-        ),
+  Widget _construirListaVazia(String nomePropriedade) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 32.0),
+      child: Text(
+        widget.construirMensagemVazia(_viewModel.statusAtual, nomePropriedade),
+        style: const TextStyle(fontSize: 16, color: Colors.black54),
+        textAlign: TextAlign.center,
       ),
     );
   }

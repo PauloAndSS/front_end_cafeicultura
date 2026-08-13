@@ -5,10 +5,19 @@ class CardPropriedadeWidget extends StatelessWidget {
   final Propriedade propriedade;
   final VoidCallback? onTap;
 
+  /// Ícone no canto do cabeçalho, exibido só quando há [onTap].
+  ///
+  /// O padrão é a seta de avançar, que é o que o toque costuma significar. Quem
+  /// usa o card como parte expandida de um bloco recolhível passa
+  /// `Icons.expand_less`: ali o toque recolhe, e uma seta de avançar prometeria
+  /// uma navegação que não acontece.
+  final IconData iconeAcao;
+
   const CardPropriedadeWidget({
     super.key,
     required this.propriedade,
     this.onTap,
+    this.iconeAcao = Icons.arrow_forward_ios,
   });
 
   @override
@@ -52,7 +61,7 @@ class CardPropriedadeWidget extends StatelessWidget {
                       ),
                     ),
                     if (onTap != null)
-                      const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black26),
+                      Icon(iconeAcao, size: 16, color: Colors.black26),
                   ],
                 ),
                 const Padding(
@@ -62,7 +71,7 @@ class CardPropriedadeWidget extends StatelessWidget {
                 _buildInfoRow(
                   icon: Icons.square_foot,
                   title: 'Tamanho',
-                  value: '${propriedade.tamanho.valor} ${propriedade.tamanho.medida.name}',
+                  value: propriedade.tamanho.formatado,
                 ),
                 const SizedBox(height: 12),
                 _buildInfoRow(

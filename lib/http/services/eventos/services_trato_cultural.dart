@@ -1,7 +1,9 @@
 import 'dart:convert';
 
+import 'package:frond_end_cafeicultura_mobile/http/dtos/paginacao_dto.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
+import 'package:frond_end_cafeicultura_mobile/model/eventos/status_evento.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/tipo_trato.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo_utilizado.dart';
@@ -10,21 +12,96 @@ import 'package:http/http.dart' as http;
 class ServicesTratoCultural extends BaseService {
   late final Uri url = Uri.parse('$baseUrl/tratosculturais');
 
-  Future<List<TratoCultural>> buscarPorPropriedade(
-    int idPropriedade,
-  ) async {
+  /// Tratos da propriedade numa janela de tempo — o caso do calendário.
+  ///
+  /// `/tratosculturais/propriedade/{id}` atende **dois** usos, e eles entram por
+  /// métodos separados de propósito: aqui a rota não recebe `pagina` e por isso
+  /// devolve tudo o que houver no período, sem contadores no corpo. Um método só
+  /// com todos os parâmetros opcionais deixaria a chamada dizer nada sobre qual
+  /// dos dois contratos está em jogo.
+  ///
+  /// [filtroInicio] e [filtroFim] filtram pela **data de início** do trato.
+  Future<List<TratoCultural>> buscarPorPeriodo(
+    int idPropriedade, {
+    required DateTime filtroInicio,
+    required DateTime filtroFim,
+  }) async {
     try {
-      final response = await http.get(
-        Uri.parse('$url/propriedade/$idPropriedade'),
-        headers: defaultHeaders,
+      final uri = Uri.parse('$url/propriedade/$idPropriedade').replace(
+        queryParameters: {
+          'filtroInicio': filtroInicio.toUtc().toIso8601String(),
+          'filtroFim': filtroFim.toUtc().toIso8601String(),
+        },
       );
 
-      if (response.statusCode == 200) {
-        final dados = extrairDadosResposta(response.bodyBytes);
+      final response = await http.get(uri, headers: defaultHeaders);
 
-        return (dados as List)
-            .map((json) => TratoCultural.fromJson(json))
-            .toList();
+      if (response.statusCode == 200) {
+        return extrairListaNomeada(
+          response.bodyBytes,
+          'tratos',
+          TratoCultural.fromJson,
+        );
+      } else if (response.statusCode == 404) {
+        return const [];
+      } else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao buscar tratos culturais do período.',
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(
+        'Falha na comunicação ao buscar tratos culturais. Tente novamente mais tarde.',
+      );
+    }
+  }
+
+  /// Uma página de tratos num [status] — o caso da listagem com rolagem
+  /// infinita.
+  ///
+  /// A presença de `pagina` é o que liga a paginação na rota; o tamanho da
+  /// página é fixado em 25 pelo backend, então **não existe** parâmetro
+  /// `limite` para mandar. A resposta traz
+  /// `{ tratos, total, totalPaginas, paginaAtual }`, e quem decide se busca a
+  /// próxima é o ViewModel.
+  Future<ResultadoPaginadoDTO<TratoCultural>> buscarPorStatus(
+    int idPropriedade, {
+    required StatusEvento status,
+    required int pagina,
+  }) async {
+    try {
+      final uri = Uri.parse('$url/propriedade/$idPropriedade').replace(
+        queryParameters: {
+          'status': status.filtroApi,
+          'pagina': pagina.toString(),
+        },
+      );
+
+      final response = await http.get(uri, headers: defaultHeaders);
+
+      if (response.statusCode == 200) {
+        return ResultadoPaginadoDTO.deEnvelopePaginado(
+          extrairDadosPaginados(response.bodyBytes),
+          'tratos',
+          TratoCultural.fromJson,
+        );
+      } else if (response.statusCode == 404) {
+        // "Nenhum trato encontrado": o backend trata lista vazia como erro.
+        // Para a tela isso não é falha — é propriedade sem atividade naquele
+        // status, e o estado vazio da listagem já cobre esse caso. Sem esta
+        // guarda, uma propriedade nova abre a aba com mensagem de erro.
+        //
+        // `totalPaginas: pagina` e não `1`: assim `pagina >= totalPaginas` para
+        // a rolagem em vez de pedir a mesma página vazia de novo.
+        return ResultadoPaginadoDTO(
+          data: const [],
+          total: 0,
+          pagina: pagina,
+          totalPaginas: pagina,
+        );
       } else {
         tratarErroRequisicao(
           response.bodyBytes,

@@ -22,4 +22,17 @@ extension RotulosStatusEvento on StatusEvento {
         StatusEvento.emAndamento => 'Em andamento',
         StatusEvento.finalizado => 'Finalizadas',
       };
+
+  /// Valor do query param `status` nas rotas de atividade.
+  ///
+  /// Mora aqui, junto dos rótulos, e não no service: o enum é a fonte única do
+  /// que significa cada estado, e um `switch` de tradução perdido na camada HTTP
+  /// seria o quarto lugar a listar os mesmos três casos.
+  ///
+  /// Os valores não seguem o nome do enum — são os que o backend aceita.
+  String get filtroApi => switch (this) {
+        StatusEvento.agendado => 'agendados',
+        StatusEvento.emAndamento => 'em_andamento',
+        StatusEvento.finalizado => 'finalizados',
+      };
 }

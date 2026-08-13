@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_localizations/flutter_localizations.dart'; 
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
@@ -12,8 +13,14 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.d
 import 'package:frond_end_cafeicultura_mobile/views/auth/first_acess.dart';
 import 'package:frond_end_cafeicultura_mobile/views/home/main_screen_view.dart';
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized(); 
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Carrega os símbolos de data de pt-BR (nomes de mês e de dia da semana).
+  // Os delegates do MaterialApp cobrem os widgets do Flutter, mas não o `intl`
+  // usado direto pelo app e pelo calendário: sem isto, todo `DateFormat` com
+  // locale explícito lança `LocaleDataException` em runtime.
+  await initializeDateFormatting('pt_BR', null);
 
   runApp(
     MultiProvider(
