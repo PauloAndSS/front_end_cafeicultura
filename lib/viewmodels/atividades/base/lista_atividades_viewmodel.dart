@@ -17,11 +17,11 @@ abstract class ListaAtividadesViewModel<T extends EventoAgricola>
   List<T> _atividades = [];
   List<T> get atividades => List.unmodifiable(_atividades);
 
-  List<T> get emAndamento =>
-      _atividades.where((atividade) => atividade.emAndamento).toList();
-
-  List<T> get finalizadas =>
-      _atividades.where((atividade) => !atividade.emAndamento).toList();
+  /// Um método no lugar dos getters `emAndamento`/`finalizadas`: com três
+  /// estados, o filtro da tela é o próprio [StatusEvento], e um getter por
+  /// estado só repetiria o `where`.
+  List<T> porStatus(StatusEvento status) =>
+      _atividades.where((atividade) => atividade.status == status).toList();
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;

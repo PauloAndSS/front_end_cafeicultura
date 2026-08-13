@@ -6,22 +6,7 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_selector
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_summary.dart';  
 import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
-/// Tela de Safras e Relatórios.
-///
-/// Depois da modularização, essa página só cuida de: carregar os dados da
-/// propriedade selecionada, abrir os diálogos de nova/encerrar/reativar
-/// safra, e orquestrar os widgets reutilizáveis abaixo — toda a UI pesada
-/// (select de safra, card de resumo, relatório com gráficos) mora em
-/// `lib/widgets/safra/`, então pode ser reaproveitada em outras telas do
-/// sistema sem depender desta página:
-///
-/// - `SafraSelectorWidget` — select de safra; use `mostrarAcoes: false`
-///   para embutir só o campo de seleção em outro lugar, sem os botões de
-///   nova/encerrar/reativar safra.
-/// - `SafraSummaryCard` — card com os detalhes da safra selecionada.
-/// - `SafraRelatorioWidget` — relatório completo (estatísticas, resumo
-///   financeiro, gráficos e lista de eventos), bastando passar a lista de
-///   `SafraEvento` da safra desejada.
+
 class SafraViewPage extends StatefulWidget {
   const SafraViewPage({super.key});
 

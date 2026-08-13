@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/tipo_atividade.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/trato_cultural/trato_cultural_view.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/atividade_em_desenvolvimento.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/trato_cultural/trato_cultural_view.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/atividade_em_desenvolvimento.dart';
 
 /// Telas de listagem por tipo de atividade.
 ///

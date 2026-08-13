@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/blocos_detalhes_atividade.dart';
 
 /// Uma linha extra no corpo do card, específica de um tipo de atividade.
 class LinhaInfoCard {
@@ -150,8 +151,7 @@ class AtividadeCard extends StatelessWidget {
   }
 
   Widget _construirBadgeStatus() {
-    final cor =
-        atividade.emAndamento ? const Color(0xFF67835C) : Colors.black54;
+    final cor = corDoStatus(atividade.status);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

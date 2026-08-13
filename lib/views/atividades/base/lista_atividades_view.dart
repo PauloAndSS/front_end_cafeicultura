@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/lista_atividades_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/atividade_card.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/corpo_com_estado.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/filtro_status_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/atividade_card.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/corpo_com_estado.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/filtro_status_atividade.dart';
 import 'package:provider/provider.dart';
 
 const _verdePrimario = Color(0xFF67835C);
@@ -28,7 +28,7 @@ class ListaAtividadesView<T extends EventoAgricola>
   /// Frase do estado vazio. É a atividade que a escreve, e não a base, por
   /// concordância: 'tratos culturais finalizados' e 'colheitas finalizadas'
   /// não saem do mesmo molde.
-  final String Function(bool emAndamento, String nomePropriedade)
+  final String Function(StatusEvento status, String nomePropriedade)
       construirMensagemVazia;
 
   final IconData iconeCard;
@@ -59,7 +59,7 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
   @override
   bool get wantKeepAlive => true;
 
-  StatusAtividadeFiltro _filtroSelecionado = StatusAtividadeFiltro.emAndamento;
+  StatusEvento _filtroSelecionado = StatusEvento.emAndamento;
 
   ListaAtividadesDaPropriedadeViewModel<T> get _viewModel => widget.viewModel;
 
@@ -169,10 +169,7 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
   }
 
   Widget _construirCorpo(String nomePropriedade) {
-    final filtradas =
-        _filtroSelecionado == StatusAtividadeFiltro.emAndamento
-            ? _viewModel.emAndamento
-            : _viewModel.finalizadas;
+    final filtradas = _viewModel.porStatus(_filtroSelecionado);
 
     return CorpoComEstado(
       isLoading: _viewModel.isLoading,
@@ -197,14 +194,11 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
   }
 
   Widget _construirEstadoVazio(String nomePropriedade) {
-    final emAndamento =
-        _filtroSelecionado == StatusAtividadeFiltro.emAndamento;
-
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32.0),
         child: Text(
-          widget.construirMensagemVazia(emAndamento, nomePropriedade),
+          widget.construirMensagemVazia(_filtroSelecionado, nomePropriedade),
           style: const TextStyle(fontSize: 16, color: Colors.black54),
           textAlign: TextAlign.center,
         ),

@@ -14,7 +14,7 @@ class ServicesAuth extends BaseService {
         headers: defaultHeaders,
         body: jsonEncode(dto.toJson()),
       );
-      if (response.statusCode == 200 || response.statusCode == 201) {
+      if (response.statusCode == 200) {
         BaseService.atualizarCookie(response);
         final dadosAuth = extrairDadosResposta(response.bodyBytes);
         return LoginResponseDTO.fromJson(dadosAuth);

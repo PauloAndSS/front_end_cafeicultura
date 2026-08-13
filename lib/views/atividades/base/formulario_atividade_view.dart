@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/dados_formulario_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/formatadores.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/cadastrar_atividade_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/corpo_com_estado.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/selecionar_responsaveis_modal.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/seletor_data_atividade.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/seletor_multiplo_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/corpo_com_estado.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/selecionar_responsaveis_modal.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_data_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_multiplo_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:provider/provider.dart';
@@ -152,11 +153,17 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     );
   }
 
+  /// Data de término só existe em lançamento retroativo: o que ainda vai
+  /// acontecer não tem como já ter terminado. Início hoje entra aqui — a
+  /// atividade de um dia só, feita e fechada no mesmo dia.
+  bool get _aceitaDataFim => _dataInicio != null && !ehFutura(_dataInicio!);
+
   Future<void> _selecionarDataInicio() async {
     final escolhida = await selecionarDataAtividade(
       context: context,
       ajuda: widget.ajudaDataInicio,
       inicial: _dataInicio,
+      maxima: limiteAgendamento,
     );
 
     if (escolhida == null) return;
@@ -165,20 +172,24 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
       _dataInicio = escolhida;
       _dataInicioController.text = formatarDataBr(escolhida);
 
-      // Um término anterior ao novo início deixaria de fazer sentido.
-      if (_dataFim != null && _dataFim!.isBefore(escolhida)) {
-        _dataFim = null;
-        _dataFimController.clear();
+      // Um término anterior ao novo início deixaria de fazer sentido, e um
+      // início no futuro faz o campo de término sumir — em qualquer dos dois
+      // casos o que já estava escolhido precisa cair junto.
+      if (_dataFim != null && (_dataFim!.isBefore(escolhida) || !_aceitaDataFim)) {
+        _limparDataFim();
       }
     });
   }
 
-  Future<void> _selecionarDataFim() async {
-    if (_dataInicio == null) {
-      _mostrarAviso('Selecione primeiro a data de início.');
-      return;
-    }
+  /// Só chamado de dentro de um `setState` ou de um `onPressed` que já
+  /// reconstrói — o campo em si é `readOnly`, quem guarda o valor é [_dataFim].
+  void _limparDataFim() {
+    _dataFim = null;
+    _dataFimController.clear();
+  }
 
+  Future<void> _selecionarDataFim() async {
+    // O campo não é montado sem data de início, então não há guarda a fazer.
     final escolhida = await selecionarDataAtividade(
       context: context,
       ajuda: widget.ajudaDataFim,
@@ -414,31 +425,30 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
               ),
             ),
 
-            GestureDetector(
-              onTap: _selecionarDataFim,
-              child: AbsorbPointer(
-                child: CustomTextField(
-                  label: 'Data de término (opcional)',
-                  controller: _dataFimController,
-                  hintText: widget.dicaDataFim,
-                  readOnly: true,
+            if (_aceitaDataFim) ...[
+              GestureDetector(
+                onTap: _selecionarDataFim,
+                child: AbsorbPointer(
+                  child: CustomTextField(
+                    label: 'Data de término (opcional)',
+                    controller: _dataFimController,
+                    hintText: widget.dicaDataFim,
+                    readOnly: true,
+                  ),
                 ),
               ),
-            ),
-
-            if (_dataFim != null)
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton.icon(
-                  onPressed: () => setState(() {
-                    _dataFim = null;
-                    _dataFimController.clear();
-                  }),
-                  icon: const Icon(Icons.close, size: 16),
-                  label: const Text('Remover data de término'),
-                  style: TextButton.styleFrom(foregroundColor: _verdePrimario),
+              if (_dataFim != null)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton.icon(
+                    onPressed: () => setState(_limparDataFim),
+                    icon: const Icon(Icons.close, size: 16),
+                    label: const Text('Remover data de término'),
+                    style: TextButton.styleFrom(foregroundColor: _verdePrimario),
+                  ),
                 ),
-              ),
+            ] else if (_dataInicio != null)
+              const _AvisoAgendamento(),
 
             const SizedBox(height: 8),
 
@@ -480,6 +490,40 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Explica o sumiço do campo de término quando a data de início é futura.
+///
+/// Sem isto o campo simplesmente desaparece ao escolher uma data futura, e o
+/// usuário fica sem saber se a tela quebrou.
+class _AvisoAgendamento extends StatelessWidget {
+  const _AvisoAgendamento();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: _verdeSecundario.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.event_available, size: 20, color: _verdePrimario),
+          SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              'Atividade agendada. A data de término é informada na '
+              'confirmação, depois que ela começar.',
+              style: TextStyle(fontSize: 13, color: Colors.black87),
+            ),
+          ),
+        ],
       ),
     );
   }

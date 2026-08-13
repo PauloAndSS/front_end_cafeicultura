@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/tipo_atividade.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/registro_atividades.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/registro_atividades.dart';
 
 /// Aba de atividades: uma guia por [TipoAtividade].
 ///

@@ -118,7 +118,15 @@ class SecaoEditavelAtividade extends StatelessWidget {
   }
 }
 
-/// Selo de "Em andamento" / "Finalizado" no cabeçalho do cartão.
+/// Cor do selo de status, compartilhada pelo cartão de detalhes e pelo card da
+/// listagem — os dois pintavam o mesmo ternário antes do agendamento entrar.
+Color corDoStatus(StatusEvento status) => switch (status) {
+      StatusEvento.agendado => _verdeSecundario,
+      StatusEvento.emAndamento => _verdePrimario,
+      StatusEvento.finalizado => Colors.black54,
+    };
+
+/// Selo de "Agendado" / "Em andamento" / "Finalizado" no cabeçalho do cartão.
 class BadgeStatusAtividade extends StatelessWidget {
   final EventoAgricola atividade;
 
@@ -126,7 +134,7 @@ class BadgeStatusAtividade extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cor = atividade.emAndamento ? _verdePrimario : Colors.black54;
+    final cor = corDoStatus(atividade.status);
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -186,23 +194,72 @@ class AvisoAtividadeFinalizada extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return _CaixaAviso(
+      icone: Icons.info_outline,
+      cor: Colors.orange,
+      corDoTexto: Colors.brown,
+      mensagem: mensagem,
+    );
+  }
+}
+
+/// Aviso no lugar do botão de confirmar, enquanto a atividade não começou.
+///
+/// Explica a ausência do botão: sem isto o usuário abre uma atividade agendada,
+/// não acha como finalizá-la e conclui que a tela está quebrada.
+class AvisoAtividadeAgendada extends StatelessWidget {
+  final String dataInicioFormatada;
+
+  const AvisoAtividadeAgendada({
+    super.key,
+    required this.dataInicioFormatada,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return _CaixaAviso(
+      icone: Icons.event_available,
+      cor: _verdePrimario,
+      corDoTexto: Colors.black87,
+      mensagem: 'Atividade agendada. Poderá ser confirmada a partir de '
+          '$dataInicioFormatada.',
+    );
+  }
+}
+
+/// Moldura comum aos avisos de rodapé.
+class _CaixaAviso extends StatelessWidget {
+  final IconData icone;
+  final Color cor;
+  final Color corDoTexto;
+  final String mensagem;
+
+  const _CaixaAviso({
+    required this.icone,
+    required this.cor,
+    required this.corDoTexto,
+    required this.mensagem,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.orange.withValues(alpha: 0.1),
+        color: cor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+        border: Border.all(color: cor.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          const Icon(Icons.info_outline, color: Colors.orange),
+          Icon(icone, color: cor),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               mensagem,
-              style: const TextStyle(
-                color: Colors.brown,
+              style: TextStyle(
+                color: corDoTexto,
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),

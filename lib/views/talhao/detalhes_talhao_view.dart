@@ -1,16 +1,17 @@
 // lib/views/talhao/detalhes_talhao_view.dart
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
+import 'package:frond_end_cafeicultura_mobile/model/eventos/status_evento.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/tipo_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/model/talhao.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/tratos_culturais_do_talhao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/detalhes_talhao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_propriedades_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/registro_atividades.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/trato_cultural/detalhes_trato_cultural_view.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/atividade_card.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/filtro_status_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/registro_atividades.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/trato_cultural/detalhes_trato_cultural_view.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/atividade_card.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/filtro_status_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/talhao/widgets/seletor_tipo_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:provider/provider.dart';
@@ -34,7 +35,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
 
   TipoAtividade _tipoAtividade = TipoAtividade.tratosCulturais;
 
-  StatusAtividadeFiltro _filtroAtividades = StatusAtividadeFiltro.emAndamento;
+  StatusEvento _filtroAtividades = StatusEvento.emAndamento;
 
   @override
   void initState() {
@@ -446,14 +447,10 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
       );
     }
 
-    final emAndamento = _filtroAtividades == StatusAtividadeFiltro.emAndamento;
-
-    final tratosFiltrados = emAndamento
-        ? _atividadesViewModel.emAndamento
-        : _atividadesViewModel.finalizadas;
+    final tratosFiltrados = _atividadesViewModel.porStatus(_filtroAtividades);
 
     if (tratosFiltrados.isEmpty) {
-      return _construirAtividadesVazias(emAndamento);
+      return _construirAtividadesVazias();
     }
 
     // Column em vez de ListView: a tela inteira já está num
@@ -477,8 +474,12 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView> {
     return _construirCaixaAviso('${_tipoAtividade.rotulo} em desenvolvimento.');
   }
 
-  Widget _construirAtividadesVazias(bool emAndamento) {
-    final statusTexto = emAndamento ? 'em andamento' : 'finalizada';
+  Widget _construirAtividadesVazias() {
+    final statusTexto = switch (_filtroAtividades) {
+      StatusEvento.agendado => 'agendada',
+      StatusEvento.emAndamento => 'em andamento',
+      StatusEvento.finalizado => 'finalizada',
+    };
 
     return _construirCaixaAviso(
       'Nenhuma atividade $statusTexto neste talhão.',

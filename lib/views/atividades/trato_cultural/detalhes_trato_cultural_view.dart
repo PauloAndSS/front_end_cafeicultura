@@ -2,14 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/detalhes_trato_cultural_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/base/detalhes_atividade_view.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/blocos_detalhes_atividade.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/selecionar_insumos_modal.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/base/detalhes_atividade_view.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/blocos_detalhes_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/selecionar_insumos_modal.dart';
 import 'package:provider/provider.dart';
 
 /// Detalhes de um trato cultural.
 ///
-/// Tudo o que é comum a qualquer atividade — finalizar, descrição,
+/// Tudo o que é comum a qualquer atividade — confirmar, datas, descrição,
 /// responsáveis, status — vem de [DetalhesAtividadeView]. Aqui sobram a linha
 /// do tipo e a seção de insumos.
 class DetalhesTratoCulturalView extends StatefulWidget {
@@ -83,10 +83,11 @@ class _DetalhesTratoCulturalViewState extends State<DetalhesTratoCulturalView> {
       viewModel: _viewModel,
       nomeTalhao: widget.nomeTalhao,
       tituloCartao: 'Informações do Trato',
-      rotuloBotaoFinalizar: 'Finalizar Trato',
-      tituloDialogoFinalizar: 'Finalizar Trato Cultural',
+      rotuloBotaoConfirmar: 'Confirmar Trato',
+      tituloTelaConfirmar: 'Confirmar Trato Cultural',
+      ajudaDataInicio: 'Data de início do trato cultural',
       ajudaDataFim: 'Data de término do trato cultural',
-      mensagemSucessoFinalizar: 'Trato cultural finalizado com sucesso!',
+      mensagemSucessoConfirmar: 'Trato cultural confirmado com sucesso!',
       mensagemJaFinalizada:
           'Este trato cultural já foi finalizado e não pode mais ser modificado.',
       construirLinhasExtras: (context, trato, editavel) => [

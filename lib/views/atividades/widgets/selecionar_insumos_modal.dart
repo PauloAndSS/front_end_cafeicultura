@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo_utilizado.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/carregar_insumos_mixin.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/cadastrar_insumo_dialog.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/quantidade_insumo_dialog.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/cadastrar_insumo_dialog.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/quantidade_insumo_dialog.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 
 const _verdePrimario = Color(0xFF67835C);

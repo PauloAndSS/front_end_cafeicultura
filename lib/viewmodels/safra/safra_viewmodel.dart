@@ -138,9 +138,6 @@ class SafraViewModel extends ChangeNotifier {
     _cacheSafrasPorPropriedade[idPropriedade] = List<Safra>.from(safras);
   }
 
-  /// Limpa o cache de sessão de todas as propriedades (ex: no logout do
-  /// usuário) ou apenas de uma propriedade específica, se [idPropriedade]
-  /// for informado.
   void limparCacheSessao({int? idPropriedade}) {
     if (idPropriedade != null) {
       _cacheSafrasPorPropriedade.remove(idPropriedade);
@@ -350,8 +347,6 @@ class SafraViewModel extends ChangeNotifier {
     try {
       final novasSafras = await _buscarSafrasDaPropriedade(idPropriedade);
       _safras = _ordenarSafras(novasSafras);
-      // Mutação (criar/encerrar/reativar) sempre atualiza o cache de sessão
-      // dessa propriedade, já que os dados no servidor mudaram.
       _salvarSafrasNoCache(idPropriedade, _safras);
 
       if (novasSafras.isEmpty) {
@@ -434,7 +429,7 @@ class SafraViewModel extends ChangeNotifier {
     copia.sort((a, b) {
       final dataA = a.dataInicio ?? a.dataFim ?? DateTime.fromMillisecondsSinceEpoch(0);
       final dataB = b.dataInicio ?? b.dataFim ?? DateTime.fromMillisecondsSinceEpoch(0);
-      final comparacaoData = dataB.compareTo(dataA);
+      final   comparacaoData = dataB.compareTo(dataA);
       if (comparacaoData != 0) {
         return comparacaoData;
       }

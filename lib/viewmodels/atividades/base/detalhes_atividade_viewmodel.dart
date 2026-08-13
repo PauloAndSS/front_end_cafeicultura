@@ -4,7 +4,12 @@ import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/ev
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/carregar_responsaveis_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/descarte_seguro_mixin.dart';
 
-typedef ChamadaFinalizar = Future<bool> Function(int id, DateTime dataFim);
+typedef ChamadaConfirmar = Future<bool> Function(
+  int id, {
+  required DateTime dataInicio,
+  required DateTime dataFim,
+});
+typedef ChamadaData = Future<bool> Function(int id, DateTime data);
 typedef ChamadaTexto = Future<bool> Function(int id, String texto);
 typedef ChamadaIds = Future<bool> Function(int id, List<int> ids);
 
@@ -16,7 +21,7 @@ typedef ChamadaIds = Future<bool> Function(int id, List<int> ids);
 /// pontual sem `dataFim`, ou não tiver rota de descrição, a subclasse seria
 /// obrigada a um `throw UnimplementedError()` — erro em runtime onde deveria
 /// ser simplesmente ausência de botão. Com o getter anulável, `null` já é a
-/// flag de capacidade ([podeFinalizar] e companhia) que a View consulta.
+/// flag de capacidade ([podeConfirmar] e companhia) que a View consulta.
 abstract class DetalhesAtividadeViewModel<T extends EventoAgricola>
     extends ChangeNotifier with DescarteSeguroMixin, CarregarResponsaveisMixin {
   DetalhesAtividadeViewModel(this._atividade);
@@ -48,7 +53,10 @@ abstract class DetalhesAtividadeViewModel<T extends EventoAgricola>
   // --- injeção da camada HTTP ---------------------------------------------
 
   @protected
-  ChamadaFinalizar? get chamadaFinalizar => null;
+  ChamadaConfirmar? get chamadaConfirmar => null;
+
+  @protected
+  ChamadaData? get chamadaAlterarDataInicio => null;
 
   @protected
   ChamadaTexto? get chamadaAlterarDescricao => null;
@@ -56,7 +64,8 @@ abstract class DetalhesAtividadeViewModel<T extends EventoAgricola>
   @protected
   ChamadaIds? get chamadaAlterarResponsaveis => null;
 
-  bool get podeFinalizar => chamadaFinalizar != null;
+  bool get podeConfirmar => chamadaConfirmar != null;
+  bool get podeAlterarDataInicio => chamadaAlterarDataInicio != null;
   bool get podeAlterarDescricao => chamadaAlterarDescricao != null;
   bool get podeAlterarResponsaveis => chamadaAlterarResponsaveis != null;
 
@@ -69,6 +78,7 @@ abstract class DetalhesAtividadeViewModel<T extends EventoAgricola>
   @protected
   T copiarComum(
     T atual, {
+    DateTime? dataInicio,
     DateTime? dataFim,
     String? descricao,
     List<Pessoa>? responsaveis,
@@ -76,11 +86,40 @@ abstract class DetalhesAtividadeViewModel<T extends EventoAgricola>
 
   // --- ações ---------------------------------------------------------------
 
-  Future<bool> finalizar(DateTime dataFim) {
+  /// Fecha a atividade na [dataFim], com a [dataInicio] eventualmente corrigida
+  /// na tela de confirmação.
+  ///
+  /// As duas datas vão para o endpoint mesmo quando o início não mudou — é ele
+  /// quem valida o par.
+  Future<bool> confirmar({
+    required DateTime dataInicio,
+    required DateTime dataFim,
+  }) {
     return executar(
-      chamada: () => chamadaFinalizar!(_atividade.id!, dataFim),
-      aplicar: () => _atividade = copiarComum(_atividade, dataFim: dataFim),
-      erroInterno: 'Ocorreu um erro interno ao finalizar $rotuloAtividade.',
+      chamada: () => chamadaConfirmar!(
+        _atividade.id!,
+        dataInicio: dataInicio,
+        dataFim: dataFim,
+      ),
+      aplicar: () => _atividade = copiarComum(
+        _atividade,
+        dataInicio: dataInicio,
+        dataFim: dataFim,
+      ),
+      erroInterno: 'Ocorreu um erro interno ao confirmar $rotuloAtividade.',
+    );
+  }
+
+  /// Corrige ou reagenda o início de uma atividade ainda aberta.
+  ///
+  /// Jogar a data para frente rebaixa a atividade a "Agendada" — o status é
+  /// derivado das datas, então a View se reconfigura sozinha no rebuild.
+  Future<bool> alterarDataInicio(DateTime dataInicio) {
+    return executar(
+      chamada: () => chamadaAlterarDataInicio!(_atividade.id!, dataInicio),
+      aplicar: () =>
+          _atividade = copiarComum(_atividade, dataInicio: dataInicio),
+      erroInterno: 'Ocorreu um erro interno ao alterar a data de início.',
     );
   }
 

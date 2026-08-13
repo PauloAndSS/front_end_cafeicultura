@@ -3,9 +3,9 @@ import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tr
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo_utilizado.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/cadastrar_trato_cultural_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/base/formulario_atividade_view.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/selecionar_insumos_modal.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/seletor_multiplo_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/base/formulario_atividade_view.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/selecionar_insumos_modal.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_multiplo_atividade.dart';
 import 'package:provider/provider.dart';
 
 class CadastrarTratoCulturalView extends StatefulWidget {

@@ -19,7 +19,10 @@ class DetalhesTratoCulturalViewModel
   String get rotuloAtividade => 'o trato cultural';
 
   @override
-  ChamadaFinalizar? get chamadaFinalizar => _tratoService.finalizar;
+  ChamadaConfirmar? get chamadaConfirmar => _tratoService.confirmar;
+
+  @override
+  ChamadaData? get chamadaAlterarDataInicio => _tratoService.alterarDataInicio;
 
   @override
   ChamadaTexto? get chamadaAlterarDescricao => _tratoService.alterarDescricao;
@@ -31,11 +34,13 @@ class DetalhesTratoCulturalViewModel
   @override
   TratoCultural copiarComum(
     TratoCultural atual, {
+    DateTime? dataInicio,
     DateTime? dataFim,
     String? descricao,
     List<Pessoa>? responsaveis,
   }) {
     return atual.copyWith(
+      dataInicio: dataInicio,
       dataFim: dataFim,
       descricao: descricao,
       responsaveis: responsaveis,

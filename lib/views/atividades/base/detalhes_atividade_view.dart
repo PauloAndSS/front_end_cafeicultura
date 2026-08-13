@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/formatadores.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/detalhes_atividade_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/blocos_detalhes_atividade.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/selecionar_responsaveis_modal.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/atividades/widgets/seletor_data_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/base/confirmar_atividade_view.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/blocos_detalhes_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/selecionar_responsaveis_modal.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_data_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 
 const _verdePrimario = Color(0xFF67835C);
@@ -23,10 +24,10 @@ typedef ConstrutorBlocosAtividade<T> = List<Widget> Function(
 
 /// Detalhes de uma atividade agrícola.
 ///
-/// Descrição e responsáveis são editados tocando no próprio atributo dentro do
-/// cartão — o lápis marca quais têm endpoint de alteração, e ele só aparece se
-/// o ViewModel expuser a chamada correspondente. Finalizar continua sendo
-/// botão: muda o estado da atividade inteira e é irreversível.
+/// Data de início, descrição e responsáveis são editados tocando no próprio
+/// atributo dentro do cartão — o lápis marca quais têm endpoint de alteração, e
+/// ele só aparece se o ViewModel expuser a chamada correspondente. Confirmar
+/// continua sendo botão: muda o estado da atividade inteira e é irreversível.
 ///
 /// Recebe o [nomeTalhao] pronto porque a listagem já resolveu o nome a partir
 /// do `idTalhao` — refazer a busca aqui repetiria dezenas de requisições por
@@ -39,13 +40,17 @@ class DetalhesAtividadeView<T extends EventoAgricola>
   /// 'Informações do Trato' — cabeçalho do cartão.
   final String tituloCartao;
 
-  final String rotuloBotaoFinalizar;
-  final String tituloDialogoFinalizar;
+  /// 'Confirmar Trato' — rótulo do botão que abre a tela de confirmação.
+  final String rotuloBotaoConfirmar;
 
-  /// 'Data de término do trato cultural' — cabeçalho do calendário.
+  /// 'Confirmar Trato Cultural' — título da tela de confirmação.
+  final String tituloTelaConfirmar;
+
+  /// 'Data de início do trato cultural' — cabeçalhos dos calendários.
+  final String ajudaDataInicio;
   final String ajudaDataFim;
 
-  final String mensagemSucessoFinalizar;
+  final String mensagemSucessoConfirmar;
   final String mensagemJaFinalizada;
 
   /// Linhas de info do tipo concreto, logo após 'Talhão:'.
@@ -59,10 +64,11 @@ class DetalhesAtividadeView<T extends EventoAgricola>
     required this.viewModel,
     required this.nomeTalhao,
     required this.tituloCartao,
-    required this.rotuloBotaoFinalizar,
-    required this.tituloDialogoFinalizar,
+    required this.rotuloBotaoConfirmar,
+    required this.tituloTelaConfirmar,
+    required this.ajudaDataInicio,
     required this.ajudaDataFim,
-    required this.mensagemSucessoFinalizar,
+    required this.mensagemSucessoConfirmar,
     required this.mensagemJaFinalizada,
     this.construirLinhasExtras,
     this.construirSecoesExtras,
@@ -89,55 +95,59 @@ class _DetalhesAtividadeViewState<T extends EventoAgricola>
     );
   }
 
-  Future<void> _finalizar() async {
-    final atividade = _viewModel.atividade;
-
-    final dataEscolhida = await selecionarDataAtividade(
-      context: context,
-      ajuda: widget.ajudaDataFim,
-      minima: atividade.dataInicio,
-    );
-
-    if (dataEscolhida == null || !mounted) return;
-
-    final confirmou = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(widget.tituloDialogoFinalizar),
-        content: Text(
-          'Deseja finalizar "${atividade.tituloExibicao}" na data '
-          '${formatarDataBr(dataEscolhida)}?\n\n'
-          'Depois de finalizada ela não poderá mais ser alterada.',
+  /// A confirmação é tela, e não diálogo: são dois calendários que dependem um
+  /// do outro. O erro é reportado lá dentro, para o usuário poder corrigir as
+  /// datas sem refazer o caminho — aqui só chega o sucesso.
+  Future<void> _abrirConfirmacao() async {
+    final confirmou = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ConfirmarAtividadeView<T>(
+          viewModel: _viewModel,
+          nomeTalhao: widget.nomeTalhao,
+          titulo: widget.tituloTelaConfirmar,
+          ajudaDataInicio: widget.ajudaDataInicio,
+          ajudaDataFim: widget.ajudaDataFim,
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Finalizar',
-              style: TextStyle(
-                color: _verdePrimario,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
       ),
     );
 
-    if (confirmou != true) return;
+    if (confirmou == true && mounted) {
+      _mostrarSucesso(widget.mensagemSucessoConfirmar);
+    }
+  }
 
-    final sucesso = await _viewModel.finalizar(dataEscolhida);
+  /// Corrigir o início não exige confirmar a atividade — é edição de atributo,
+  /// como a descrição.
+  ///
+  /// O teto é [limiteAgendamento], e não hoje: quem marcou para o dia errado
+  /// precisa poder adiar. A atividade então volta para "Agendada" sozinha,
+  /// porque o status sai das datas.
+  Future<void> _alterarDataInicio() async {
+    // `apenasData` porque a data vem do backend em meia-noite UTC: crua, o
+    // picker abriria no dia anterior no fuso de Brasília.
+    final atual = apenasData(_viewModel.atividade.dataInicio);
+
+    final escolhida = await selecionarDataAtividade(
+      context: context,
+      ajuda: widget.ajudaDataInicio,
+      inicial: atual,
+      maxima: limiteAgendamento,
+    );
+
+    if (escolhida == null || !mounted) return;
+    if (apenasData(escolhida) == atual) return;
+
+    final sucesso = await _viewModel.alterarDataInicio(escolhida);
 
     if (!mounted) return;
 
     if (sucesso) {
-      _mostrarSucesso(widget.mensagemSucessoFinalizar);
+      _mostrarSucesso('Data de início alterada com sucesso!');
     } else {
-      _mostrarErro(_viewModel.mensagemErro ?? 'Erro ao finalizar a atividade.');
+      _mostrarErro(
+        _viewModel.mensagemErro ?? 'Erro ao alterar a data de início.',
+      );
     }
   }
 
@@ -215,12 +225,7 @@ class _DetalhesAtividadeViewState<T extends EventoAgricola>
                 children: [
                   _construirCartaoInformacoes(context),
                   const SizedBox(height: 32),
-                  if (_viewModel.atividade.emAndamento)
-                    _construirAcoes()
-                  else
-                    AvisoAtividadeFinalizada(
-                      mensagem: widget.mensagemJaFinalizada,
-                    ),
+                  _construirRodape(),
                 ],
               ),
             );
@@ -236,7 +241,10 @@ class _DetalhesAtividadeViewState<T extends EventoAgricola>
     // Atividade finalizada congela tudo; durante uma requisição em voo, o toque
     // não pode disparar uma segunda. O lápis e o InkWell nascem os dois deste
     // mesmo null, então nunca aparece um indicador que não responde.
-    final editavel = atividade.emAndamento && !_viewModel.isLoading;
+    //
+    // `!finalizado`, e não `emAndamento`: atividade agendada ainda não começou,
+    // mas descrição, responsáveis e insumos continuam editáveis.
+    final editavel = !atividade.finalizado && !_viewModel.isLoading;
 
     return Container(
       width: double.infinity,
@@ -291,6 +299,9 @@ class _DetalhesAtividadeViewState<T extends EventoAgricola>
             LinhaInfoAtividade(
               rotulo: 'Data de Início:',
               valor: atividade.dataInicioFormatada,
+              onEditar: editavel && _viewModel.podeAlterarDataInicio
+                  ? _alterarDataInicio
+                  : null,
             ),
             LinhaInfoAtividade(
               rotulo: 'Data de Término:',
@@ -325,17 +336,34 @@ class _DetalhesAtividadeViewState<T extends EventoAgricola>
     );
   }
 
-  /// Só finalizar sobrou como botão: as edições de atributo migraram para o
-  /// próprio cartão, mas finalizar congela a atividade e não pode ficar a um
-  /// toque distraído de distância.
-  Widget _construirAcoes() {
-    if (!_viewModel.podeFinalizar) return const SizedBox.shrink();
+  /// Um ramo por estado da atividade.
+  ///
+  /// Só confirmar sobrou como botão: as edições de atributo migraram para o
+  /// próprio cartão, mas confirmar congela a atividade e não pode ficar a um
+  /// toque distraído de distância. Agendada não tem o que confirmar — ela nem
+  /// começou —, e o aviso diz a partir de quando terá.
+  Widget _construirRodape() {
+    final atividade = _viewModel.atividade;
+
+    return switch (atividade.status) {
+      StatusEvento.agendado => AvisoAtividadeAgendada(
+          dataInicioFormatada: atividade.dataInicioFormatada,
+        ),
+      StatusEvento.finalizado => AvisoAtividadeFinalizada(
+          mensagem: widget.mensagemJaFinalizada,
+        ),
+      StatusEvento.emAndamento => _construirBotaoConfirmar(),
+    };
+  }
+
+  Widget _construirBotaoConfirmar() {
+    if (!_viewModel.podeConfirmar) return const SizedBox.shrink();
 
     final bloqueado = _viewModel.isLoading;
 
     return CustomButton(
-      text: bloqueado ? 'Aguarde...' : widget.rotuloBotaoFinalizar,
-      onPressed: bloqueado ? null : _finalizar,
+      text: bloqueado ? 'Aguarde...' : widget.rotuloBotaoConfirmar,
+      onPressed: bloqueado ? null : _abrirConfirmacao,
     );
   }
 }

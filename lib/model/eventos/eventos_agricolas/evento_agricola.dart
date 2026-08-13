@@ -11,7 +11,6 @@ abstract class EventoAgricola extends Evento {
     super.dataFim,
     super.descricao,
     super.dataCadastro,
-    super.confirmado,
     super.idSafra,
     super.responsaveis,
     required this.idTalhao,

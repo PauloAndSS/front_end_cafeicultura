@@ -70,18 +70,35 @@ class ServicesTratoCultural extends BaseService {
       );
     }
   }
-
-  Future<bool> finalizar(int idTrato, DateTime dataFim) async {
-    final dataUtc = DateTime.utc(dataFim.year, dataFim.month, dataFim.day);
-
+  Future<bool> confirmar(
+    int idTrato, {
+    required DateTime dataInicio,
+    required DateTime dataFim,
+  }) async {
     return _alterar(
       idTrato: idTrato,
       recurso: 'finalizar',
-      corpo: {'dataFim': dataUtc.toIso8601String()},
-      fallbackMsg: 'Erro ao finalizar trato cultural.',
-      acao: 'finalizar trato cultural',
+      corpo: {
+        'dataInicio': _meiaNoiteUtc(dataInicio).toIso8601String(),
+        'dataFim': _meiaNoiteUtc(dataFim).toIso8601String(),
+      },
+      fallbackMsg: 'Erro ao confirmar trato cultural.',
+      acao: 'confirmar trato cultural',
     );
   }
+
+  Future<bool> alterarDataInicio(int idTrato, DateTime dataInicio) async {
+    return _alterar(
+      idTrato: idTrato,
+      recurso: 'dataInicio',
+      corpo: {'dataInicio': _meiaNoiteUtc(dataInicio).toIso8601String()},
+      fallbackMsg: 'Erro ao alterar a data de início do trato cultural.',
+      acao: 'alterar a data de início',
+    );
+  }
+
+  DateTime _meiaNoiteUtc(DateTime data) =>
+      DateTime.utc(data.year, data.month, data.day);
 
   Future<bool> alterarDescricao(int idTrato, String descricao) async {
     return _alterar(

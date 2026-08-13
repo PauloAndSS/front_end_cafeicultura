@@ -89,6 +89,7 @@ abstract class BaseService {
     return jsonResponse;
   }
 
+
   Map<String, dynamic> extrairDadosPaginados(List<int> bodyBytes) {
     final jsonResponse = jsonDecode(utf8.decode(bodyBytes));
 

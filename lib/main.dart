@@ -2,17 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart'; 
 
-// ViewModels
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/pessoas_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_propriedades_viewmodel.dart'; 
+import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 
-// Views
 import 'package:frond_end_cafeicultura_mobile/views/auth/first_acess.dart';
 import 'package:frond_end_cafeicultura_mobile/views/home/main_screen_view.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
+
 void main() {
   WidgetsFlutterBinding.ensureInitialized(); 
 
@@ -20,8 +19,6 @@ void main() {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => SessionViewModel()),
-        ChangeNotifierProvider(create: (_) => SafraViewModel()),
-        ChangeNotifierProvider(create: (_) => TalhoesViewModel()),
       ],
       child: const MeuApp(),
     ),
@@ -55,6 +52,7 @@ class MeuApp extends StatelessWidget {
               ChangeNotifierProvider(create: (_) => PropriedadesUsuarioViewModel()),
               ChangeNotifierProvider(create: (_) => PessoasViewModel()),
               ChangeNotifierProvider(create: (_) => TalhoesViewModel()),
+              ChangeNotifierProvider(create: (_) => SafraViewModel()),
             ],
             child: child!,
           );

@@ -1,6 +1,10 @@
+import 'package:frond_end_cafeicultura_mobile/model/eventos/status_evento.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/formatadores.dart';
+
+export 'package:frond_end_cafeicultura_mobile/model/eventos/status_evento.dart';
 
 abstract class Evento {
   final int? id;
@@ -8,7 +12,6 @@ abstract class Evento {
   final DateTime? dataFim;
   final String? descricao;
   final DateTime? dataCadastro;
-  final bool confirmado;
 
   final int? idSafra;
   final List<Pessoa> responsaveis;
@@ -19,7 +22,6 @@ abstract class Evento {
     this.dataFim,
     this.descricao,
     this.dataCadastro,
-    this.confirmado = false,
     this.idSafra,
     this.responsaveis = const [],
   });
@@ -30,15 +32,30 @@ abstract class Evento {
         dataFim = _lerData(json['dataFim']),
         descricao = json['descricao'],
         dataCadastro = _lerData(json['dataCadastro']),
-        confirmado = json['confirmado'] ?? false,
         idSafra = _lerIdSafra(json),
         responsaveis = _lerResponsaveis(json);
 
   String get tituloExibicao;
 
-  bool get emAndamento => dataFim == null;
+  /// Situação no tempo: sem data de término o evento pode estar apenas
+  /// agendado, e é a data de início contra hoje que separa os dois casos.
+  StatusEvento get status {
+    if (dataFim != null) return StatusEvento.finalizado;
 
-  String get statusFormatado => emAndamento ? 'Em andamento' : 'Finalizado';
+    return ehFutura(dataInicio)
+        ? StatusEvento.agendado
+        : StatusEvento.emAndamento;
+  }
+
+  bool get agendado => status == StatusEvento.agendado;
+
+  /// Já começou e ainda não terminou — **não** é sinônimo de "não finalizado".
+  /// Quem quer dizer "ainda editável" deve usar `!finalizado`.
+  bool get emAndamento => status == StatusEvento.emAndamento;
+
+  bool get finalizado => status == StatusEvento.finalizado;
+
+  String get statusFormatado => status.rotulo;
 
   String get dataInicioFormatada => formatarDataBr(dataInicio);
 
