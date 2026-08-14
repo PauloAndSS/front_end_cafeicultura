@@ -4,6 +4,7 @@ import 'package:frond_end_cafeicultura_mobile/views/pessoas/pessoas_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/propriedade/atualizar_propriedade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/propriedade/cadastrar_propriedade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/proprietario/atualizar_dados_view.dart';
+import 'package:frond_end_cafeicultura_mobile/views/safra/safra_view_page.dart';
 import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 
@@ -15,7 +16,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   void _navegarSubstituindo(BuildContext context, Widget novaTela) {
     final rotaAtual = ModalRoute.of(context);
-    if (rotaAtual != null && rotaAtual.settings.name == novaTela.runtimeType.toString()) {
+    if (rotaAtual != null &&
+        rotaAtual.settings.name == novaTela.runtimeType.toString()) {
       return;
     }
 
@@ -29,12 +31,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   }
 
   void _navegarFormulario(BuildContext context, Widget novaTela) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => novaTela,
-      ),
-    );
+    Navigator.push(context, MaterialPageRoute(builder: (context) => novaTela));
   }
 
   @override
@@ -42,9 +39,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     final session = context.watch<SessionViewModel>();
     final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
     final listaPropriedades = propriedadesVM.propriedades;
-    final int? idSelecionadoValido = listaPropriedades.any(
-      (p) => p.id == propriedadesVM.idPropriedadeSelecionada,
-    )
+    final int? idSelecionadoValido =
+        listaPropriedades.any(
+          (p) => p.id == propriedadesVM.idPropriedadeSelecionada,
+        )
         ? propriedadesVM.idPropriedadeSelecionada
         : null;
 
@@ -70,41 +68,49 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             child: DropdownButton<int>(
               isExpanded: true,
               dropdownColor: Colors.white,
-              icon: Icon(Icons.keyboard_arrow_down, color: Colors.grey.shade700, size: 20),
+              icon: Icon(
+                Icons.keyboard_arrow_down,
+                color: Colors.grey.shade700,
+                size: 20,
+              ),
               style: TextStyle(
-                color: Colors.grey.shade800, 
-                fontSize: 13, 
+                color: Colors.grey.shade800,
+                fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
               hint: propriedadesVM.isLoading
                   ? const Text('Carregando...', overflow: TextOverflow.ellipsis)
                   : const Text('Propriedade', overflow: TextOverflow.ellipsis),
-              
+
               value: idSelecionadoValido,
-              
+
               items: [
                 ...listaPropriedades.map((prop) {
                   return DropdownMenuItem<int>(
                     value: prop.id,
-                    child: Text(
-                      prop.nome,
-                      overflow: TextOverflow.ellipsis,
-                    ),
+                    child: Text(prop.nome, overflow: TextOverflow.ellipsis),
                   );
                 }),
-                
+
                 if (idSelecionadoValido != null)
                   const DropdownMenuItem<int>(
                     value: -2,
                     child: Row(
                       children: [
-                        Icon(Icons.edit_outlined, size: 16, color: Color(0xFF8FA67E)),
+                        Icon(
+                          Icons.edit_outlined,
+                          size: 16,
+                          color: Color(0xFF8FA67E),
+                        ),
                         SizedBox(width: 8),
-                        Text('Editar Atual', style: TextStyle(color: Color(0xFF8FA67E))),
+                        Text(
+                          'Editar Atual',
+                          style: TextStyle(color: Color(0xFF8FA67E)),
+                        ),
                       ],
                     ),
                   ),
-                
+
                 const DropdownMenuItem<int>(
                   value: -1,
                   child: Row(
@@ -112,8 +118,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                       Icon(Icons.add, size: 18, color: Color(0xFF8FA67E)),
                       SizedBox(width: 8),
                       Text(
-                        'Nova Propriedade', 
-                        style: TextStyle(color: Color(0xFF8FA67E), fontWeight: FontWeight.bold),
+                        'Nova Propriedade',
+                        style: TextStyle(
+                          color: Color(0xFF8FA67E),
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ],
                   ),
@@ -122,10 +131,13 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               onChanged: (int? valorSelecionado) {
                 if (valorSelecionado == -1) {
                   _navegarFormulario(context, const CadastrarPropriedadeView());
-                } else if (valorSelecionado == -2 && idSelecionadoValido != null) {
+                } else if (valorSelecionado == -2 &&
+                    idSelecionadoValido != null) {
                   _navegarFormulario(
-                    context, 
-                    AtualizarPropriedadeView(idPropriedade: idSelecionadoValido),
+                    context,
+                    AtualizarPropriedadeView(
+                      idPropriedade: idSelecionadoValido,
+                    ),
                   );
                 } else if (valorSelecionado != null) {
                   propriedadesVM.selecionarPropriedade(valorSelecionado);
@@ -137,16 +149,23 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         IconButton(
-          icon: const Icon(Icons.notifications_none, color: Colors.white, size: 26),
+          icon: const Icon(
+            Icons.notifications_none,
+            color: Colors.white,
+            size: 26,
+          ),
           tooltip: 'Notificações',
           onPressed: () {},
         ),
-        
+
+        // MENU DE PERFIL (Corrigido)
         PopupMenuButton<String>(
           icon: const Icon(Icons.person_outline, color: Colors.white, size: 26),
           tooltip: 'Perfil',
           offset: const Offset(0, 45),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           onSelected: (String escolha) {
             if (escolha == 'atualizar') {
               _navegarFormulario(context, const AtualizarDadosView());
@@ -156,7 +175,10 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             const PopupMenuItem<String>(
               value: 'atualizar',
               child: ListTile(
-                leading: Icon(Icons.manage_accounts_outlined, color: Colors.black87),
+                leading: Icon(
+                  Icons.manage_accounts_outlined,
+                  color: Colors.black87,
+                ),
                 title: Text('Atualizar Dados'),
                 contentPadding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
@@ -164,19 +186,28 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             ),
           ],
         ),
-        
+
+        // MENU DE HAMBÚRGUER (Corrigido)
         PopupMenuButton<String>(
           icon: const Icon(Icons.menu, color: Colors.white, size: 28),
           tooltip: 'Menu',
           offset: const Offset(0, 45),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           onSelected: (String escolha) async {
             if (escolha == 'pessoas') {
               _navegarSubstituindo(context, const PessoasView());
+            } else if (escolha == 'safras') { // Adicionado a verificação de safras aqui!
+              _navegarSubstituindo(context, const SafraViewPage());
             } else if (escolha == 'sair') {
               await session.logout();
               if (context.mounted) {
-                Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  '/login',
+                  (route) => false,
+                );
               }
             }
           },
@@ -190,19 +221,30 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 visualDensity: VisualDensity.compact,
               ),
             ),
+            const PopupMenuItem<String>(
+              value: 'safras',
+              child: ListTile(
+                leading: Icon(Icons.eco_outlined, color: Colors.black87),
+                title: Text('Safras'),
+                contentPadding: EdgeInsets.zero,
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
             const PopupMenuDivider(),
             const PopupMenuItem<String>(
               value: 'sair',
               child: ListTile(
                 leading: Icon(Icons.logout, color: Colors.red),
-                title: Text('Encerrar Sessão', style: TextStyle(color: Colors.red)),
+                title: Text(
+                  'Encerrar Sessão',
+                  style: TextStyle(color: Colors.red),
+                ),
                 contentPadding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
               ),
             ),
           ],
         ),
-        const SizedBox(width: 6),
       ],
     );
   }

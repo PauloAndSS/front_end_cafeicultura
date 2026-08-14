@@ -1,15 +1,10 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
-import 'package:http/http.dart' as http;
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
-import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
+import 'package:frond_end_cafeicultura_mobile/http/services/services_safra.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
 
-class _SafraApiService extends BaseService {}
-
 class SafraViewModel extends ChangeNotifier {
-  final _SafraApiService _service = _SafraApiService();
+  final ServicesSafra _service = ServicesSafra();
 
   bool _isLoading = false;
   bool _isLoadingRelatorio = false;
@@ -81,23 +76,18 @@ class SafraViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final safrasCarregadas = await _buscarSafrasDaPropriedade(idPropriedade);
+      final safrasCarregadas = _ordenarSafras(await _service.buscarPorPropriedade(idPropriedade));
 
       if (safrasCarregadas.isNotEmpty) {
-        _safras = _ordenarSafras(safrasCarregadas);
+        _safras = safrasCarregadas;
         _salvarSafrasNoCache(idPropriedade, _safras);
 
-        if (_safras.isNotEmpty) {
-          _safraSelecionada = _safras.first;
-          _cacheSafraSelecionadaPorPropriedade[idPropriedade] = _safraSelecionada!.id;
-          await carregarRelatorioDaSafra(
-            idPropriedade: idPropriedade,
-            idSafra: _safraSelecionada!.id!,
-          );
-        } else {
-          _safraSelecionada = null;
-          _relatorio = [];
-        }
+        _safraSelecionada = _safras.first;
+        _cacheSafraSelecionadaPorPropriedade[idPropriedade] = _safraSelecionada!.id;
+        await carregarRelatorioDaSafra(
+          idPropriedade: idPropriedade,
+          idSafra: _safraSelecionada!.id!,
+        );
       } else {
         _safras = [];
         _safraSelecionada = null;
@@ -138,6 +128,9 @@ class SafraViewModel extends ChangeNotifier {
     _cacheSafrasPorPropriedade[idPropriedade] = List<Safra>.from(safras);
   }
 
+  /// Limpa o cache de sessão de todas as propriedades (ex: no logout do
+  /// usuário) ou apenas de uma propriedade específica, se [idPropriedade]
+  /// for informado.
   void limparCacheSessao({int? idPropriedade}) {
     if (idPropriedade != null) {
       _cacheSafrasPorPropriedade.remove(idPropriedade);
@@ -183,28 +176,10 @@ class SafraViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await http.get(
-        Uri.parse(
-          '${_service.baseUrl}/safras/propriedade/$idPropriedade/safra/$idSafra/eventos',
-        ),
-        headers: _service.defaultHeaders,
+      _relatorio = await _service.buscarRelatorio(
+        idPropriedade: idPropriedade,
+        idSafra: idSafra,
       );
-
-      debugPrint('GET relatório status=${response.statusCode} body=${response.body}');
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        _relatorio = _parseRelatorio(response.body);
-      } else {
-        final mensagemDeErro = _extractErrorMessage(response.body);
-
-        if (_isMensagemSemRegistro(mensagemDeErro)) {
-          // Não é um erro de fato: apenas não há eventos cadastrados
-          // ainda para essa safra. Tratamos como relatório vazio.
-          _relatorio = [];
-        } else {
-          throw ApiException(mensagemDeErro);
-        }
-      }
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
     } catch (e) {
@@ -225,25 +200,9 @@ class SafraViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final payload = {
-        'idPropriedade': idPropriedade,
-        'dataInicio': (dataInicio ?? DateTime.now()).toUtc().toIso8601String(),
-      };
-
-      final response = await http.post(
-        Uri.parse('${_service.baseUrl}/safras/'),
-        headers: _service.defaultHeaders,
-        body: jsonEncode(payload),
-      );
-
-      debugPrint('POST safra status=${response.statusCode} body=${response.body}');
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        await _refreshSafrasAfterMutation(idPropriedade);
-        return true;
-      }
-
-      throw ApiException(_extractErrorMessage(response.body));
+      await _service.cadastrar(idPropriedade: idPropriedade, dataInicio: dataInicio);
+      await _refreshSafrasAfterMutation(idPropriedade);
+      return true;
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
     } catch (e) {
@@ -273,22 +232,9 @@ class SafraViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await http.patch(
-        Uri.parse('${_service.baseUrl}/safras/$idSafra/finalizar'),
-        headers: _service.defaultHeaders,
-        body: jsonEncode({
-          'dataFim': (dataFim ?? DateTime.now()).toUtc().toIso8601String(),
-        }),
-      );
-
-      debugPrint('PATCH safra status=${response.statusCode} body=${response.body}');
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        await _refreshSafrasAfterMutation(idPropriedade);
-        return true;
-      }
-
-      throw ApiException(_extractErrorMessage(response.body));
+      await _service.encerrar(idSafra, dataFim: dataFim);
+      await _refreshSafrasAfterMutation(idPropriedade);
+      return true;
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
     } catch (e) {
@@ -317,19 +263,9 @@ class SafraViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await http.patch(
-        Uri.parse('${_service.baseUrl}/safras/$idSafra/reativar'),
-        headers: _service.defaultHeaders,
-      );
-
-      debugPrint('PATCH reativar safra status=${response.statusCode} body=${response.body}');
-
-      if (response.statusCode >= 200 && response.statusCode < 300) {
-        await _refreshSafrasAfterMutation(idPropriedade);
-        return true;
-      }
-
-      throw ApiException(_extractErrorMessage(response.body));
+      await _service.reativar(idSafra);
+      await _refreshSafrasAfterMutation(idPropriedade);
+      return true;
     } on ApiException catch (e) {
       _mensagemErro = e.mensagem;
     } catch (e) {
@@ -345,8 +281,10 @@ class SafraViewModel extends ChangeNotifier {
 
   Future<void> _refreshSafrasAfterMutation(int idPropriedade) async {
     try {
-      final novasSafras = await _buscarSafrasDaPropriedade(idPropriedade);
-      _safras = _ordenarSafras(novasSafras);
+      final novasSafras = _ordenarSafras(await _service.buscarPorPropriedade(idPropriedade));
+      _safras = novasSafras;
+      // Mutação (criar/encerrar/reativar) sempre atualiza o cache de sessão
+      // dessa propriedade, já que os dados no servidor mudaram.
       _salvarSafrasNoCache(idPropriedade, _safras);
 
       if (novasSafras.isEmpty) {
@@ -380,194 +318,22 @@ class SafraViewModel extends ChangeNotifier {
     }
   }
 
-  Future<List<Safra>> _buscarSafrasDaPropriedade(int idPropriedade) async {
-    final endpoints = [
-      Uri.parse('${_service.baseUrl}/safras/propriedade/${idPropriedade}/safras/todas'),
-    ];
-
-    final listasEncontradas = <List<Safra>>[];
-
-    for (final endpoint in endpoints) {
-      try {
-        final response = await http.get(endpoint, headers: _service.defaultHeaders);
-
-        debugPrint('GET safras status=${response.statusCode} body=${response.body}');
-
-        if (response.statusCode >= 200 && response.statusCode < 300) {
-          final lista = _parseSafras(response.body);
-          if (lista.isNotEmpty) {
-            listasEncontradas.add(lista);
-          }
-        }
-      } catch (e) {
-        debugPrint('Erro ao buscar safras em $endpoint: $e');
-      }
-    }
-
-    if (listasEncontradas.isEmpty) {
-      return [];
-    }
-
-    final merged = <int, Safra>{};
-    for (final lista in listasEncontradas) {
-      for (final safra in lista) {
-        if (safra.id != null) {
-          merged[safra.id!] = safra;
-        }
-      }
-    }
-
-    if (merged.isNotEmpty) {
-      return _ordenarSafras(merged.values.toList());
-    }
-
-    return _ordenarSafras(listasEncontradas.first);
-  }
-
+  /// Ordena as safras em ordem cronológica decrescente de início (a mais
+  /// recente primeiro). Fica no viewmodel (não no service) porque é uma
+  /// questão de apresentação, não de acesso a dados — `ServicesSafra`
+  /// só busca e devolve os dados como a API os enviou, seguindo o mesmo
+  /// padrão dos outros services do projeto (ex: `ServicesPropriedade`).
   List<Safra> _ordenarSafras(List<Safra> safras) {
     final copia = List<Safra>.from(safras);
     copia.sort((a, b) {
       final dataA = a.dataInicio ?? a.dataFim ?? DateTime.fromMillisecondsSinceEpoch(0);
       final dataB = b.dataInicio ?? b.dataFim ?? DateTime.fromMillisecondsSinceEpoch(0);
-      final   comparacaoData = dataB.compareTo(dataA);
+      final comparacaoData = dataB.compareTo(dataA);
       if (comparacaoData != 0) {
         return comparacaoData;
       }
       return (a.id ?? 0).compareTo(b.id ?? 0);
     });
     return copia;
-  }
-
-  List<Safra> _parseSafras(String body) {
-    if (body.isEmpty) {
-      return [];
-    }
-
-    final decoded = jsonDecode(body);
-
-    if (decoded is List) {
-      return decoded.whereType<Map>().map((item) {
-        return Safra.fromJson(Map<String, dynamic>.from(item));
-      }).toList();
-    }
-
-    if (decoded is Map<String, dynamic>) {
-      final list = _extractList(decoded);
-      return list.map((item) {
-        if (item is Map<String, dynamic>) {
-          return Safra.fromJson(item);
-        }
-
-        if (item is Map) {
-          return Safra.fromJson(Map<String, dynamic>.from(item));
-        }
-
-        return Safra();
-      }).toList();
-    }
-
-    return [];
-  }
-
-  List<SafraEvento> _parseRelatorio(String body) {
-    if (body.isEmpty) {
-      return [];
-    }
-
-    final decoded = jsonDecode(body);
-
-    if (decoded is List) {
-      return decoded.whereType<Map>().map((item) {
-        return SafraEvento.fromJson(Map<String, dynamic>.from(item));
-      }).toList();
-    }
-
-    if (decoded is Map<String, dynamic>) {
-      final list = _extractList(decoded);
-      return list.map((item) {
-        if (item is Map<String, dynamic>) {
-          return SafraEvento.fromJson(item);
-        }
-
-        if (item is Map) {
-          return SafraEvento.fromJson(Map<String, dynamic>.from(item));
-        }
-
-        return const SafraEvento();
-      }).toList();
-    }
-
-    return [];
-  }
-
-  List<dynamic> _extractList(Map<String, dynamic> payload) {
-    final candidates = [
-      payload['data'],
-      payload['items'],
-      payload['result'],
-      payload['safras'],
-      payload['eventos'],
-      payload['events'],
-      payload['relatorio'],
-      payload['dados'],
-      payload['ativas'],
-      payload['encerradas'],
-      payload['historico'],
-      payload['todos'],
-      payload['all'],
-    ];
-
-    for (final candidate in candidates) {
-      if (candidate is List) {
-        return candidate;
-      }
-    }
-
-    if (payload['data'] is Map<String, dynamic>) {
-      final nested = payload['data'] as Map<String, dynamic>;
-      return _extractList(nested);
-    }
-
-    return [];
-  }
-
-  bool _isMensagemSemRegistro(String mensagem) {
-    final normalizada = _removerAcentos(mensagem.toLowerCase());
-
-    final indicaAusencia = normalizada.contains('nao possui') ||
-        normalizada.contains('nenhum') ||
-        normalizada.contains('sem eventos') ||
-        normalizada.contains('sem registro');
-
-    final indicaEventos = normalizada.contains('evento') ||
-        normalizada.contains('registrad') ||
-        normalizada.contains('exemplo') ||
-        normalizada.contains('relatorio');
-
-    return indicaAusencia && indicaEventos;
-  }
-
-  String _removerAcentos(String texto) {
-    const comAcento = 'áàãâäéèêëíìîïóòõôöúùûüçÁÀÃÂÄÉÈÊËÍÌÎÏÓÒÕÔÖÚÙÛÜÇ';
-    const semAcento = 'aaaaaeeeeiiiiooooouuuucAAAAAEEEEIIIIOOOOOUUUUC';
-
-    var resultado = texto;
-    for (var i = 0; i < comAcento.length; i++) {
-      resultado = resultado.replaceAll(comAcento[i], semAcento[i]);
-    }
-    return resultado;
-  }
-
-  String _extractErrorMessage(String body) {
-    try {
-      final decoded = jsonDecode(body);
-      if (decoded is Map<String, dynamic>) {
-        return decoded['message']?.toString() ??
-            decoded['error']?.toString() ??
-            'Erro ao buscar os dados da safra.';
-      }
-    } catch (_) {}
-
-    return 'Erro ao buscar os dados da safra.';
   }
 }

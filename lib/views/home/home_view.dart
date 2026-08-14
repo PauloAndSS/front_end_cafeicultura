@@ -393,11 +393,10 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
             ],
 
             SafraRelatorioWidget(
-              eventos: safraVM.relatorio,
+              eventos: safraVM.relatorio.cast<EventoAgricola>(), 
               isLoading: safraVM.isLoadingRelatorio,
               mostrarTitulo: false,
             ),
-
           ],
         ),
       ),

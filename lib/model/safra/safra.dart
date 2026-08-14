@@ -158,7 +158,6 @@ class SafraEvento {
   final DateTime? dataFim;
   final DateTime? dataCadastro;
   final int? idTalhao;
-  final bool confirmado;
   final List<ResponsavelEvento> responsaveis;
   final List<InsumoUtilizado> insumosUtilizados;
   final List<TransacaoFinanceira> transacoesFinanceiras;
@@ -172,11 +171,17 @@ class SafraEvento {
     this.dataFim,
     this.dataCadastro,
     this.idTalhao,
-    this.confirmado = false,
     this.responsaveis = const [],
     this.insumosUtilizados = const [],
     this.transacoesFinanceiras = const [],
   });
+
+  /// Não existe mais um atributo "confirmado" vindo da API: o evento (o
+  /// trato cultural, no caso do módulo TRATO_CULTURAL) é considerado
+  /// concluído quando `dataFim` está preenchida — mesma lógica usada em
+  /// `Safra.isEncerrada`. Enquanto `dataFim` for nula, o evento é tratado
+  /// como em andamento/pendente.
+  bool get concluido => dataFim != null;
 
   factory SafraEvento.fromJson(Map<String, dynamic> json) {
     final modulo = json['modulo']?.toString() ?? '';
@@ -224,7 +229,6 @@ class SafraEvento {
       dataFim: _parseDate(dados['dataFim']),
       dataCadastro: _parseDate(dados['dataCadastro']),
       idTalhao: rawIdTalhao is num ? rawIdTalhao.toInt() : int.tryParse(rawIdTalhao?.toString() ?? ''),
-      confirmado: dados['confirmado'] == true,
       responsaveis: responsaveis,
       insumosUtilizados: insumos,
       transacoesFinanceiras: transacoes,
