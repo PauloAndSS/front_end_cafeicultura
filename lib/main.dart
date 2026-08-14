@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_localizations/flutter_localizations.dart'; 
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
@@ -12,8 +13,10 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.d
 import 'package:frond_end_cafeicultura_mobile/views/auth/first_acess.dart';
 import 'package:frond_end_cafeicultura_mobile/views/home/main_screen_view.dart';
 
-void main() {
-  WidgetsFlutterBinding.ensureInitialized(); 
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await initializeDateFormatting('pt_BR', null);
 
   runApp(
     MultiProvider(

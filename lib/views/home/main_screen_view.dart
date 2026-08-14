@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/armazem/armazem_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/atividades_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_app_bar.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_bottom_navbar.dart';
@@ -67,8 +68,8 @@ class _MainScreenViewState extends State<MainScreenView> {
       const HomeView(), 
       const AtividadesView(),
       const TalhaoView(),  
-      const SizedBox.shrink(), // Armazém
-      const FinanceiroView(), // Financeiro
+      const ArmazemView(),
+      const FinanceiroView(),
     ];
 
     return Scaffold(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/tipo_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/em_desenvolvimento_widget.dart';
 
 /// Placeholder das atividades que ainda não têm tela.
 ///
@@ -12,27 +13,6 @@ class AtividadeEmDesenvolvimento extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.construction, size: 64, color: Color(0xFF8FA67E)),
-          const SizedBox(height: 16),
-          Text(
-            'Tela de ${tipo.rotulo}',
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF67835C),
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Em desenvolvimento...',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ],
-      ),
-    );
+    return EmDesenvolvimentoWidget(titulo: 'Tela de ${tipo.rotulo}');
   }
 }

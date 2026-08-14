@@ -1,3 +1,5 @@
+import 'package:intl/intl.dart';
+
 enum Medida {
   hectare('hectare', 'Hectares'),
   m2('m2', 'm²');
@@ -15,9 +17,18 @@ enum Medida {
   }
 }
 
+final _numeroBr = NumberFormat.decimalPattern('pt_BR');
+
 class Tamanho {
   final double valor;
   final Medida medida;
+
+  /// "12 Hectares", "1.250,5 m²".
+  ///
+  /// Existe porque as telas montavam `'$valor ${medida.name}'`, que imprime o
+  /// `double` cru e o nome do enum — "10.0 hectare" em vez de "10 Hectares".
+  /// Formatação de model mora no model.
+  String get formatado => '${_numeroBr.format(valor)} ${medida.nomeExibicao}';
 
   Tamanho({
     required this.valor,

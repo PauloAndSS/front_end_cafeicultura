@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
+import 'package:frond_end_cafeicultura_mobile/http/services/eventos/services_evento.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/carregar_responsaveis_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/descarte_seguro_mixin.dart';
@@ -68,6 +69,18 @@ abstract class DetalhesAtividadeViewModel<T extends EventoAgricola>
   bool get podeAlterarDataInicio => chamadaAlterarDataInicio != null;
   bool get podeAlterarDescricao => chamadaAlterarDescricao != null;
   bool get podeAlterarResponsaveis => chamadaAlterarResponsaveis != null;
+
+  /// Excluir é a exceção à injeção acima: a rota é a mesma para todo módulo
+  /// (`DELETE /eventos/{id}`), então um getter anulável por subclasse seria
+  /// cada subclasse devolvendo o tear-off do mesmo método.
+  final _eventoService = ServicesEvento();
+
+  /// Agendada e em andamento saem; finalizada é histórico e fica.
+  ///
+  /// Só o estado é conferido aqui. Se a atividade pode mesmo ser apagada —
+  /// safra fechada, vínculo com despesa, o que for — quem responde é o backend,
+  /// e a recusa dele vira [mensagemErro].
+  bool get podeExcluir => !_atividade.finalizado;
 
   /// Cópia com os campos **comuns** trocados, preservando os específicos.
   ///
@@ -147,6 +160,19 @@ abstract class DetalhesAtividadeViewModel<T extends EventoAgricola>
       aplicar: () =>
           _atividade = copiarComum(_atividade, responsaveis: escolhidos),
       erroInterno: 'Ocorreu um erro interno ao alterar os responsáveis.',
+    );
+  }
+
+  /// Apaga a atividade. Em caso de sucesso a tela **precisa** fechar: o objeto
+  /// que ela desenha deixou de existir no servidor.
+  Future<bool> excluir() {
+    return executar(
+      chamada: () => _eventoService.excluir(_atividade.id!),
+      // Nada a refletir na cópia local — a atividade inteira sai de cena. O que
+      // interessa deste caminho é `houveAlteracao`, que `executar` liga sozinho
+      // e é o sinal que faz a listagem e o calendário recarregarem.
+      aplicar: () {},
+      erroInterno: 'Ocorreu um erro interno ao excluir $rotuloAtividade.',
     );
   }
 

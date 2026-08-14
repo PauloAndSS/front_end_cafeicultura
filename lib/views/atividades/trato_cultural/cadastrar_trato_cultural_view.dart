@@ -9,7 +9,10 @@ import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_m
 import 'package:provider/provider.dart';
 
 class CadastrarTratoCulturalView extends StatefulWidget {
-  const CadastrarTratoCulturalView({super.key});
+  /// Dia escolhido no calendário, quando o cadastro veio de lá.
+  final DateTime? dataInicial;
+
+  const CadastrarTratoCulturalView({super.key, this.dataInicial});
 
   @override
   State<CadastrarTratoCulturalView> createState() =>
@@ -33,6 +36,7 @@ class _CadastrarTratoCulturalViewState
   Widget build(BuildContext context) {
     return FormularioAtividadeView(
       viewModel: _viewModel,
+      dataInicial: widget.dataInicial,
       titulo: 'Novo Trato Cultural',
       rotuloBotaoSalvar: 'Salvar Trato Cultural',
       mensagemSucesso: 'Trato cultural cadastrado com sucesso!',

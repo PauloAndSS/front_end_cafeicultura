@@ -194,6 +194,59 @@ class _DetalhesAtividadeViewState<T extends EventoAgricola>
     }
   }
 
+  /// Pergunta antes de apagar, e só então chama o ViewModel.
+  ///
+  /// Se o backend recusar, a tela **fica aberta** com o motivo no SnackBar: a
+  /// recusa costuma ser condicional (vínculo com outro cadastro, safra
+  /// fechada), e fechar a tela esconderia do usuário o que ele precisa resolver.
+  Future<void> _confirmarExclusao() async {
+    final confirmou = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Excluir atividade?'),
+        content: Text(
+          'Deseja realmente excluir "${_viewModel.atividade.tituloExibicao}"? '
+          'Esta ação não poderá ser desfeita.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text(
+              'Excluir',
+              style: TextStyle(
+                color: _vermelhoErro,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmou != true || !mounted) return;
+
+    final sucesso = await _viewModel.excluir();
+
+    if (!mounted) return;
+
+    if (!sucesso) {
+      _mostrarErro(_viewModel.mensagemErro ?? 'Erro ao excluir a atividade.');
+      return;
+    }
+
+    _mostrarSucesso('Atividade excluída com sucesso!');
+
+    // `Navigator.pop` direto: o `PopScope` abaixo intercepta apenas o caminho
+    // do botão voltar (`maybePop`), e o valor que ele devolveria
+    // (`houveAlteracao`) já é `true` depois da exclusão. Não há divergência.
+    Navigator.of(context).pop(true);
+  }
+
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -226,6 +279,7 @@ class _DetalhesAtividadeViewState<T extends EventoAgricola>
                   _construirCartaoInformacoes(context),
                   const SizedBox(height: 32),
                   _construirRodape(),
+                  _construirAcaoExcluir(),
                 ],
               ),
             );
@@ -364,6 +418,35 @@ class _DetalhesAtividadeViewState<T extends EventoAgricola>
     return CustomButton(
       text: bloqueado ? 'Aguarde...' : widget.rotuloBotaoConfirmar,
       onPressed: bloqueado ? null : _abrirConfirmacao,
+    );
+  }
+
+  /// Discreto de propósito, e abaixo do rodapé: excluir é irreversível e não é
+  /// o que o usuário veio fazer aqui. A ação primária do estado — confirmar —
+  /// continua sendo a que tem peso visual.
+  ///
+  /// Fica fora do `switch` de [_construirRodape] porque aquele switch é
+  /// exaustivo nos três status e a exclusão vale em dois: enfiá-la lá obrigaria
+  /// a repetir o botão em dois ramos. Quem decide se aparece é [podeExcluir],
+  /// para a regra de "agendada e em andamento" não ficar escrita nos dois lados.
+  Widget _construirAcaoExcluir() {
+    if (!_viewModel.podeExcluir) return const SizedBox.shrink();
+
+    final bloqueado = _viewModel.isLoading;
+
+    // Cinza durante a requisição: com a cor vermelha fixa e `onPressed` nulo, o
+    // botão pareceria clicável e não responderia.
+    final cor = bloqueado ? Colors.black38 : _vermelhoErro;
+
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        TextButton.icon(
+          onPressed: bloqueado ? null : _confirmarExclusao,
+          icon: Icon(Icons.delete_outline, color: cor),
+          label: Text('Excluir', style: TextStyle(color: cor, fontSize: 16)),
+        ),
+      ],
     );
   }
 }

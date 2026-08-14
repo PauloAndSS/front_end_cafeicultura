@@ -6,14 +6,17 @@ AGUARDANDO RETORNO
 -> adicionar despesa ao registrar uma atividade (aguardando Kaik finalizar despesa).
     -> Adicionar lógica de despesa no cadastro de atividades retroativas (hoje ou menos) ou ao confirmar atividade.
 
-
+-> aguardar paginacao talhao
 ###############################################################################################################################
 A FAZER
 ###############################################################################################################################
 
--> Relatórios nas telas de início
-    -> Relatório temporal da propriedade (HUEVGE04);
-    -> Relatório temporal da propriedade por evento (HUEVGE05);
-     
 -> botão de cadastro de qualquer atividade só deve ser possível se houver alguma safra ativa (sem data fim). avisar ao usuário e redirecionar para a página de criar safra (aguardando Karllos finalizar safra).
+
 -> Ao registrar uma atividade, deve-se conferir as safras ativas. Se só houver 1, não mostra o select de qual safra essa atividade é referente. Se houver 2, select de qual das 2 safras essa atividade é referente (aguardando Karllos finalizar safra).
+
+
+-> implementar filtros de paginação e status em tratos culturais por talhão
+-> implementar paginação em tratos culturais por safra.
+
+-> refatoração da view de detalhes de talhão (excluir mais discreto e só deve aparecer quando não há atividades no talhão, botão de encerrar deve ser mais explicativo[você não pode mais registrar quaisquer atividades ou fazer alterações no talhão, somente visualizá-lo])
