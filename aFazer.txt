@@ -18,3 +18,5 @@ A FAZER
 
 -> implementar filtros de paginação e status em tratos culturais por talhão
 -> implementar paginação em tratos culturais por safra.
+
+-> refatoração da view de detalhes de talhão (excluir mais discreto e só deve aparecer quando não há atividades no talhão, botão de encerrar deve ser mais explicativo[você não pode mais registrar quaisquer atividades ou fazer alterações no talhão, somente visualizá-lo])

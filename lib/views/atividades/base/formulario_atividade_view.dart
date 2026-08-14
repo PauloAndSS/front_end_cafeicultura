@@ -32,6 +32,10 @@ const _vermelhoErro = Color(0xFFD32F2F);
 class FormularioAtividadeView extends StatefulWidget {
   final CadastrarAtividadeViewModel viewModel;
 
+  /// Dia escolhido no calendário, quando o cadastro veio de lá: entra no campo
+  /// de data de início já preenchido, e continua editável.
+  final DateTime? dataInicial;
+
   final String titulo;
   final String rotuloBotaoSalvar;
   final String mensagemSucesso;
@@ -74,6 +78,7 @@ class FormularioAtividadeView extends StatefulWidget {
     required this.dicaDataFim,
     required this.mensagemSemTalhoes,
     required this.aoSalvar,
+    this.dataInicial,
     this.construirCamposEspecificos,
     this.construirCamposFinais,
     this.validarCamposEspecificos,
@@ -115,6 +120,11 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
 
     _descricaoController.addListener(_aoDigitarDescricao);
 
+    if (widget.dataInicial != null) {
+      _dataInicio = widget.dataInicial;
+      _dataInicioController.text = formatarDataBr(widget.dataInicial!);
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _viewModel.init(context.read<PropriedadesUsuarioViewModel>());
@@ -140,9 +150,12 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     super.dispose();
   }
 
+  /// A data compara com [FormularioAtividadeView.dataInicial], e não com nulo:
+  /// o formulário aberto pelo calendário já nasce com ela preenchida, e voltar
+  /// sem ter tocado em nada pediria confirmação de descarte à toa.
   bool get _temAlteracoes =>
       _idTalhaoSelecionado != null ||
-      _dataInicio != null ||
+      _dataInicio != widget.dataInicial ||
       _descricaoPreenchida ||
       _responsaveisSelecionados.isNotEmpty ||
       widget.camposEspecificosPreenchidos;

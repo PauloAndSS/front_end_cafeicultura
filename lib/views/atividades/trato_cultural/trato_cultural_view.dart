@@ -15,12 +15,7 @@ class TratoCulturalView extends StatefulWidget {
 }
 
 class _TratoCulturalViewState extends State<TratoCulturalView> {
-  /// Listagem paginada por status.
   final _viewModel = TratosCulturaisViewModel();
-
-  /// Calendário do topo. Instância separada porque as duas metades da tela vêm
-  /// de contratos diferentes da mesma rota: esta busca o mês inteiro sem
-  /// paginação, aquela busca uma página de um status.
   final _agendaViewModel = AgendaTratosCulturaisViewModel();
 
   @override
@@ -40,14 +35,12 @@ class _TratoCulturalViewState extends State<TratoCulturalView> {
           'Você não tem tratos culturais ${_descricaoDoStatus(status)} '
           'na propriedade "$nomePropriedade".',
       iconeCard: Icons.grass,
-      construirTelaCadastro: (_) => const CadastrarTratoCulturalView(),
+      construirTelaCadastro: (_, dataInicial) =>
+          CadastrarTratoCulturalView(dataInicial: dataInicial),
       construirTelaDetalhes: (_, trato, nomeTalhao) =>
           DetalhesTratoCulturalView(trato: trato, nomeTalhao: nomeTalhao),
     );
   }
-
-  /// Concorda com "tratos culturais", no masculino plural — é por isso que a
-  /// frase do estado vazio é montada aqui e não na tela base.
   String _descricaoDoStatus(StatusEvento status) => switch (status) {
         StatusEvento.agendado => 'agendados',
         StatusEvento.emAndamento => 'em andamento',

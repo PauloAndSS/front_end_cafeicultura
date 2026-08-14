@@ -16,10 +16,6 @@ import 'package:frond_end_cafeicultura_mobile/views/home/main_screen_view.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Carrega os símbolos de data de pt-BR (nomes de mês e de dia da semana).
-  // Os delegates do MaterialApp cobrem os widgets do Flutter, mas não o `intl`
-  // usado direto pelo app e pelo calendário: sem isto, todo `DateFormat` com
-  // locale explícito lança `LocaleDataException` em runtime.
   await initializeDateFormatting('pt_BR', null);
 
   runApp(

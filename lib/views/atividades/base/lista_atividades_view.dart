@@ -13,24 +13,8 @@ import 'package:provider/provider.dart';
 
 const _verdePrimario = Color(0xFF67835C);
 
-/// Distância do fim da lista em que a próxima página começa a ser buscada.
-/// Sobra de cerca de dois cards: pedir só ao encostar no fim mostraria o
-/// indicador em toda rolagem.
 const _margemParaProximaPagina = 300.0;
 
-/// Aba de um tipo de atividade: calendário do mês no topo, listagem por status
-/// embaixo.
-///
-/// As duas metades são independentes **e têm fontes de dados diferentes**, o que
-/// é a razão de esta tela receber dois ViewModels. O calendário é uma visão do
-/// tempo: pede à [agendaViewModel] o mês aberto, com a cor do marcador dizendo o
-/// status, e o toque num dia abre o painel daquele dia. A listagem é a varredura
-/// por status, sem recorte de tempo: o segmentado escolhe o status, o servidor
-/// devolve em páginas de 25 e a rolagem pede a seguinte.
-///
-/// Antes as duas liam a mesma lista em memória. Não dá mais: com o status virando
-/// filtro do servidor, "o que está carregado" passou a ser uma fatia de um status
-/// só, e o calendário ficaria sem os marcadores dos outros dois.
 class ListaAtividadesView<T extends EventoAgricola> extends StatefulWidget {
   /// Listagem paginada por status.
   final ListaAtividadesPaginadaViewModel<T> viewModel;
@@ -45,7 +29,8 @@ class ListaAtividadesView<T extends EventoAgricola> extends StatefulWidget {
 
   final IconData iconeCard;
 
-  final WidgetBuilder construirTelaCadastro;
+  final Widget Function(BuildContext context, DateTime? dataInicial)
+      construirTelaCadastro;
 
   final Widget Function(BuildContext context, T atividade, String nomeTalhao)
       construirTelaDetalhes;
@@ -72,11 +57,8 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
 
   final _controladorDeRolagem = ScrollController();
 
-  /// Dia aceso na grade. Estado só do calendário — a listagem abaixo não o lê.
   DateTime? _diaSelecionado;
 
-  /// Última propriedade para a qual a agenda foi carregada. É o que distingue
-  /// "trocou de propriedade" de um rebuild qualquer.
   int? _idPropriedadeDaAgenda;
 
   ListaAtividadesPaginadaViewModel<T> get _viewModel => widget.viewModel;
@@ -110,9 +92,6 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
     _idPropriedadeDaAgenda = idPropriedade;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      // A própria listagem detecta a troca de propriedade e descarta os três
-      // status; o calendário precisa que alguém esvazie o cache de meses, que é
-      // da propriedade anterior.
       if (trocouDePropriedade) _agendaViewModel.limparCache();
 
       _viewModel.carregar(idPropriedade);
@@ -122,14 +101,9 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
     });
   }
 
-  /// Pede a próxima página quando a rolagem se aproxima do fim. O ViewModel
-  /// ignora a chamada se já estiver buscando ou se não houver mais página, então
-  /// o disparo repetido durante o arrasto não vira requisição repetida.
   void _aoRolar() {
     if (!_controladorDeRolagem.hasClients) return;
 
-    // Com erro pendente no rodapé, quem retenta é o botão. Sem esta guarda, uma
-    // rota fora do ar viraria uma requisição por quadro de rolagem.
     if (_viewModel.mensagemErro != null) return;
 
     final posicao = _controladorDeRolagem.position;
@@ -139,7 +113,7 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
     }
   }
 
-  Future<void> _abrirCadastro() async {
+  Future<void> _abrirCadastro({DateTime? dataInicial}) async {
     final propriedadesVM = context.read<PropriedadesUsuarioViewModel>();
 
     if (propriedadesVM.idPropriedadeSelecionada == null) {
@@ -151,7 +125,9 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
 
     final cadastrou = await Navigator.push<bool>(
       context,
-      MaterialPageRoute(builder: widget.construirTelaCadastro),
+      MaterialPageRoute(
+        builder: (context) => widget.construirTelaCadastro(context, dataInicial),
+      ),
     );
 
     if (cadastrou == true && mounted) _recarregar();
@@ -172,9 +148,6 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
     if (alterou == true && mounted) _recarregar();
   }
 
-  /// Recarrega as duas metades. Confirmar uma atividade muda o status dela e a
-  /// cor do marcador no mesmo movimento — atualizar só uma deixaria a outra
-  /// mentindo.
   Future<void> _recarregar() {
     return Future.wait([
       _viewModel.recarregar(),
@@ -182,9 +155,6 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
     ]);
   }
 
-  /// Toque num dia do calendário abre o painel daquele dia — o mesmo da home.
-  /// A listagem abaixo fica onde está: quem tocou o dia quis ver o dia, não
-  /// refazer o filtro da tela.
   void _abrirAtividadesDoDia(DateTime dia, List<T> doDia) {
     setState(() => _diaSelecionado = dia);
 
@@ -194,6 +164,8 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
       atividades: doDia,
       nomeDoTalhao: _agendaViewModel.nomeDoTalhao,
       aoTocar: _abrirDetalhes,
+      rotuloCadastrar: widget.rotuloCadastrar,
+      aoCadastrar: () => _abrirCadastro(dataInicial: dia),
     );
   }
 
@@ -237,20 +209,7 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
     );
   }
 
-  /// Sem `CorpoComEstado` aqui, ao contrário das outras telas de atividade:
-  /// aquele widget decide carregando/erro/vazio pela tela inteira, e esta tem
-  /// duas metades alimentadas por requisições diferentes. Deixá-lo mandando
-  /// fazia o toque num segmento apagar o calendário — e o próprio segmentado —
-  /// enquanto a primeira página daquele status vinha.
-  ///
-  /// Cada metade cuida do seu estado: o calendário no cabeçalho da grade
-  /// (`CalendarioAtividades.carregando`), a listagem em
-  /// [_construirSliverDaListagem].
   Widget _construirCorpo(String nomePropriedade) {
-    // Slivers, e não um `SingleChildScrollView` com os cards num `Column`: a
-    // lista cresce a cada página e montar todos os cards de uma vez desfaria a
-    // preguiça do `SliverList.builder`. O calendário e o filtro rolam junto
-    // porque são cabeçalho da mesma tela, não uma barra fixa.
     return RefreshIndicator(
       color: _verdePrimario,
       onRefresh: _recarregar,
@@ -276,7 +235,6 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
             ),
           ),
           SliverPadding(
-            // Folga generosa embaixo: o FAB flutua sobre o fim da lista.
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 96),
             sliver: _construirSliverDaListagem(nomePropriedade),
           ),
@@ -284,11 +242,7 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
       ),
     );
   }
-
-  /// Cascata de estados **da listagem** — a mesma ordem do `CorpoComEstado`
-  /// (carregando → erro → vazio → conteúdo), só que ocupando a região dos cards
-  /// em vez da tela.
-  Widget _construirSliverDaListagem(String nomePropriedade) {
+    Widget _construirSliverDaListagem(String nomePropriedade) {
     if (_viewModel.isLoading) return _construirCarregandoListagem();
 
     final atividades = _viewModel.atividades;
@@ -302,21 +256,13 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
             : _construirListaVazia(nomePropriedade),
       );
     }
-
-    // Com cards na tela, um erro de página seguinte não chega aqui: vai para o
-    // rodapé, sem apagar o que já foi carregado.
     return SliverList.builder(
-      // O item extra é o rodapé de "carregando mais".
       itemCount: atividades.length + 1,
       itemBuilder: (context, indice) => indice < atividades.length
           ? _construirCard(atividades[indice])
           : _construirRodapeDaLista(),
     );
   }
-
-  /// Primeira página do status. Altura fixa de propósito: se o bloco encolhesse
-  /// para o tamanho do spinner, a rolagem saltaria a cada troca de segmento e
-  /// levaria o calendário junto.
   Widget _construirCarregandoListagem() {
     return const SliverToBoxAdapter(
       child: SizedBox(
@@ -328,8 +274,6 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
     );
   }
 
-  /// Erro no lugar dos cards, na mesma moldura do erro do calendário. Retentar
-  /// pede só a página que falhou — o calendário acima não é refeito.
   Widget _construirErroDaListagem(String mensagem) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 32.0),
@@ -353,9 +297,6 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
     );
   }
 
-  /// A grade recebe **todas** as atividades do mês, sem passar pelo filtro de
-  /// status: filtrar deixaria todos os marcadores visíveis da mesma cor, e a cor
-  /// é justamente o que informa o status ali.
   Widget _construirCalendario() {
     final erro = _agendaViewModel.mensagemErro;
 
@@ -372,8 +313,6 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
     );
   }
 
-  /// Erro do calendário no lugar da grade, e não na tela inteira: a listagem
-  /// abaixo vem de outra requisição e pode estar perfeitamente carregada.
   Widget _construirErroDoCalendario(String mensagem) {
     return Container(
       decoration: BoxDecoration(
@@ -401,9 +340,6 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
     );
   }
 
-  /// Rodapé da rolagem infinita: indicador da próxima página ou o erro de quem
-  /// falhou ao buscá-la. Ocupa altura zero quando não há nem um nem outro, para
-  /// não abrir um vão no fim da lista.
   Widget _construirRodapeDaLista() {
     if (_viewModel.isCarregandoMais) {
       return const Padding(
@@ -423,8 +359,6 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
 
     final erro = _viewModel.mensagemErro;
 
-    // Com cards na tela, o erro é desta página só — mora no fim da lista, e
-    // retentar pede a mesma página de novo em vez de recarregar tudo.
     if (erro != null) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 24),

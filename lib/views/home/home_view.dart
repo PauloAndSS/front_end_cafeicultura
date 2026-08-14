@@ -9,6 +9,7 @@ import 'package:frond_end_cafeicultura_mobile/views/atividades/trato_cultural/de
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/atividades_do_dia_sheet.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/blocos_detalhes_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/corpo_com_estado.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_tipo_atividade_sheet.dart';
 import 'package:frond_end_cafeicultura_mobile/views/home/widgets/resumo_propriedade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/talhao/cadastrar_talhao_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/calendario/calendario_atividades.dart';
@@ -284,7 +285,35 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
       atividades: atividades,
       nomeDoTalhao: _agendaViewModel.nomeDoTalhao,
       aoTocar: _abrirDetalhes,
+      rotuloCadastrar: 'Cadastrar atividade',
+      aoCadastrar: () => _abrirCadastroDoDia(dia),
     );
+  }
+
+  /// Cadastro nascido do calendário: o dia tocado vira a data de início do
+  /// formulário. Diferente das abas, aqui o tipo ainda não está decidido — a
+  /// home é a visão de todos os módulos —, então o seletor vem antes.
+  Future<void> _abrirCadastroDoDia(DateTime dia) async {
+    if (context.read<PropriedadesUsuarioViewModel>().idPropriedadeSelecionada ==
+        null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecione uma propriedade primeiro.')),
+      );
+      return;
+    }
+
+    final tipo = await mostrarSelecaoTipoAtividade(context: context);
+
+    if (tipo == null || !mounted) return;
+
+    final cadastrou = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (context) => tipo.construirTela(dia)),
+    );
+
+    if (cadastrou == true && mounted) {
+      await _agendaViewModel.recarregarMesVisivel();
+    }
   }
 
   /// Só trato cultural tem tela de detalhes hoje. Os demais módulos aparecem no

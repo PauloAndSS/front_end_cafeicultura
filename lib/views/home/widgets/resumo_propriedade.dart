@@ -4,15 +4,6 @@ import 'package:frond_end_cafeicultura_mobile/views/propriedade/widgets/propried
 
 const _verdeSecundario = Color(0xFF8FA67E);
 
-/// A propriedade selecionada na home, recolhida por padrão.
-///
-/// Fechada, é uma linha: nome, cidade e tamanho. Tocar troca pelo
-/// [CardPropriedadeWidget] inteiro, que já existia e continua sendo a única
-/// definição de como uma propriedade é exibida por extenso.
-///
-/// Recolhido é o padrão porque endereço e CEP são dados que o usuário confere
-/// uma vez e depois só atrapalham: na home eles empurravam o resto da tela para
-/// baixo todo dia.
 class ResumoPropriedade extends StatefulWidget {
   final Propriedade propriedade;
 
