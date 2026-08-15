@@ -525,8 +525,8 @@ void _voltar() {
               const SizedBox(width: 8),
               Text(
                 viewModel.safraSelecionada != null
-                    ? 'Dashboard de ${viewModel.safraSelecionada!.nomeExibicao}'
-                    : 'Dashboard da safra',
+                    ? 'Resumo de ${viewModel.safraSelecionada!.nomeExibicao}'
+                    : 'Resumo da safra',
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF67835C)),
               ),
             ],
