@@ -8,10 +8,6 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/carregar_ins
 
 class CadastrarTratoCulturalViewModel extends CadastrarAtividadeViewModel
     with CarregarInsumosMixin {
-  /// Provisório: não existe seleção de safra no app. Fica aqui, e não no model,
-  /// para que a classe base de todo evento não carregue um dado de produção
-  /// chumbado — quando a seleção existir, é este ponto que muda.
-  static const int idSafraProvisoria = 2;
 
   final _tratoService = ServicesTratoCultural();
 
@@ -31,6 +27,7 @@ class CadastrarTratoCulturalViewModel extends CadastrarAtividadeViewModel
     required DadosFormularioAtividade dados,
     required TipoTrato tipoTrato,
     required List<InsumoUtilizado> insumosUtilizados,
+    required int idSafra, // 👈 Recebe a safra atual dinamicamente aqui
   }) {
     return executarCadastro(
       chamada: () {
@@ -40,7 +37,7 @@ class CadastrarTratoCulturalViewModel extends CadastrarAtividadeViewModel
           dataInicio: dados.dataInicio,
           dataFim: dados.dataFim,
           descricao: dados.descricao?.trim(),
-          idSafra: idSafraProvisoria,
+          idSafra: idSafra, 
           responsaveis: dados.responsaveis,
           insumosUtilizados: insumosUtilizados,
         );
