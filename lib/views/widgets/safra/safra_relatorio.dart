@@ -362,7 +362,10 @@ class SafraRelatorioWidget extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    (evento as dynamic).tituloExibicao ?? 'Evento Agrícola',
+                    // `tituloExibicao` é um getter real (não-nulo) da
+                    // classe base `Evento`, sobrescrito por `TratoCultural`
+                    // — não precisa mais do cast dinâmico com fallback.
+                    evento.tituloExibicao,
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                 ),
@@ -391,15 +394,20 @@ class SafraRelatorioWidget extends StatelessWidget {
             ],
             if (evento.responsaveis.isNotEmpty) ...[
               const SizedBox(height: 6),
-
-              Text('Responsável: ${evento.responsaveis.map((r) => (r as dynamic).razaoSocial ?? (r as dynamic).nome ?? '').join(', ')}'),
+              // `responsaveisTexto` já vem pronto de `Evento` (junta os
+              // nomes de exibição de cada `Pessoa`) — sem cast dinâmico.
+              Text('Responsável: ${evento.responsaveisTexto}'),
             ],
             
             if (evento is TratoCultural && evento.insumosUtilizados.isNotEmpty) ...[
               const SizedBox(height: 6),
               const Text('Insumos utilizados:', style: TextStyle(fontWeight: FontWeight.w600)),
+              // `InsumoUtilizado` (model/insumos/insumo_utilizado.dart) não
+              // tem um getter `textoQuantidade` — os campos reais são
+              // `descricao` e `qtdFormatada` (ou `descricaoComQuantidade`
+              // já pronto com os dois juntos).
               ...evento.insumosUtilizados.map(
-                (insumo) => Text('• ${(insumo as dynamic).descricao ?? 'Insumo'} - ${(insumo as dynamic).textoQuantidade ?? ''}'),
+                (insumo) => Text('• ${insumo.descricaoComQuantidade}'),
               ),
             ],
           ],

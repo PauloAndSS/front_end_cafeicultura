@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
+import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
+import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
 import 'package:http/http.dart' as http;
 
@@ -32,7 +34,14 @@ class ServicesSafra extends BaseService {
     }
   }
 
-  Future<List<SafraEvento>> buscarRelatorio({
+  /// Busca o relatório de eventos agrícolas de uma safra específica.
+  ///
+  /// Cada item da resposta vem no formato `{ "modulo": "...", "dados": {...} }`.
+  /// O `dados` é o que os construtores `fromJson` de `EventoAgricola`
+  /// esperam receber; o `modulo` diz qual subclasse concreta instanciar.
+  /// Módulos ainda não suportados no app são ignorados silenciosamente
+  /// (não derrubam o relatório inteiro).
+  Future<List<EventoAgricola>> buscarRelatorio({
     required int idPropriedade,
     required int idSafra,
   }) async {
@@ -44,7 +53,7 @@ class ServicesSafra extends BaseService {
 
       if (response.statusCode == 200) {
         final dadosEventos = extrairDadosResposta(response.bodyBytes);
-        return dadosEventos.map<SafraEvento>((evento) => SafraEvento.fromJson(evento)).toList();
+        return _mapearEventos(dadosEventos);
       } else {
         tratarErroRequisicao(
           response.bodyBytes,
@@ -59,6 +68,45 @@ class ServicesSafra extends BaseService {
     } catch (e) {
       throw Exception('Falha na comunicação ao buscar relatório da safra. Tente novamente mais tarde.');
     }
+  }
+
+  /// Desembrulha cada `{modulo, dados}` e instancia a subclasse concreta
+  /// de `EventoAgricola` correspondente ao `modulo`.
+  ///
+  /// Hoje só existe o módulo TRATO_CULTURAL. Quando outros módulos forem
+  /// adicionados (ex: colheita, financeiro), basta somar um novo `case`
+  /// aqui — o resto do app já trabalha em cima de `EventoAgricola`, então
+  /// não precisa mudar mais nada fora daqui.
+  List<EventoAgricola> _mapearEventos(dynamic dadosEventos) {
+    final eventos = <EventoAgricola>[];
+
+    for (final item in dadosEventos) {
+      if (item is! Map) {
+        continue;
+      }
+
+      final itemMap = Map<String, dynamic>.from(item);
+      final modulo = itemMap['modulo']?.toString() ?? '';
+      final dadosRaw = itemMap['dados'];
+
+      if (dadosRaw is! Map) {
+        continue;
+      }
+
+      final dados = Map<String, dynamic>.from(dadosRaw);
+
+      switch (modulo) {
+        case 'TRATO_CULTURAL':
+          eventos.add(TratoCultural.fromJson(dados));
+          break;
+        default:
+          // Módulo que o app ainda não sabe interpretar: ignora em vez
+          // de quebrar o relatório inteiro.
+          break;
+      }
+    }
+
+    return eventos;
   }
 
   // cadastro

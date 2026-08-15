@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_safra.dart';
+import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
 
 class SafraViewModel extends ChangeNotifier {
@@ -11,7 +12,7 @@ class SafraViewModel extends ChangeNotifier {
   String? _mensagemErro;
   List<Safra> _safras = [];
   Safra? _safraSelecionada;
-  List<SafraEvento> _relatorio = [];
+  List<EventoAgricola> _relatorio = [];
   int? _propriedadeIdAtual;
   bool _dadosCarregados = false;
 
@@ -30,7 +31,7 @@ class SafraViewModel extends ChangeNotifier {
   String? get mensagemErro => _mensagemErro;
   List<Safra> get safras => _safras;
   Safra? get safraSelecionada => _safraSelecionada;
-  List<SafraEvento> get relatorio => _relatorio;
+  List<EventoAgricola> get relatorio => _relatorio;
   int? get propriedadeIdAtual => _propriedadeIdAtual;
   bool get dadosCarregados => _dadosCarregados;
 
