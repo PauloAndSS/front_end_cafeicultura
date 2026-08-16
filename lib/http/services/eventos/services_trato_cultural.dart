@@ -11,16 +11,6 @@ import 'package:http/http.dart' as http;
 
 class ServicesTratoCultural extends BaseService {
   late final Uri url = Uri.parse('$baseUrl/tratosculturais');
-
-  /// Tratos da propriedade numa janela de tempo — o caso do calendário.
-  ///
-  /// `/tratosculturais/propriedade/{id}` atende **dois** usos, e eles entram por
-  /// métodos separados de propósito: aqui a rota não recebe `pagina` e por isso
-  /// devolve tudo o que houver no período, sem contadores no corpo. Um método só
-  /// com todos os parâmetros opcionais deixaria a chamada dizer nada sobre qual
-  /// dos dois contratos está em jogo.
-  ///
-  /// [filtroInicio] e [filtroFim] filtram pela **data de início** do trato.
   Future<List<TratoCultural>> buscarPorPeriodo(
     int idPropriedade, {
     required DateTime filtroInicio,
@@ -59,14 +49,6 @@ class ServicesTratoCultural extends BaseService {
     }
   }
 
-  /// Uma página de tratos num [status] — o caso da listagem com rolagem
-  /// infinita.
-  ///
-  /// A presença de `pagina` é o que liga a paginação na rota; o tamanho da
-  /// página é fixado em 25 pelo backend, então **não existe** parâmetro
-  /// `limite` para mandar. A resposta traz
-  /// `{ tratos, total, totalPaginas, paginaAtual }`, e quem decide se busca a
-  /// próxima é o ViewModel.
   Future<ResultadoPaginadoDTO<TratoCultural>> buscarPorStatus(
     int idPropriedade, {
     required StatusEvento status,
@@ -89,13 +71,6 @@ class ServicesTratoCultural extends BaseService {
           TratoCultural.fromJson,
         );
       } else if (response.statusCode == 404) {
-        // "Nenhum trato encontrado": o backend trata lista vazia como erro.
-        // Para a tela isso não é falha — é propriedade sem atividade naquele
-        // status, e o estado vazio da listagem já cobre esse caso. Sem esta
-        // guarda, uma propriedade nova abre a aba com mensagem de erro.
-        //
-        // `totalPaginas: pagina` e não `1`: assim `pagina >= totalPaginas` para
-        // a rolagem em vez de pedir a mesma página vazia de novo.
         return ResultadoPaginadoDTO(
           data: const [],
           total: 0,
@@ -117,22 +92,37 @@ class ServicesTratoCultural extends BaseService {
     }
   }
 
-  Future<List<TratoCultural>> buscarPorTalhao(
+  Future<ResultadoPaginadoDTO<TratoCultural>> buscarPorTalhao(
     int idPropriedade,
-    int idTalhao,
-  ) async {
+    int idTalhao, {
+    required int pagina,
+    StatusEvento? status,
+  }) async {
     try {
-      final response = await http.get(
-        Uri.parse('$url/propriedade/$idPropriedade/talhao/$idTalhao'),
-        headers: defaultHeaders,
+      final uri = Uri.parse(
+        '$url/propriedade/$idPropriedade/talhao/$idTalhao',
+      ).replace(
+        queryParameters: {
+          'pagina': pagina.toString(),
+          if (status != null) 'status': status.filtroApi,
+        },
       );
 
-      if (response.statusCode == 200) {
-        final dados = extrairDadosResposta(response.bodyBytes);
+      final response = await http.get(uri, headers: defaultHeaders);
 
-        return (dados as List)
-            .map((json) => TratoCultural.fromJson(json))
-            .toList();
+      if (response.statusCode == 200) {
+        return ResultadoPaginadoDTO.deEnvelopePaginado(
+          extrairDadosPaginados(response.bodyBytes),
+          'tratos',
+          TratoCultural.fromJson,
+        );
+      } else if (response.statusCode == 404) {
+        return ResultadoPaginadoDTO(
+          data: const [],
+          total: 0,
+          pagina: pagina,
+          totalPaginas: pagina,
+        );
       } else {
         tratarErroRequisicao(
           response.bodyBytes,
@@ -147,6 +137,7 @@ class ServicesTratoCultural extends BaseService {
       );
     }
   }
+
   Future<bool> confirmar(
     int idTrato, {
     required DateTime dataInicio,

@@ -6,6 +6,7 @@ import 'package:frond_end_cafeicultura_mobile/views/atividades/base/confirmar_at
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/blocos_detalhes_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/selecionar_responsaveis_modal.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_data_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/botao_excluir.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 
 const _verdePrimario = Color(0xFF67835C);
@@ -194,42 +195,12 @@ class _DetalhesAtividadeViewState<T extends EventoAgricola>
     }
   }
 
-  /// Pergunta antes de apagar, e só então chama o ViewModel.
+  /// Chamado pelo [BotaoExcluir] depois que o usuário confirma no diálogo.
   ///
   /// Se o backend recusar, a tela **fica aberta** com o motivo no SnackBar: a
   /// recusa costuma ser condicional (vínculo com outro cadastro, safra
   /// fechada), e fechar a tela esconderia do usuário o que ele precisa resolver.
-  Future<void> _confirmarExclusao() async {
-    final confirmou = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Excluir atividade?'),
-        content: Text(
-          'Deseja realmente excluir "${_viewModel.atividade.tituloExibicao}"? '
-          'Esta ação não poderá ser desfeita.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Excluir',
-              style: TextStyle(
-                color: _vermelhoErro,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (confirmou != true || !mounted) return;
-
+  Future<void> _excluir() async {
     final sucesso = await _viewModel.excluir();
 
     if (!mounted) return;
@@ -432,21 +403,13 @@ class _DetalhesAtividadeViewState<T extends EventoAgricola>
   Widget _construirAcaoExcluir() {
     if (!_viewModel.podeExcluir) return const SizedBox.shrink();
 
-    final bloqueado = _viewModel.isLoading;
-
-    // Cinza durante a requisição: com a cor vermelha fixa e `onPressed` nulo, o
-    // botão pareceria clicável e não responderia.
-    final cor = bloqueado ? Colors.black38 : _vermelhoErro;
-
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.end,
-      children: [
-        TextButton.icon(
-          onPressed: bloqueado ? null : _confirmarExclusao,
-          icon: Icon(Icons.delete_outline, color: cor),
-          label: Text('Excluir', style: TextStyle(color: cor, fontSize: 16)),
-        ),
-      ],
+    return BotaoExcluir(
+      titulo: 'Excluir atividade?',
+      mensagem:
+          'Deseja realmente excluir "${_viewModel.atividade.tituloExibicao}"? '
+          'Esta ação não poderá ser desfeita.',
+      bloqueado: _viewModel.isLoading,
+      aoConfirmar: _excluir,
     );
   }
 }

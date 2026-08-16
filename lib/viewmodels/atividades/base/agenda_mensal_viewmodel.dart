@@ -7,9 +7,11 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/descarte_seg
 
 /// Atividades de uma propriedade **mês a mês**, com cache por mês.
 ///
-/// É a base dos calendários, e por isso não herda de `ListaAtividadesViewModel`:
-/// aquela guarda um escopo único e a coleção inteira, enquanto aqui o escopo é o
-/// par (propriedade, mês) e o usuário navega entre vários deles na mesma sessão.
+/// É a base dos calendários, e por isso não herda de
+/// `ListaAtividadesPaginadaViewModel`: lá o cache é por status e a rolagem pede
+/// a próxima página, enquanto aqui a chave é o par (propriedade, mês) e o mês
+/// vem inteiro, sem paginação — o calendário precisa de todos os dias de uma vez
+/// para marcar os pontos.
 ///
 /// A granularidade é o **mês inteiro**. Andar dentro do mês não custa requisição
 /// nenhuma, e a chave de cache é uma só em vez de uma por intervalo visível.

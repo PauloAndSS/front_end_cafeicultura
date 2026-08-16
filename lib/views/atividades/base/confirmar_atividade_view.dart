@@ -5,6 +5,7 @@ import 'package:frond_end_cafeicultura_mobile/utils/formatadores.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/detalhes_atividade_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_data_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 
 const _verdePrimario = Color(0xFF67835C);
@@ -203,9 +204,13 @@ class _ConfirmarAtividadeViewState<T extends EventoAgricola>
           ),
 
           const SizedBox(height: 8),
-          const Text(
-            'Depois de confirmada a atividade não poderá mais ser alterada.',
-            style: TextStyle(fontSize: 13, color: Colors.black54),
+          // Caixa de aviso, e não a linha cinza que estava aqui: confirmar é o
+          // ponto sem volta da atividade — descrição, responsáveis, insumos e a
+          // própria exclusão saem de cena junto. Em 13px cinza, ao lado de um
+          // botão verde, essa consequência passava batida.
+          const CaixaAvisoAtencao(
+            mensagem: 'Depois de confirmada, a atividade não poderá mais ser '
+                'alterada nem excluída — apenas visualizada.',
           ),
           const SizedBox(height: 32),
 

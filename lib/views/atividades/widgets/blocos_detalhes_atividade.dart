@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
 
 const _verdePrimario = Color(0xFF67835C);
 const _verdeSecundario = Color(0xFF8FA67E);
@@ -194,7 +195,7 @@ class AvisoAtividadeFinalizada extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _CaixaAviso(
+    return CaixaAviso(
       icone: Icons.info_outline,
       cor: Colors.orange,
       corDoTexto: Colors.brown,
@@ -217,56 +218,12 @@ class AvisoAtividadeAgendada extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _CaixaAviso(
+    return CaixaAviso(
       icone: Icons.event_available,
       cor: _verdePrimario,
       corDoTexto: Colors.black87,
       mensagem: 'Atividade agendada. Poderá ser confirmada a partir de '
           '$dataInicioFormatada.',
-    );
-  }
-}
-
-/// Moldura comum aos avisos de rodapé.
-class _CaixaAviso extends StatelessWidget {
-  final IconData icone;
-  final Color cor;
-  final Color corDoTexto;
-  final String mensagem;
-
-  const _CaixaAviso({
-    required this.icone,
-    required this.cor,
-    required this.corDoTexto,
-    required this.mensagem,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cor.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: cor.withValues(alpha: 0.3)),
-      ),
-      child: Row(
-        children: [
-          Icon(icone, color: cor),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              mensagem,
-              style: TextStyle(
-                color: corDoTexto,
-                fontWeight: FontWeight.w600,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

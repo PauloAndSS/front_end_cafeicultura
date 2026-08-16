@@ -23,6 +23,18 @@ extension RotulosStatusEvento on StatusEvento {
         StatusEvento.finalizado => 'Finalizadas',
       };
 
+  /// Versão enxuta de [rotuloFiltro], para o segmentado de **quatro** opções.
+  ///
+  /// Existe por medida, não por gosto: com "Todas" no filtro do talhão, cada
+  /// segmento fica com ~78dp num telefone de 360dp, e "Em andamento" precisa de
+  /// ~86dp. O `SegmentedButton` não avisa que não coube — ele divide a largura
+  /// por igual e deixa o texto quebrar e cortar.
+  String get rotuloFiltroCurto => switch (this) {
+        StatusEvento.agendado => 'Agendadas',
+        StatusEvento.emAndamento => 'Andamento',
+        StatusEvento.finalizado => 'Finalizadas',
+      };
+
   /// Valor do query param `status` nas rotas de atividade.
   ///
   /// Mora aqui, junto dos rótulos, e não no service: o enum é a fonte única do
@@ -35,4 +47,15 @@ extension RotulosStatusEvento on StatusEvento {
         StatusEvento.emAndamento => 'em_andamento',
         StatusEvento.finalizado => 'finalizados',
       };
+}
+
+/// Rótulo de um segmento do filtro, contando o caso "Todas".
+///
+/// Função solta em vez de mais um getter na extension porque `null` não aceita
+/// chamada de extension — e `null` é exatamente o valor que representa "sem
+/// filtro de status", isto é, a query sem o parâmetro `status`.
+String rotuloDeFiltro(StatusEvento? status, {bool curto = false}) {
+  if (status == null) return 'Todas';
+
+  return curto ? status.rotuloFiltroCurto : status.rotuloFiltro;
 }

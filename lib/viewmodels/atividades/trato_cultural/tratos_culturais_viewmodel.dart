@@ -10,7 +10,7 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/lista_a
 /// mostrava a propriedade inteira e filtrava por status na memória; agora o
 /// status é query param e a rolagem pede a próxima página quando chega ao fim.
 class TratosCulturaisViewModel
-    extends ListaAtividadesPaginadaViewModel<TratoCultural> {
+    extends ListaAtividadesDaPropriedadePaginadaViewModel<TratoCultural> {
   final _tratoService = ServicesTratoCultural();
 
   @override
@@ -20,12 +20,14 @@ class TratosCulturaisViewModel
   @override
   Future<ResultadoPaginadoDTO<TratoCultural>> buscarPagina(
     int idPropriedade,
-    StatusEvento status,
+    StatusEvento? status,
     int pagina,
   ) {
+    // A aba não oferece o segmento "Todas", então `status` nunca chega nulo —
+    // é o que o `statusAtual` não-nulo desta variante garante.
     return _tratoService.buscarPorStatus(
       idPropriedade,
-      status: status,
+      status: status!,
       pagina: pagina,
     );
   }

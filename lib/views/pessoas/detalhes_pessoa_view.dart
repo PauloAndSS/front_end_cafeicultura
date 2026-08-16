@@ -11,6 +11,7 @@ import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart'
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/detalhes_pessoa_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/botao_excluir.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/sessao_em_breve_widget.dart';
 
 class DetalhesPessoaView extends StatefulWidget {
@@ -42,60 +43,28 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
     super.dispose();
   }
 
-  Future<void> _confirmarExclusao() async {
-    final resultado = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Excluir Pessoa?'),
-        content: Text(
-          'Deseja realmente excluir ${widget.papelPessoa.pessoa.nomeParaExibicao}? Esta ação não poderá ser desfeita.',
+  /// Chamado pelo [BotaoExcluir] depois que o usuário confirma no diálogo.
+  Future<void> _excluir() async {
+    final tipoPapel = PessoaFactory.obterTipoPapel(widget.papelPessoa);
+    final sucesso = await _viewModel.excluir(widget.papelPessoa.id!, tipoPapel);
+
+    if (!mounted) return;
+
+    if (sucesso) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Pessoa excluída com sucesso.'),
+          backgroundColor: Color(0xFF8FA67E),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              'Cancelar',
-              style: TextStyle(
-                color: Colors.black54,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Excluir',
-              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
-    );
-
-    if (resultado == true && mounted) {
-      final tipoPapel = PessoaFactory.obterTipoPapel(widget.papelPessoa);
-      final sucesso = await _viewModel.excluir(
-        widget.papelPessoa.id!,
-        tipoPapel,
       );
-
-      if (sucesso && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Pessoa excluída com sucesso.'),
-            backgroundColor: Color(0xFF8FA67E),
-          ),
-        );
-        Navigator.pop(context, true);
-      } else if (mounted && _viewModel.mensagemErro != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_viewModel.mensagemErro!),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      Navigator.pop(context, true);
+    } else if (_viewModel.mensagemErro != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(_viewModel.mensagemErro!),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -282,21 +251,14 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
                   ),
                   const SizedBox(height: 24),
 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      TextButton.icon(
-                        onPressed: _confirmarExclusao,
-                        icon: const Icon(
-                          Icons.delete_outline,
-                          color: Colors.red,
-                        ),
-                        label: const Text(
-                          'Excluir',
-                          style: TextStyle(color: Colors.red, fontSize: 16),
-                        ),
-                      ),
-                    ],
+                  BotaoExcluir(
+                    titulo: 'Excluir Pessoa?',
+                    mensagem:
+                        'Deseja realmente excluir '
+                        '${widget.papelPessoa.pessoa.nomeParaExibicao}? '
+                        'Esta ação não poderá ser desfeita.',
+                    bloqueado: _viewModel.isLoading,
+                    aoConfirmar: _excluir,
                   ),
 
                   const SizedBox(height: 16),

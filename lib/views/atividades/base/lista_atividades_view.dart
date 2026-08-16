@@ -17,7 +17,7 @@ const _margemParaProximaPagina = 300.0;
 
 class ListaAtividadesView<T extends EventoAgricola> extends StatefulWidget {
   /// Listagem paginada por status.
-  final ListaAtividadesPaginadaViewModel<T> viewModel;
+  final ListaAtividadesDaPropriedadePaginadaViewModel<T> viewModel;
 
   /// Calendário mensal — cache próprio, por mês.
   final AgendaMensalViewModel<T> agendaViewModel;
@@ -61,7 +61,8 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
 
   int? _idPropriedadeDaAgenda;
 
-  ListaAtividadesPaginadaViewModel<T> get _viewModel => widget.viewModel;
+  ListaAtividadesDaPropriedadePaginadaViewModel<T> get _viewModel =>
+      widget.viewModel;
   AgendaMensalViewModel<T> get _agendaViewModel => widget.agendaViewModel;
 
   @override
