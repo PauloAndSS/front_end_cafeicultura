@@ -1,58 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
 
-/// Widget de seleção de safra (dropdown), reutilizável em qualquer tela do
-/// sistema que precise deixar o usuário escolher a safra atual.
-///
-/// Por padrão (`mostrarAcoes: true`) ele também mostra, logo abaixo do
-/// select, os botões de "Nova safra" e "Encerrar/Reativar safra" — é o
-/// comportamento que já existia na tela de Safras e Relatórios. Para usar
-/// só o campo de seleção em outra parte do sistema (sem essas ações de
-/// cadastro/arquivamento), basta instanciar com `mostrarAcoes: false`; os
-/// callbacks de ação ficam ignorados nesse caso.
-///
-/// Exemplo de uso completo (com ações), igual à tela original:
-/// ```dart
-/// SafraSelectorWidget(
-///   safras: viewModel.safras,
-///   safraSelecionada: viewModel.safraSelecionada,
-///   onSelecionar: viewModel.selecionarSafra,
-///   isLoading: viewModel.isLoading,
-///   onNovaSafra: _mostrarDialogoNovaSafra,
-///   onEncerrarSafra: _encerrarSafraSelecionada,
-///   onReativarSafra: _reativarSafraSelecionada,
-/// )
-/// ```
-///
-/// Exemplo de uso só como select, em outra tela do sistema:
-/// ```dart
-/// SafraSelectorWidget(
-///   safras: viewModel.safras,
-///   safraSelecionada: viewModel.safraSelecionada,
-///   onSelecionar: viewModel.selecionarSafra,
-///   mostrarAcoes: false,
-/// )
-/// ```
+
 class SafraSelectorWidget extends StatelessWidget {
   final List<Safra> safras;
   final Safra? safraSelecionada;
   final ValueChanged<Safra> onSelecionar;
 
-  /// Quando `true`, mostra os botões de nova/encerrar/reativar safra
-  /// abaixo do select. Quando `false`, mostra só o campo de seleção.
+
   final bool mostrarAcoes;
 
   final bool isLoading;
   final String? titulo;
   final String? subtitulo;
 
-  /// Obrigatório quando `mostrarAcoes` é `true`.
   final VoidCallback? onNovaSafra;
 
-  /// Obrigatório quando `mostrarAcoes` é `true`.
   final VoidCallback? onEncerrarSafra;
 
-  /// Obrigatório quando `mostrarAcoes` é `true`.
   final VoidCallback? onReativarSafra;
 
   const SafraSelectorWidget({
@@ -73,8 +38,6 @@ class SafraSelectorWidget extends StatelessWidget {
           'sentido nessa tela, onEncerrarSafra/onReativarSafra também).',
         );
 
-  /// Ordena as safras em ordem cronológica crescente de início (a mais
-  /// antiga primeiro), para exibição no select.
   List<Safra> get _safrasEmOrdem {
     final ordenadas = List<Safra>.from(safras);
     ordenadas.sort((a, b) {

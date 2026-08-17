@@ -1,32 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
+import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
+import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart'; 
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/pie_chart.dart';
-/// Relatório completo de eventos de uma safra: estatísticas gerais,
-/// resumo financeiro, gráficos (tratos por tipo, eventos por talhão,
-/// gastos por categoria) e a lista detalhada de eventos pendentes e
-/// concluídos.
-///
-/// É independente da tela de seleção de safra — só depende da lista de
-/// eventos (`List<SafraEvento>`) — então pode ser plugado em qualquer
-/// outra parte do sistema (ex: dentro da tela de uma propriedade, de um
-/// talhão, ou de um dashboard financeiro), bastando passar os eventos da
-/// safra desejada.
-///
-/// Exemplo de uso:
-/// ```dart
-/// SafraRelatorioWidget(
-///   eventos: viewModel.relatorio,
-///   isLoading: viewModel.isLoadingRelatorio,
-/// )
-/// ```
+
 class SafraRelatorioWidget extends StatelessWidget {
-  final List<SafraEvento> eventos;
+  final List<EventoAgricola> eventos;
   final bool isLoading;
   final String? mensagemErro;
-
-  /// Se `true`, mostra "Relatório da safra" como título acima do
-  /// conteúdo. Desligue quando o widget for embutido em uma tela que já
-  /// tem seu próprio título de seção.
   final bool mostrarTitulo;
 
   const SafraRelatorioWidget({
@@ -37,8 +17,6 @@ class SafraRelatorioWidget extends StatelessWidget {
     this.mostrarTitulo = true,
   });
 
-  // Ordem fixa dos tipos de trato conhecidos (tabela tipostratos), para o
-  // gráfico sempre mostrar todas as categorias, mesmo com contagem zero.
   static const List<String> _tiposTratoConhecidos = [
     'Capina',
     'Adubação',
@@ -47,8 +25,6 @@ class SafraRelatorioWidget extends StatelessWidget {
     'Defensivo',
   ];
 
-  // Paleta em tons terrosos/laranja, no mesmo espírito do gráfico de
-  // "Sacas armazenadas" do dashboard de referência.
   static const List<Color> _paletaTratos = [
     Color(0xFFE07B39),
     Color(0xFFB2542C),
@@ -58,9 +34,6 @@ class SafraRelatorioWidget extends StatelessWidget {
     Color(0xFFD9642F),
   ];
 
-  // Paleta em tons de azul/petróleo para o gráfico por talhão (o verde
-  // fica reservado para o gráfico de gastos, no mesmo espírito da imagem
-  // de referência).
   static const List<Color> _paletaTalhoes = [
     Color(0xFF2E6E7A),
     Color(0xFF4F98A6),
@@ -70,8 +43,6 @@ class SafraRelatorioWidget extends StatelessWidget {
     Color(0xFF3A8492),
   ];
 
-  // Paleta em tons de verde, no mesmo espírito do gráfico de "Gastos da
-  // lavoura" do dashboard de referência.
   static const List<Color> _paletaGastos = [
     Color(0xFF4C6B3A),
     Color(0xFF7A9A5C),
@@ -112,9 +83,9 @@ class SafraRelatorioWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildRelatorioCompleto(List<SafraEvento> eventos) {
-    final concluidos = eventos.where((e) => e.confirmado).toList();
-    final pendentes = eventos.where((e) => !e.confirmado).toList();
+  Widget _buildRelatorioCompleto(List<EventoAgricola> eventos) {
+    final concluidos = eventos.where((e) => e.dataFim != null).toList();
+    final pendentes = eventos.where((e) => e.dataFim == null).toList();
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,10 +152,10 @@ class SafraRelatorioWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildResumoRelatorio(List<SafraEvento> eventos) {
+  Widget _buildResumoRelatorio(List<EventoAgricola> eventos) {
     final total = eventos.length;
-    final confirmados = eventos.where((e) => e.confirmado).length;
-    final pendentes = total - confirmados;
+    final concluidos = eventos.where((e) => e.dataFim != null).length;
+    final pendentes = total - concluidos;
 
     return Row(
       children: [
@@ -193,7 +164,7 @@ class SafraRelatorioWidget extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _buildEstatisticaCard('Confirmados', '$confirmados', Icons.check_circle_outline, Colors.green.shade700),
+          child: _buildEstatisticaCard('Concluídos', '$concluidos', Icons.check_circle_outline, Colors.green.shade700),
         ),
         const SizedBox(width: 10),
         Expanded(
@@ -222,9 +193,6 @@ class SafraRelatorioWidget extends StatelessWidget {
   }
 
   static String _formatarMoeda(num valor) {
-    // Formatação simples em Real, sem depender do pacote intl. Se o
-    // projeto já usar `intl` em outro lugar, pode trocar por
-    // NumberFormat.currency(locale: 'pt_BR', symbol: 'R\$').
     final negativo = valor < 0;
     final absoluto = valor.abs();
     final inteiro = absoluto.truncate();
@@ -236,18 +204,19 @@ class SafraRelatorioWidget extends StatelessWidget {
     final texto = 'R\$ $inteiroTexto,${centavos.toString().padLeft(2, '0')}';
     return negativo ? '-$texto' : texto;
   }
+  List<dynamic> _extrairTransacoes(List<EventoAgricola> eventos) {
+    return eventos.expand((e) {
+      try {
+        return (e as dynamic).transacoesFinanceiras as Iterable<dynamic>? ?? [];
+      } catch (_) {
+        return [];
+      }
+    }).toList();
+  }
 
-  /// Card com receita total, despesa total e saldo líquido, somando as
-  /// `transacoesFinanceiras` de todos os eventos da safra. Só é exibido
-  /// quando há pelo menos uma transação registrada (com o payload atual
-  /// da API, esse array costuma vir vazio, então o card fica oculto até
-  /// existirem lançamentos).
-  Widget _buildResumoFinanceiro(List<SafraEvento> eventos) {
-    final transacoes = eventos.expand((e) => e.transacoesFinanceiras).toList();
-
-    if (transacoes.isEmpty) {
-      return const SizedBox.shrink();
-    }
+  Widget _buildResumoFinanceiro(List<EventoAgricola> eventos) {
+    final transacoes = _extrairTransacoes(eventos);
+    if (transacoes.isEmpty) return const SizedBox.shrink();
 
     final receitaTotal = transacoes.where((t) => t.isReceita).fold<num>(0, (soma, t) => soma + t.valor);
     final despesaTotal = transacoes.where((t) => t.isDespesa).fold<num>(0, (soma, t) => soma + t.valor);
@@ -307,28 +276,16 @@ class SafraRelatorioWidget extends StatelessWidget {
     );
   }
 
-  /// Pizza com o percentual de despesas por categoria (Fertilizantes, Mão
-  /// de obra, Combustível etc.), igual ao "Porcentagem de gastos da
-  /// lavoura" da imagem de referência. Fica oculto enquanto não houver
-  /// nenhuma despesa com categoria preenchida.
-  Widget _buildGraficoGastosPorCategoria(List<SafraEvento> eventos) {
-    final despesas = eventos
-        .expand((e) => e.transacoesFinanceiras)
-        .where((t) => t.isDespesa && t.valor > 0)
-        .toList();
-
-    if (despesas.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
+ Widget _buildGraficoGastosPorCategoria(List<EventoAgricola> eventos) {
+    final despesas = _extrairTransacoes(eventos).where((t) => t.isDespesa && t.valor > 0).toList();
+    if (despesas.isEmpty) return const SizedBox.shrink();
     final totaisPorCategoria = <String, int>{};
     for (final despesa in despesas) {
       final categoria = despesa.categoria.isNotEmpty ? despesa.categoria : 'Outros';
-      // Somamos como inteiro (centavos) só para reaproveitar o mesmo
-      // pie chart de contagem inteira usado nos outros gráficos.
-      totaisPorCategoria[categoria] = (totaisPorCategoria[categoria] ?? 0) + (despesa.valor * 100).round();
+      final int valorAtual = totaisPorCategoria[categoria] ?? 0;
+      final int centavosAdicionais = ((despesa.valor as num) * 100).round();
+      totaisPorCategoria[categoria] = valorAtual + centavosAdicionais;
     }
-
     return PieChartCard(
       titulo: 'Gastos por categoria',
       icone: Icons.pie_chart_outline,
@@ -337,30 +294,23 @@ class SafraRelatorioWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildGraficoPorTipoTrato(List<SafraEvento> eventos) {
+  Widget _buildGraficoPorTipoTrato(List<EventoAgricola> eventos) {
     final contagem = <String, int>{for (final tipo in _tiposTratoConhecidos) tipo: 0};
     var outros = 0;
-
     for (final evento in eventos) {
-      final tipo = evento.tipoTrato;
-      if (tipo.isEmpty) {
-        continue;
-      }
+      if (evento is! TratoCultural) continue;
+      final tipo = evento.tipoTrato.descricao;
+      if (tipo.isEmpty || tipo == 'Não informado') continue;
       if (contagem.containsKey(tipo)) {
         contagem[tipo] = contagem[tipo]! + 1;
       } else {
         outros++;
       }
     }
-
     if (outros > 0) {
       contagem['Outro'] = outros;
     }
-
-    // Remove categorias zeradas para o gráfico de pizza (categoria com 0
-    // eventos não ocupa fatia nenhuma e só polui a legenda).
     contagem.removeWhere((_, valor) => valor == 0);
-
     return PieChartCard(
       titulo: 'Tratos por tipo',
       icone: Icons.eco_outlined,
@@ -369,34 +319,20 @@ class SafraRelatorioWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildGraficoPorTalhao(List<SafraEvento> eventos) {
+  Widget _buildGraficoPorTalhao(List<EventoAgricola> eventos) {
     final contagem = <int, int>{};
-    // Mapa auxiliar para guardar o nome de cada talhão a partir do id.
     final nomesTalhoes = <int, String>{};
-
     for (final evento in eventos) {
-      final idTalhao = evento.idTalhao;
-      if (idTalhao == null) {
-        continue;
-      }
-
+      final idTalhao = evento.idTalhao; 
       contagem[idTalhao] = (contagem[idTalhao] ?? 0) + 1;
-      // OBS: `SafraEvento` hoje não traz o nome do talhão, só o id. Se/quando
-      // o modelo passar a ter um campo de nome (ex: vindo de
-      // `dados['talhao']['nome']` na API), basta usá-lo aqui no lugar do
-      // rótulo genérico abaixo.
       nomesTalhoes[idTalhao] = 'Talhão $idTalhao';
     }
-
-    if (contagem.isEmpty) {
-      return const SizedBox.shrink();
-    }
+    if (contagem.isEmpty) return const SizedBox.shrink();
 
     final talhoesOrdenados = contagem.keys.toList()..sort();
     final valoresPorNome = <String, int>{
       for (final id in talhoesOrdenados) (nomesTalhoes[id] ?? 'Talhão $id'): contagem[id]!,
     };
-
     return PieChartCard(
       titulo: 'Eventos por talhão',
       icone: Icons.grid_view_rounded,
@@ -404,15 +340,15 @@ class SafraRelatorioWidget extends StatelessWidget {
       paleta: _paletaTalhoes,
     );
   }
-
+  
   String _formatarData(DateTime data) {
     return '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
   }
 
-  Widget _buildEventCard(SafraEvento evento) {
-    final dataInicioTexto = evento.dataInicio != null ? _formatarData(evento.dataInicio!) : null;
+  Widget _buildEventCard(EventoAgricola evento) {
+    final isConcluido = evento.dataFim != null;
+    final dataInicioTexto = _formatarData(evento.dataInicio); 
     final dataFimTexto = evento.dataFim != null ? _formatarData(evento.dataFim!) : null;
-
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -426,6 +362,9 @@ class SafraRelatorioWidget extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
+                    // `tituloExibicao` é um getter real (não-nulo) da
+                    // classe base `Evento`, sobrescrito por `TratoCultural`
+                    // — não precisa mais do cast dinâmico com fallback.
                     evento.tituloExibicao,
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
@@ -433,38 +372,42 @@ class SafraRelatorioWidget extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: evento.confirmado ? Colors.green.shade50 : Colors.orange.shade50,
+                    color: isConcluido ? Colors.green.shade50 : Colors.orange.shade50,
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
-                    evento.confirmado ? 'Confirmado' : 'Pendente',
+                    isConcluido ? 'Concluído' : 'Em andamento',
                     style: TextStyle(
                       fontSize: 11,
-                      color: evento.confirmado ? Colors.green.shade700 : Colors.orange.shade700,
+                      color: isConcluido ? Colors.green.shade700 : Colors.orange.shade700,
                     ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 6),
-            if (evento.idTalhao != null) Text('Talhão: ${evento.idTalhao}'),
-            if (dataInicioTexto != null)
-              Text(
-                dataFimTexto != null ? 'Período: $dataInicioTexto até $dataFimTexto' : 'Data: $dataInicioTexto',
-              ),
-            if (evento.descricao.isNotEmpty) ...[
+            Text('Talhão: ${evento.idTalhao}'),
+            Text(dataFimTexto != null ? 'Período: $dataInicioTexto até $dataFimTexto' : 'Data: $dataInicioTexto',),
+            if (evento.descricao != null && evento.descricao!.isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text(evento.descricao),
+              Text(evento.descricao!),
             ],
             if (evento.responsaveis.isNotEmpty) ...[
               const SizedBox(height: 6),
-              Text('Responsável: ${evento.responsaveis.map((r) => r.razaoSocial).join(', ')}'),
+              // `responsaveisTexto` já vem pronto de `Evento` (junta os
+              // nomes de exibição de cada `Pessoa`) — sem cast dinâmico.
+              Text('Responsável: ${evento.responsaveisTexto}'),
             ],
-            if (evento.insumosUtilizados.isNotEmpty) ...[
+            
+            if (evento is TratoCultural && evento.insumosUtilizados.isNotEmpty) ...[
               const SizedBox(height: 6),
               const Text('Insumos utilizados:', style: TextStyle(fontWeight: FontWeight.w600)),
+              // `InsumoUtilizado` (model/insumos/insumo_utilizado.dart) não
+              // tem um getter `textoQuantidade` — os campos reais são
+              // `descricao` e `qtdFormatada` (ou `descricaoComQuantidade`
+              // já pronto com os dois juntos).
               ...evento.insumosUtilizados.map(
-                (insumo) => Text('• ${insumo.descricao} - ${insumo.textoQuantidade}'),
+                (insumo) => Text('• ${insumo.descricaoComQuantidade}'),
               ),
             ],
           ],

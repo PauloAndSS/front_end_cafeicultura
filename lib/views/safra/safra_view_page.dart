@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_relatorio.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_selector.dart'; 
-import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_summary.dart';  
-import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/home/main_screen_view.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_bottom_navbar.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_selector.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_summary.dart';
+import 'package:provider/provider.dart';
+
 
 class SafraViewPage extends StatefulWidget {
   const SafraViewPage({super.key});
@@ -33,6 +35,19 @@ class _SafraViewPageState extends State<SafraViewPage> {
 
         context.read<SafraViewModel>().carregarDadosDaPropriedade(idPropriedade);
       });
+    }
+  }
+
+
+void _voltar() {
+    if (Navigator.of(context).canPop()) {
+      Navigator.pop(context, true); 
+    } else {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => const MainScreenView()),
+        (route) => false,
+      );
     }
   }
 
@@ -402,16 +417,21 @@ class _SafraViewPageState extends State<SafraViewPage> {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
       appBar: AppBar(
-        title: const Text('Safras e relatórios'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          tooltip: 'Voltar',
+          onPressed: _voltar,
+        ),
+        title: const Text('Safras'),
         backgroundColor: const Color(0xFF8FA67E),
         foregroundColor: Colors.white,
         elevation: 0,
       ),
+      // 👇 ADICIONADO AQUI:
+      bottomNavigationBar: const CustomBottomNavBar(ocultarSelecao: true),
       body: RefreshIndicator(
         onRefresh: () async {
           if (propriedadesVm.idPropriedadeSelecionada != null) {
-            // Pull-to-refresh ignora o cache de sessão de propósito: é a
-            // forma do usuário forçar a busca dos dados mais recentes.
             await viewModel.carregarDadosDaPropriedade(
               propriedadesVm.idPropriedadeSelecionada!,
               forcarAtualizacao: true,
@@ -419,63 +439,106 @@ class _SafraViewPageState extends State<SafraViewPage> {
           }
         },
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
           physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SafraSelectorWidget(
-                titulo: 'Seleção da safra',
-                subtitulo: nomePropriedade ?? 'Selecione uma propriedade para ver as safras.',
-                safras: viewModel.safras,
-                safraSelecionada: viewModel.safraSelecionada,
-                isLoading: viewModel.isLoading,
-                onSelecionar: (Safra safra) => viewModel.selecionarSafra(safra),
-                onNovaSafra: _mostrarDialogoNovaSafra,
-                onEncerrarSafra: _encerrarSafraSelecionada,
-                onReativarSafra: _reativarSafraSelecionada,
+              // Área de gestão da safra: seleção + ações de
+              // nova/encerrar/reativar.
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: SafraSelectorWidget(
+                  titulo: 'Seleção da safra',
+                  subtitulo: nomePropriedade ?? 'Selecione uma propriedade para ver as safras.',
+                  safras: viewModel.safras,
+                  safraSelecionada: viewModel.safraSelecionada,
+                  isLoading: viewModel.isLoading,
+                  onSelecionar: (Safra safra) => viewModel.selecionarSafra(safra),
+                  onNovaSafra: _mostrarDialogoNovaSafra,
+                  onEncerrarSafra: _encerrarSafraSelecionada,
+                  onReativarSafra: _reativarSafraSelecionada,
+                ),
               ),
-              const SizedBox(height: 16),
               if (viewModel.isLoading)
-                const Center(child: CircularProgressIndicator())
+                const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Center(child: CircularProgressIndicator()),
+                )
               else if (viewModel.mensagemErro != null)
-                Center(
-                  child: Column(
-                    children: [
-                      _buildMessageCard(viewModel.mensagemErro!),
-                      const SizedBox(height: 8),
-                      TextButton.icon(
-                        onPressed: () {
-                          if (propriedadesVm.idPropriedadeSelecionada != null) {
-                            viewModel.carregarDadosDaPropriedade(
-                              propriedadesVm.idPropriedadeSelecionada!,
-                              forcarAtualizacao: true,
-                            );
-                          }
-                        },
-                        icon: const Icon(Icons.refresh),
-                        label: const Text('Tentar novamente'),
-                      ),
-                    ],
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        _buildMessageCard(viewModel.mensagemErro!),
+                        const SizedBox(height: 8),
+                        TextButton.icon(
+                          onPressed: () {
+                            if (propriedadesVm.idPropriedadeSelecionada != null) {
+                              viewModel.carregarDadosDaPropriedade(
+                                propriedadesVm.idPropriedadeSelecionada!,
+                                forcarAtualizacao: true,
+                              );
+                            }
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Tentar novamente'),
+                        ),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
                   ),
                 )
               else if (viewModel.safras.isEmpty)
-                _buildEmptyState()
-              else
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (viewModel.safraSelecionada != null) SafraSummaryCard(safra: viewModel.safraSelecionada!),
-                    const SizedBox(height: 16),
-                    SafraRelatorioWidget(
-                      eventos: viewModel.relatorio,
-                      isLoading: viewModel.isLoadingRelatorio,
-                    ),
-                  ],
-                ),
-            ],
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                  child: _buildEmptyState(),
+                )
+              else 
+                 _buildDashboardDaSafra(viewModel),
+
+              ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildDashboardDaSafra(SafraViewModel viewModel) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(top: 8),
+      padding: const EdgeInsets.fromLTRB(16, 20, 16, 24),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(24),
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.dashboard_outlined, size: 20, color: Color(0xFF67835C)),
+              const SizedBox(width: 8),
+              Text(
+                viewModel.safraSelecionada != null
+                    ? 'Resumo de ${viewModel.safraSelecionada!.nomeExibicao}'
+                    : 'Resumo da safra',
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF67835C)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          if (viewModel.safraSelecionada != null) SafraSummaryCard(safra: viewModel.safraSelecionada!),
+          const SizedBox(height: 16),
+          /*SafraRelatorioWidget(
+            eventos: viewModel.relatorio,
+            isLoading: viewModel.isLoadingRelatorio,
+          ),*/
+        ],
       ),
     );
   }

@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
 
-/// Card com os detalhes gerais de uma safra (nome, período, status).
-///
-/// Extraído da tela de Safras e Relatórios para poder ser reaproveitado em
-/// qualquer outra tela do sistema que precise mostrar de forma resumida
-/// qual é a safra atual (ex: cabeçalho de uma tela de Talhão ou de
-/// Financeiro).
+
 class SafraSummaryCard extends StatelessWidget {
   final Safra safra;
 
