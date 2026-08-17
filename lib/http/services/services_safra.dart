@@ -2,8 +2,8 @@ import 'dart:convert';
 
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
+import 'package:frond_end_cafeicultura_mobile/model/eventos/evento_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
-import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
 import 'package:http/http.dart' as http;
 
@@ -70,43 +70,60 @@ class ServicesSafra extends BaseService {
     }
   }
 
-  /// Desembrulha cada `{modulo, dados}` e instancia a subclasse concreta
-  /// de `EventoAgricola` correspondente ao `modulo`.
+  /// Busca o relatório de eventos de uma safra recortado por um talhão.
   ///
-  /// Hoje só existe o módulo TRATO_CULTURAL. Quando outros módulos forem
-  /// adicionados (ex: colheita, financeiro), basta somar um novo `case`
-  /// aqui — o resto do app já trabalha em cima de `EventoAgricola`, então
-  /// não precisa mudar mais nada fora daqui.
+  /// Mesma resposta de [buscarRelatorio] — envelope `{modulo, dados}` — só
+  /// que quem filtra pelo talhão é o backend, e não o app depois de baixar
+  /// tudo: a safra inteira de uma propriedade grande é muito maior do que a
+  /// fatia de um talhão só.
+  Future<List<EventoAgricola>> buscarRelatorioDoTalhao({
+    required int idPropriedade,
+    required int idSafra,
+    required int idTalhao,
+  }) async {
+    try {
+      final response = await http.get(
+        Uri.parse('$url/propriedade/$idPropriedade/safra/$idSafra/talhao/$idTalhao/eventos'),
+        headers: defaultHeaders,
+      );
+
+      if (response.statusCode == 200) {
+        final dadosEventos = extrairDadosResposta(response.bodyBytes);
+        return _mapearEventos(dadosEventos);
+      } else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao buscar relatório do talhão.',
+        );
+      }
+    } on ApiException catch (e) {
+      // Talhão sem nenhuma atividade na safra é o caso mais comum de todos,
+      // e o backend o comunica como erro. Sem esta conversão a tela mostraria
+      // vermelho onde deveria mostrar estado vazio.
+      if (_isMensagemSemRegistro(e.mensagem)) {
+        return [];
+      }
+      rethrow;
+    } catch (e) {
+      throw Exception('Falha na comunicação ao buscar relatório do talhão. Tente novamente mais tarde.');
+    }
+  }
+
+  /// Desembrulha cada `{modulo, dados}` no model concreto correspondente.
+  ///
+  /// Delega ao [EventoFactory], que é o mesmo desembrulho que a listagem de
+  /// atividades já usa: um módulo que o app ainda não modela vira
+  /// `EventoGenerico` em vez de sumir do relatório — um evento com título
+  /// genérico informa mais do que um buraco silencioso na contagem.
   List<EventoAgricola> _mapearEventos(dynamic dadosEventos) {
-    final eventos = <EventoAgricola>[];
-
-    for (final item in dadosEventos) {
-      if (item is! Map) {
-        continue;
-      }
-
-      final itemMap = Map<String, dynamic>.from(item);
-      final modulo = itemMap['modulo']?.toString() ?? '';
-      final dadosRaw = itemMap['dados'];
-
-      if (dadosRaw is! Map) {
-        continue;
-      }
-
-      final dados = Map<String, dynamic>.from(dadosRaw);
-
-      switch (modulo) {
-        case 'TRATO_CULTURAL':
-          eventos.add(TratoCultural.fromJson(dados));
-          break;
-        default:
-          // Módulo que o app ainda não sabe interpretar: ignora em vez
-          // de quebrar o relatório inteiro.
-          break;
-      }
+    if (dadosEventos is! List) {
+      return const [];
     }
 
-    return eventos;
+    return dadosEventos
+        .whereType<Map<String, dynamic>>()
+        .map(EventoFactory.fromJson)
+        .toList();
   }
 
   // cadastro
