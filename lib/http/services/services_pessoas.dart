@@ -101,9 +101,7 @@ class ServicesFornecedor extends BaseService {
       final response = await http.delete(urlDelete, headers: defaultHeaders);
       if (response.statusCode == 200 || response.statusCode == 204) {
         return true;
-      } else if(response.statusCode == 403) {
-        throw ApiException('Nao eh possivel excluir um fornecedor que possui relacao com outro cadastro.');
-        }else {
+      } else {
         tratarErroRequisicao(
           response.bodyBytes,
           fallbackMsg: 'Erro ao excluir fornecedor.',
@@ -239,8 +237,6 @@ class ServicesCliente extends BaseService {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
-      } else if (response.statusCode == 409) {
-        throw ApiException('CPF ou CNPJ já cadastrado no sistema.');
       } else {
         tratarErroRequisicao(
           response.bodyBytes,
@@ -400,8 +396,6 @@ class ServicesPrestadorDeServico extends BaseService {
       );
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
-      } else if(response.statusCode == 409) {
-        throw ApiException('CNPJ ou CPF já cadastrado no sistema.');
       } else {
         tratarErroRequisicao(
           response.bodyBytes,
