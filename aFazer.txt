@@ -13,10 +13,3 @@ AGUARDANDO RETORNO
 ###############################################################################################################################
 A FAZER
 ###############################################################################################################################
-
--> paginado sempre retorna {
-  "data": [{},{}],
-  "total": 0,
-  "pagina": 0,
-  "totalPaginas": 0
-}. pode retornar "talhoes", "tratos" e "data", no caso do get /pessoas. Utilizar esse envelope para fazer uma função/atualizar a função de dto de paginação, para o services ter uma lógica mais simples. Pode ser editado o arquivo dentro da pasta /dto ou atualizar o método do service base.
