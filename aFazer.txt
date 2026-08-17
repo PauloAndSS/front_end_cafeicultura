@@ -13,3 +13,11 @@ AGUARDANDO RETORNO
 ###############################################################################################################################
 A FAZER
 ###############################################################################################################################
+
+-> olhar com calma a pasta model, principalmente eventos. Entender quais métodos/classes estão repetidas e desnecessárias.
+
+-> Visualizar services e se há funções que podem ser implementadas, funções confusas, e que podem ser mais simplificadas;
+
+-> Visualizar viewmodels e simplificá-la, identificar código repetido e modularizar;
+
+-> componentizar a view, olhando grandes elementos em comum, como botões, classes de cores, formulários, telas de "em desenvolvimento"; olhar elementos específicos, presentes somente em talhões/atividades, entre outros. Reaproveitamentos gerais devem ficar na pasta views/widgets; específicos devem ficar dentro de cada feature em /widgets

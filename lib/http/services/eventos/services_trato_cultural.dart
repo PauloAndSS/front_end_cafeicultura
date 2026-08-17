@@ -157,7 +157,7 @@ class ServicesTratoCultural extends BaseService {
   Future<bool> alterarDataInicio(int idTrato, DateTime dataInicio) async {
     return _alterar(
       idTrato: idTrato,
-      recurso: 'dataInicio',
+      recurso: 'alterarInicio',
       corpo: {'dataInicio': _meiaNoiteUtc(dataInicio).toIso8601String()},
       fallbackMsg: 'Erro ao alterar a data de início do trato cultural.',
       acao: 'alterar a data de início',
