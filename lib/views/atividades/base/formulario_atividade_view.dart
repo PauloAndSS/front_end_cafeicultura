@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/dados_formulario_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
+import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/formatadores.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/cadastrar_atividade_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/corpo_com_estado.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/selecionar_responsaveis_modal.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_data_atividade.dart';
@@ -50,6 +52,13 @@ class FormularioAtividadeView extends StatefulWidget {
   /// Frase do estado vazio quando a propriedade não tem talhão ativo.
   final String mensagemSemTalhoes;
 
+  /// Frase do estado vazio quando a propriedade não tem safra aberta.
+  ///
+  /// Bloquear é mais honesto do que deixar preencher: sem safra ativa o
+  /// lançamento não tem onde entrar, e descobrir isso depois de escolher
+  /// talhão, data, tipo e insumos é o pior momento possível.
+  final String mensagemSemSafras;
+
   /// Campos do tipo concreto, logo abaixo do talhão.
   final WidgetBuilder? construirCamposEspecificos;
 
@@ -77,6 +86,7 @@ class FormularioAtividadeView extends StatefulWidget {
     required this.ajudaDataFim,
     required this.dicaDataFim,
     required this.mensagemSemTalhoes,
+    required this.mensagemSemSafras,
     required this.aoSalvar,
     this.dataInicial,
     this.construirCamposEspecificos,
@@ -98,6 +108,11 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
   final _dataFimController = TextEditingController();
 
   int? _idTalhaoSelecionado;
+
+  /// Só tem valor quando a propriedade tem mais de uma safra aberta: com uma
+  /// só não há dropdown, e [_resolverSafra] a devolve sem passar por aqui.
+  Safra? _safraSelecionada;
+
   DateTime? _dataInicio;
   DateTime? _dataFim;
 
@@ -155,6 +170,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
   /// sem ter tocado em nada pediria confirmação de descarte à toa.
   bool get _temAlteracoes =>
       _idTalhaoSelecionado != null ||
+      _safraSelecionada != null ||
       _dataInicio != widget.dataInicial ||
       _descricaoPreenchida ||
       _responsaveisSelecionados.isNotEmpty ||
@@ -164,6 +180,39 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(mensagem), backgroundColor: _vermelhoErro),
     );
+  }
+
+  /// Recarrega as duas fontes do formulário: talhões e catálogos pelo
+  /// ViewModel da tela, safras pelo ViewModel global.
+  ///
+  /// A safra vai com `forcarAtualizacao` de propósito. O cache de sessão do
+  /// `SafraViewModel` devolveria a mesma lista de antes, e o usuário que
+  /// acabou de abrir uma safra em outra aba continuaria vendo o estado vazio —
+  /// justamente na tela em que este botão é a única saída.
+  void _recarregarDados() {
+    final propriedadesViewModel = context.read<PropriedadesUsuarioViewModel>();
+
+    _viewModel.init(propriedadesViewModel);
+
+    final idPropriedade = propriedadesViewModel.idPropriedadeSelecionada;
+    if (idPropriedade == null) return;
+
+    context.read<SafraViewModel>().carregarDadosDaPropriedade(
+          idPropriedade,
+          forcarAtualizacao: true,
+        );
+  }
+
+  /// A safra em que o lançamento vai cair, ou `null` se ainda indefinida.
+  ///
+  /// Com uma ativa só não há o que perguntar. Com duas ou mais vale a escolha
+  /// do usuário — desde que ela ainda esteja na lista: uma recarga pode ter
+  /// encerrado a safra escolhida, e continuar apontando para ela gravaria em
+  /// safra fechada, que é o caso que este seletor existe para impedir.
+  Safra? _resolverSafra(List<Safra> ativas) {
+    if (ativas.length == 1) return ativas.first;
+
+    return ativas.contains(_safraSelecionada) ? _safraSelecionada : null;
   }
 
   /// Data de término só existe em lançamento retroativo: o que ainda vai
@@ -273,11 +322,22 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
       return;
     }
 
+    // O `validator` do dropdown já barra o caso de duas ou mais safras sem
+    // escolha, e o de uma só nunca chega aqui nulo. A guarda é a rede para o
+    // dia em que um terceiro caminho aparecer.
+    final safra = _resolverSafra(context.read<SafraViewModel>().safrasAtivas);
+
+    if (safra?.id == null) {
+      _mostrarAviso('Selecione a safra do lançamento.');
+      return;
+    }
+
     FocusScope.of(context).unfocus();
 
     final sucesso = await widget.aoSalvar(
       DadosFormularioAtividade(
         idTalhao: _idTalhaoSelecionado!,
+        idSafra: safra!.id!,
         dataInicio: _dataInicio!,
         dataFim: _dataFim,
         descricao: _descricaoController.text,
@@ -307,6 +367,23 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
 
   @override
   Widget build(BuildContext context) {
+    final safraViewModel = context.watch<SafraViewModel>();
+    final idPropriedade =
+        context.watch<PropriedadesUsuarioViewModel>().idPropriedadeSelecionada;
+
+    // Mesma garantia que a home faz em `home_view.dart:74`. Sem ela, quem abre
+    // o formulário direto pelo calendário num app recém-aberto veria "nenhuma
+    // safra ativa" numa propriedade que tem safra aberta.
+    if (idPropriedade != null &&
+        (idPropriedade != safraViewModel.propriedadeIdAtual ||
+            !safraViewModel.dadosCarregados)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        safraViewModel.carregarDadosDaPropriedade(idPropriedade);
+      });
+    }
+
+    final safrasAtivas = safraViewModel.safrasAtivas;
+
     return PopScope(
       canPop: _salvou || !_temAlteracoes,
       onPopInvokedWithResult: (didPop, _) {
@@ -327,15 +404,19 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
           listenable: _viewModel,
           builder: (context, child) {
             return CorpoComEstado(
-              isLoading: _viewModel.isCarregandoDados,
+              // O carregamento da safra entra junto: sem ele, o estado vazio
+              // de safra pisca durante a requisição — exatamente o defeito que
+              // esta cascata de estados foi criada para eliminar.
+              isLoading:
+                  _viewModel.isCarregandoDados || safraViewModel.isLoading,
               // O erro do formulário aparece no estado vazio junto da frase de
               // "cadastre um talhão": as duas situações levam à mesma saída.
               mensagemErro: null,
-              vazio: _viewModel.talhoesAtivos.isEmpty,
+              vazio: _viewModel.talhoesAtivos.isEmpty || safrasAtivas.isEmpty,
               construirVazio: (_) => _construirEstadoVazio(),
               construirConteudo: (_) => SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
-                child: _construirFormulario(),
+                child: _construirFormulario(safrasAtivas),
               ),
             );
           },
@@ -345,7 +426,12 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
   }
 
   Widget _construirEstadoVazio() {
-    final mensagem = _viewModel.mensagemErro ?? widget.mensagemSemTalhoes;
+    // Talhão antes de safra: é a checagem que já existia, e é a que o
+    // ViewModel da tela sabe explicar com o próprio erro de carregamento.
+    final mensagem = _viewModel.mensagemErro ??
+        (_viewModel.talhoesAtivos.isEmpty
+            ? widget.mensagemSemTalhoes
+            : widget.mensagemSemSafras);
 
     return Center(
       child: Padding(
@@ -365,9 +451,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
               width: 200,
               child: CustomButton(
                 text: 'Tentar novamente',
-                onPressed: () => _viewModel.init(
-                  context.read<PropriedadesUsuarioViewModel>(),
-                ),
+                onPressed: _recarregarDados,
               ),
             ),
           ],
@@ -376,7 +460,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     );
   }
 
-  Widget _construirFormulario() {
+  Widget _construirFormulario(List<Safra> safrasAtivas) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -418,6 +502,38 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
               validator: (valor) => valor == null ? 'Obrigatório' : null,
             ),
             const SizedBox(height: 16),
+
+            // Talhão e safra são as duas dimensões de escopo do lançamento, e
+            // por isso ficam juntas. Com uma safra aberta só o dropdown não
+            // aparece: não há escolha a fazer, e um campo de opção única é
+            // trabalho pedido ao usuário em troca de nada.
+            //
+            // Sem selo de "Ativa": aqui toda safra da lista é ativa. O selo só
+            // informa no seletor da tela de safras, onde as duas convivem.
+            if (safrasAtivas.length > 1) ...[
+              construirRotuloAtividade('Safra'),
+              DropdownButtonFormField<Safra>(
+                initialValue: _resolverSafra(safrasAtivas),
+                isExpanded: true,
+                decoration: decoracaoSeletorAtividade(),
+                hint: const Text(
+                  'Selecione a safra',
+                  style: TextStyle(color: Colors.black26, fontSize: 14),
+                ),
+                items: safrasAtivas.map((safra) {
+                  return DropdownMenuItem(
+                    value: safra,
+                    child: Text(
+                      safra.nomeExibicao,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                }).toList(),
+                onChanged: (valor) => setState(() => _safraSelecionada = valor),
+                validator: (valor) => valor == null ? 'Obrigatório' : null,
+              ),
+              const SizedBox(height: 16),
+            ],
 
             if (widget.construirCamposEspecificos != null) ...[
               widget.construirCamposEspecificos!(context),

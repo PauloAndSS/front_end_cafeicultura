@@ -6,11 +6,11 @@ import 'package:http/http.dart' as http;
 
 /// Atividades de **todos** os módulos de uma propriedade.
 ///
-/// É a rota que o calendário da home consome. Os services por tipo
-/// (`ServicesTratoCultural` e os que vierem) continuam existindo para as abas
-/// de atividade, que precisam do model concreto e das operações de escrita
-/// específicas do módulo; aqui ficam a leitura da união e as operações que
-/// valem para qualquer atividade, independente de módulo — hoje, a exclusão.
+/// É a rota que o calendário da home consome, e é só isso que mora aqui: a
+/// leitura da união dos módulos. As operações de escrita ficam nos services por
+/// tipo (`ServicesTratoCultural` e os que vierem), que têm o model concreto e a
+/// rota própria de cada uma — inclusive a exclusão, que já foi genérica e hoje
+/// é `DELETE /tratosculturais/{id}` e companhia.
 class ServicesEvento extends BaseService {
   late final Uri url = Uri.parse('$baseUrl/eventos');
 
@@ -58,37 +58,6 @@ class ServicesEvento extends BaseService {
     } catch (e) {
       throw ApiException(
         'Falha na comunicação ao buscar as atividades. Tente novamente mais tarde.',
-      );
-    }
-  }
-
-  /// Exclui uma atividade de **qualquer** módulo.
-  ///
-  /// Diferente dos `excluir` de talhão e pessoa, nenhum status recebe mensagem
-  /// fabricada aqui: quem sabe se a atividade pode ou não sair é o backend, e
-  /// `tratarErroRequisicao` já entrega ao usuário o motivo que ele mandou. Um
-  /// `403 → 'não pode ser excluída porque X'` escrito neste arquivo seria regra
-  /// de negócio duplicada, e desatualizada na primeira mudança do servidor.
-  Future<bool> excluir(int idEvento) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$url/$idEvento'),
-        headers: defaultHeaders,
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        return true;
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao excluir a atividade.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao excluir a atividade. Tente novamente mais tarde.',
       );
     }
   }

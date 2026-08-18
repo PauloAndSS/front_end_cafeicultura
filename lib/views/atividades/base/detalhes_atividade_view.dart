@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/detalhes_atividade_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/base/confirmar_atividade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/blocos_detalhes_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/selecionar_responsaveis_modal.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_data_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/botao_excluir.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
+import 'package:provider/provider.dart';
 
 const _verdePrimario = Color(0xFF67835C);
 const _cinzaBorda = Color(0xFFE0E0E0);
@@ -263,6 +265,12 @@ class _DetalhesAtividadeViewState<T extends EventoAgricola>
   Widget _construirCartaoInformacoes(BuildContext context) {
     final atividade = _viewModel.atividade;
 
+    // O evento só traz o `idSafra`; quem tem o nome é o ViewModel global, que
+    // já carregou as safras da propriedade. Nulo quando a safra não está na
+    // lista — aí a linha simplesmente não é montada, porque "Safra: —" faria
+    // parecer dado faltando no servidor quando o buraco pode ser local.
+    final safra = context.watch<SafraViewModel>().safraPorId(atividade.idSafra);
+
     // Atividade finalizada congela tudo; durante uma requisição em voo, o toque
     // não pode disparar uma segunda. O lápis e o InkWell nascem os dois deste
     // mesmo null, então nunca aparece um indicador que não responde.
@@ -314,6 +322,13 @@ class _DetalhesAtividadeViewState<T extends EventoAgricola>
               editavel,
             ),
             LinhaInfoAtividade(rotulo: 'Talhão:', valor: widget.nomeTalhao),
+            // Sem lápis: não há rota para mover uma atividade de safra, e o
+            // lápis é justamente o que sinaliza "isto tem endpoint".
+            if (safra != null)
+              LinhaInfoAtividade(
+                rotulo: 'Safra:',
+                valor: safra.nomeComSituacao,
+              ),
             LinhaInfoAtividade(
               rotulo: 'Descrição:',
               valor: atividade.descricaoTexto,

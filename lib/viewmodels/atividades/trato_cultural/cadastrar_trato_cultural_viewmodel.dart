@@ -27,7 +27,7 @@ class CadastrarTratoCulturalViewModel extends CadastrarAtividadeViewModel
     required DadosFormularioAtividade dados,
     required TipoTrato tipoTrato,
     required List<InsumoUtilizado> insumosUtilizados,
-    required int idSafra, // 👈 Recebe a safra atual dinamicamente aqui
+    required int idSafra,
   }) {
     return executarCadastro(
       chamada: () {
@@ -37,7 +37,7 @@ class CadastrarTratoCulturalViewModel extends CadastrarAtividadeViewModel
           dataInicio: dados.dataInicio,
           dataFim: dados.dataFim,
           descricao: dados.descricao?.trim(),
-          idSafra: idSafra, 
+          idSafra: idSafra,
           responsaveis: dados.responsaveis,
           insumosUtilizados: insumosUtilizados,
         );

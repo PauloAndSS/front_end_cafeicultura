@@ -5,12 +5,6 @@ import 'package:frond_end_cafeicultura_mobile/utils/formatadores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/bar_chart.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/pie_chart.dart';
 
-/// Visão agregada dos eventos de um talhão numa safra.
-///
-/// Só agrega: a lista evento a evento fica com a seção "Atividades" da mesma
-/// tela, que já pagina e filtra por status. Duas listas dos mesmos registros,
-/// com regras de filtro diferentes, rolando uma sobre a outra, seria pior do
-/// que não ter nenhuma.
 class RelatorioTalhaoWidget extends StatelessWidget {
   final List<EventoAgricola> eventos;
   final bool isLoading;
@@ -25,8 +19,6 @@ class RelatorioTalhaoWidget extends StatelessWidget {
     this.onTentarNovamente,
   });
 
-  /// Terrosos, os mesmos do gráfico de tratos do relatório de safra — insumo é
-  /// assunto de trato cultural, e a cor mantém a associação entre as telas.
   static const List<Color> _paletaInsumos = [
     Color(0xFFE07B39),
     Color(0xFFB2542C),
@@ -36,9 +28,6 @@ class RelatorioTalhaoWidget extends StatelessWidget {
     Color(0xFFD9642F),
   ];
 
-  /// Fatias nomeadas antes de o resto virar "Outros". A legenda do
-  /// `PieChartCard` é uma coluna vertical: passar disso estica o card sem
-  /// acrescentar leitura.
   static const int _maximoDeInsumosNomeados = 5;
 
   /// Teto de barras com preenchimento de lacunas no gráfico por mês — um ano,
@@ -70,7 +59,7 @@ class RelatorioTalhaoWidget extends StatelessWidget {
         _construirIndicadores(),
         const SizedBox(height: 12),
         BarChartCard(
-          titulo: 'Eventos por mês',
+          titulo: 'Atividades por mês',
           icone: Icons.bar_chart_rounded,
           valores: _contarPorMes(),
         ),

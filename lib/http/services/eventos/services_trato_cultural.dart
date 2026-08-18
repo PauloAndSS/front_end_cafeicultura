@@ -283,4 +283,35 @@ class ServicesTratoCultural extends BaseService {
       );
     }
   }
+
+  /// Apaga o trato cultural.
+  ///
+  /// Nenhum status ganha mensagem fabricada aqui: quem sabe se o trato pode ou
+  /// não sair — vínculo com despesa, safra fechada, o que for — é o backend, e
+  /// `tratarErroRequisicao` já entrega ao usuário o motivo que ele mandou. Um
+  /// `403 → 'não pode ser excluído porque X'` escrito neste arquivo seria regra
+  /// de negócio duplicada, e desatualizada na primeira mudança do servidor.
+  Future<bool> excluir(int idTrato) async {
+    try {
+      final response = await http.delete(
+        Uri.parse('$url/$idTrato'),
+        headers: defaultHeaders,
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        return true;
+      } else {
+        tratarErroRequisicao(
+          response.bodyBytes,
+          fallbackMsg: 'Erro ao excluir o trato cultural.',
+        );
+      }
+    } on ApiException {
+      rethrow;
+    } catch (e) {
+      throw ApiException(
+        'Falha na comunicação ao excluir o trato cultural. Tente novamente mais tarde.',
+      );
+    }
+  }
 }

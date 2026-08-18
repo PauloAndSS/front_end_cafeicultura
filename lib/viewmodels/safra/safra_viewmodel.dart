@@ -35,6 +35,30 @@ class SafraViewModel extends ChangeNotifier {
   int? get propriedadeIdAtual => _propriedadeIdAtual;
   bool get dadosCarregados => _dadosCarregados;
 
+  /// Safras em que ainda se pode lançar atividade.
+  ///
+  /// Separado de [safras] de propósito: aquela lista é de navegação — a tela
+  /// de safras precisa mostrar as encerradas para consultar e reativar. Esta é
+  /// a de escrita, e o cadastro de atividade só enxerga esta.
+  List<Safra> get safrasAtivas =>
+      _safras.where((safra) => safra.ativa).toList();
+
+  /// Safra de [id] entre as da propriedade carregada, ou `null`.
+  ///
+  /// Traduz o `idSafra` cru que o evento carrega em algo exibível, sem obrigar
+  /// cada tela a varrer a lista por conta própria. Busca em todas, e não só
+  /// nas ativas: uma atividade antiga pertence legitimamente a uma safra já
+  /// encerrada, e é justamente ela que o card de detalhes precisa nomear.
+  Safra? safraPorId(int? id) {
+    if (id == null) return null;
+
+    for (final safra in _safras) {
+      if (safra.id == id) return safra;
+    }
+
+    return null;
+  }
+
   /// Carrega as safras da propriedade informada.
   ///
   /// Por padrão, se essa propriedade já tiver sido carregada nesta sessão

@@ -3,7 +3,6 @@ import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tr
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo_utilizado.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/cadastrar_trato_cultural_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/base/formulario_atividade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/selecionar_insumos_modal.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_multiplo_atividade.dart';
@@ -46,26 +45,22 @@ class _CadastrarTratoCulturalViewState
       dicaDataFim: 'Trato em andamento',
       mensagemSemTalhoes:
           'Nenhum talhão ativo nesta propriedade. Cadastre um talhão antes de lançar um trato cultural.',
+      mensagemSemSafras:
+          'Nenhuma safra aberta nesta propriedade. Abra uma safra antes de lançar um trato cultural.',
       camposEspecificosPreenchidos:
           _tipoTratoSelecionado != null || _insumosSelecionados.isNotEmpty,
       construirCamposEspecificos: _construirSeletorTipoTrato,
       construirCamposFinais: _construirSeletorInsumos,
-      aoSalvar: (dados) async {
-        final safraVM = context.read<SafraViewModel>();
-        final idSafraAtual = safraVM.safraSelecionada?.id;
-
-        if (idSafraAtual == null) {
-          _mostrarAviso('Selecione uma safra ativa antes de salvar o trato cultural.');
-          return false;
-        }
-
-        return await _viewModel.submeterFormulario(
-          dados: dados,
-          tipoTrato: _tipoTratoSelecionado!,
-          insumosUtilizados: _insumosSelecionados,
-          idSafra: idSafraAtual,
-        );
-      },
+      // A safra sai de `dados`, não do `SafraViewModel`: quem decide é o
+      // formulário base, entre as safras abertas. Ler a safra selecionada na
+      // aba Safras — que inclui encerradas — gravava o trato justamente na
+      // safra que o usuário estava apenas consultando.
+      aoSalvar: (dados) => _viewModel.submeterFormulario(
+        dados: dados,
+        tipoTrato: _tipoTratoSelecionado!,
+        insumosUtilizados: _insumosSelecionados,
+        idSafra: dados.idSafra,
+      ),
     );
   }
 

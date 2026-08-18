@@ -96,11 +96,10 @@ class SafraSelectorWidget extends StatelessWidget {
               ),
               selectedItemBuilder: (context) {
                 return safrasEmOrdem.map((safra) {
-                  final nomeSafra = safra.nomeExibicao;
                   return Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      safra.isEncerrada ? '$nomeSafra (Encerrada)' : nomeSafra,
+                      safra.nomeComSituacao,
                       overflow: TextOverflow.ellipsis,
                     ),
                   );

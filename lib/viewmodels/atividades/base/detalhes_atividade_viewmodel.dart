@@ -1,6 +1,5 @@
 import 'package:flutter/foundation.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
-import 'package:frond_end_cafeicultura_mobile/http/services/eventos/services_evento.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/carregar_responsaveis_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/descarte_seguro_mixin.dart';
@@ -13,6 +12,7 @@ typedef ChamadaConfirmar = Future<bool> Function(
 typedef ChamadaData = Future<bool> Function(int id, DateTime data);
 typedef ChamadaTexto = Future<bool> Function(int id, String texto);
 typedef ChamadaIds = Future<bool> Function(int id, List<int> ids);
+typedef ChamadaExcluir = Future<bool> Function(int id);
 
 /// Detalhe de uma atividade agrícola, com edição campo a campo.
 ///
@@ -65,22 +65,24 @@ abstract class DetalhesAtividadeViewModel<T extends EventoAgricola>
   @protected
   ChamadaIds? get chamadaAlterarResponsaveis => null;
 
+  /// Excluir era a exceção deste bloco enquanto a rota valia para todo módulo
+  /// (`DELETE /eventos/{id}`). Passou a ser por módulo — `DELETE
+  /// /tratosculturais/{id}` e as que vierem —, então entrou na mesma injeção:
+  /// `null` já é a flag de "este módulo não apaga" que [podeExcluir] consulta.
+  @protected
+  ChamadaExcluir? get chamadaExcluir => null;
+
   bool get podeConfirmar => chamadaConfirmar != null;
   bool get podeAlterarDataInicio => chamadaAlterarDataInicio != null;
   bool get podeAlterarDescricao => chamadaAlterarDescricao != null;
   bool get podeAlterarResponsaveis => chamadaAlterarResponsaveis != null;
 
-  /// Excluir é a exceção à injeção acima: a rota é a mesma para todo módulo
-  /// (`DELETE /eventos/{id}`), então um getter anulável por subclasse seria
-  /// cada subclasse devolvendo o tear-off do mesmo método.
-  final _eventoService = ServicesEvento();
-
   /// Agendada e em andamento saem; finalizada é histórico e fica.
   ///
-  /// Só o estado é conferido aqui. Se a atividade pode mesmo ser apagada —
-  /// safra fechada, vínculo com despesa, o que for — quem responde é o backend,
-  /// e a recusa dele vira [mensagemErro].
-  bool get podeExcluir => !_atividade.finalizado;
+  /// Só o estado da atividade é conferido aqui, além de o módulo ter a rota. Se
+  /// a atividade pode mesmo ser apagada — safra fechada, vínculo com despesa, o
+  /// que for — quem responde é o backend, e a recusa dele vira [mensagemErro].
+  bool get podeExcluir => chamadaExcluir != null && !_atividade.finalizado;
 
   /// Cópia com os campos **comuns** trocados, preservando os específicos.
   ///
@@ -167,7 +169,7 @@ abstract class DetalhesAtividadeViewModel<T extends EventoAgricola>
   /// que ela desenha deixou de existir no servidor.
   Future<bool> excluir() {
     return executar(
-      chamada: () => _eventoService.excluir(_atividade.id!),
+      chamada: () => chamadaExcluir!(_atividade.id!),
       // Nada a refletir na cópia local — a atividade inteira sai de cena. O que
       // interessa deste caminho é `houveAlteracao`, que `executar` liga sozinho
       // e é o sinal que faz a listagem e o calendário recarregarem.

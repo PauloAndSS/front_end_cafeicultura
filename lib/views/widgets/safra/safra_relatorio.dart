@@ -9,9 +9,17 @@ class SafraRelatorioWidget extends StatelessWidget {
   final String? mensagemErro;
   final bool mostrarTitulo;
 
+  /// Traduz o `idTalhao` cru do payload em nome exibível.
+  ///
+  /// Vem de fora, e não de um ViewModel lido aqui dentro: este widget é o
+  /// relatório de qualquer lista de eventos, e quem já carregou os talhões é
+  /// a tela que o monta. Mesmo contrato de `atividades_do_dia_sheet.dart`.
+  final String Function(int idTalhao) nomeDoTalhao;
+
   const SafraRelatorioWidget({
     super.key,
     required this.eventos,
+    required this.nomeDoTalhao,
     this.isLoading = false,
     this.mensagemErro,
     this.mostrarTitulo = true,
@@ -320,21 +328,29 @@ class SafraRelatorioWidget extends StatelessWidget {
   }
 
   Widget _buildGraficoPorTalhao(List<EventoAgricola> eventos) {
+    // A contagem é por id — é a única chave confiável. O nome só entra na
+    // hora de montar a legenda.
     final contagem = <int, int>{};
-    final nomesTalhoes = <int, String>{};
     for (final evento in eventos) {
-      final idTalhao = evento.idTalhao; 
-      contagem[idTalhao] = (contagem[idTalhao] ?? 0) + 1;
-      nomesTalhoes[idTalhao] = 'Talhão $idTalhao';
+      contagem[evento.idTalhao] = (contagem[evento.idTalhao] ?? 0) + 1;
     }
     if (contagem.isEmpty) return const SizedBox.shrink();
 
+    // Ordenar por id mantém a ordem das fatias estável entre rebuilds, e com
+    // ela o casamento de cada talhão com sua cor na paleta.
     final talhoesOrdenados = contagem.keys.toList()..sort();
-    final valoresPorNome = <String, int>{
-      for (final id in talhoesOrdenados) (nomesTalhoes[id] ?? 'Talhão $id'): contagem[id]!,
-    };
+
+    // Soma em vez de sobrescrever: dois talhões distintos podem ter o mesmo
+    // `nomeExibicao`, e o `PieChartCard` é indexado por rótulo. Com o rótulo
+    // antigo, montado a partir do id, a colisão era impossível; com nome real
+    // ela passa a ser, e sobrescrever perderia a contagem de uma das fatias.
+    final valoresPorNome = <String, int>{};
+    for (final id in talhoesOrdenados) {
+      final nome = nomeDoTalhao(id);
+      valoresPorNome[nome] = (valoresPorNome[nome] ?? 0) + contagem[id]!;
+    }
     return PieChartCard(
-      titulo: 'Eventos por talhão',
+      titulo: 'Atividades por talhão',
       icone: Icons.grid_view_rounded,
       valores: valoresPorNome,
       paleta: _paletaTalhoes,
@@ -386,7 +402,7 @@ class SafraRelatorioWidget extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 6),
-            Text('Talhão: ${evento.idTalhao}'),
+            Text('Talhão: ${nomeDoTalhao(evento.idTalhao)}'),
             Text(dataFimTexto != null ? 'Período: $dataInicioTexto até $dataFimTexto' : 'Data: $dataInicioTexto',),
             if (evento.descricao != null && evento.descricao!.isNotEmpty) ...[
               const SizedBox(height: 6),

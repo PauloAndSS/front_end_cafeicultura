@@ -392,10 +392,18 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
               const SizedBox(height: 16),
             ],
 
-            SafraRelatorioWidget(
-              eventos: safraVM.relatorio.cast<EventoAgricola>(), 
-              isLoading: safraVM.isLoadingRelatorio,
-              mostrarTitulo: false,
+            // Ouve a agenda porque é dela que sai o nome do talhão: os talhões
+            // chegam por uma requisição própria, que pode terminar depois do
+            // relatório. Sem este `ListenableBuilder` o rótulo congelaria no
+            // fallback com o id.
+            ListenableBuilder(
+              listenable: _agendaViewModel,
+              builder: (context, _) => SafraRelatorioWidget(
+                eventos: safraVM.relatorio.cast<EventoAgricola>(),
+                isLoading: safraVM.isLoadingRelatorio,
+                mostrarTitulo: false,
+                nomeDoTalhao: _agendaViewModel.nomeDoTalhao,
+              ),
             ),
           ],
         ),

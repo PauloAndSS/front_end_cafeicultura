@@ -32,6 +32,9 @@ class DetalhesTratoCulturalViewModel
       _tratoService.alterarResponsaveis;
 
   @override
+  ChamadaExcluir? get chamadaExcluir => _tratoService.excluir;
+
+  @override
   TratoCultural copiarComum(
     TratoCultural atual, {
     DateTime? dataInicio,

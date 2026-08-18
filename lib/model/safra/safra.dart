@@ -89,6 +89,14 @@ class Safra {
     return 'Safra ${id ?? 'sem identificador'}';
   }
 
+  /// "Safra 2026/2027" ou "Safra 2025/2026 (Encerrada)".
+  ///
+  /// A situação entra no próprio rótulo onde não há selo ao lado. No card de
+  /// detalhes de uma atividade, por exemplo, saber que a safra fechou explica
+  /// por que ela não aparece mais como opção em lançamento novo.
+  String get nomeComSituacao =>
+      isEncerrada ? '$nomeExibicao (Encerrada)' : nomeExibicao;
+
   String get periodoTexto {
     if (dataInicio == null && dataFim == null) {
       return 'Período não informado';
