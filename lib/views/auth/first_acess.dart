@@ -3,6 +3,7 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'entrar_view.dart';
 import '../proprietario/cadastrar_dados_basicos_view.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class FirstAcess extends StatelessWidget {
   const FirstAcess({super.key});
@@ -16,7 +17,6 @@ class FirstAcess extends StatelessWidget {
     return Scaffold(
       body: Stack(
         children: [
-          //banner
           Positioned(
             top: 0,
             left: 0,
@@ -28,7 +28,6 @@ class FirstAcess extends StatelessWidget {
             ),
           ),
 
-          //conteudo
           Positioned(
             bottom: 0,
             left: 0,
@@ -36,9 +35,9 @@ class FirstAcess extends StatelessWidget {
             height: screenHeight * 0.60,
             child: Container(
               decoration: const BoxDecoration(
-                color: Color(0xFF9FB896), 
+                color: AppCores.verdeAuth,
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(32), 
+                  topLeft: Radius.circular(32),
                   topRight: Radius.circular(32),
                 ),
               ),
@@ -46,28 +45,28 @@ class FirstAcess extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 40), 
-                  
+                  const SizedBox(height: 40),
+
                   CustomButton(
-                    text: "Já tenho uma conta", 
+                    text: "Já tenho uma conta",
                     onPressed: () => Navigator.push(context,MaterialPageRoute(builder: (context) => const EntrarView()),
                     )
                   ),
 
-                  const SizedBox(height: 24), 
-                  
+                  const SizedBox(height: 24),
+
                   CustomButton(
-                    text: "Criar uma conta", 
+                    text: "Criar uma conta",
                     onPressed: () => Navigator.push(context,MaterialPageRoute(builder: (context) => const CadastrarUsuarioView())),
                     backgroundColor: Colors.white,
-                    foregroundColor: const Color(0xFF67835C)
+                    foregroundColor: AppCores.verdePrimario
                   ),
                 ],
               ),
             ),
           ),
           Positioned(
-            top: bannerHeight - 65, // 65 é a metade do tamanho do logo (130/2)
+            top: bannerHeight - 65,
             left: (screenWidth / 2) - 65,
             child: const LogoCircular(),
           ),

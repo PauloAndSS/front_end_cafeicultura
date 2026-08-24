@@ -1,10 +1,49 @@
-import 'package:frond_end_cafeicultura_mobile/model/eventos/status_evento.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/formatadores.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 
-export 'package:frond_end_cafeicultura_mobile/model/eventos/status_evento.dart';
+enum StatusEvento {
+  agendado(
+    rotulo: 'Agendado',
+    filtro: 'Agendadas',
+    filtroCurto: 'Agendadas',
+    codigoApi: 'agendados',
+  ),
+  emAndamento(
+    rotulo: 'Em andamento',
+    filtro: 'Em andamento',
+    filtroCurto: 'Andamento',
+    codigoApi: 'em_andamento',
+  ),
+  finalizado(
+    rotulo: 'Finalizado',
+    filtro: 'Finalizadas',
+    filtroCurto: 'Finalizadas',
+    codigoApi: 'finalizados',
+  );
+
+  const StatusEvento({
+    required this.rotulo,
+    required this.filtro,
+    required this.filtroCurto,
+    required this.codigoApi,
+  });
+
+  final String rotulo;
+
+  final String filtro;
+
+  final String filtroCurto;
+
+  final String codigoApi;
+}
+
+String rotuloDeFiltro(StatusEvento? status, {bool curto = false}) {
+  if (status == null) return 'Todas';
+
+  return curto ? status.filtroCurto : status.filtro;
+}
 
 abstract class Evento {
   final int? id;
@@ -28,17 +67,15 @@ abstract class Evento {
 
   Evento.fromJson(Map<String, dynamic> json)
       : id = json['id'],
-        dataInicio = _lerData(json['dataInicio']) ?? DateTime.now(),
-        dataFim = _lerData(json['dataFim']),
+        dataInicio = lerDataDoJson(json['dataInicio']) ?? DateTime.now(),
+        dataFim = lerDataDoJson(json['dataFim']),
         descricao = json['descricao'],
-        dataCadastro = _lerData(json['dataCadastro']),
+        dataCadastro = lerDataDoJson(json['dataCadastro']),
         idSafra = _lerIdSafra(json),
         responsaveis = _lerResponsaveis(json);
 
   String get tituloExibicao;
 
-  /// Situação no tempo: sem data de término o evento pode estar apenas
-  /// agendado, e é a data de início contra hoje que separa os dois casos.
   StatusEvento get status {
     if (dataFim != null) return StatusEvento.finalizado;
 
@@ -47,15 +84,7 @@ abstract class Evento {
         : StatusEvento.emAndamento;
   }
 
-  bool get agendado => status == StatusEvento.agendado;
-
-  /// Já começou e ainda não terminou — **não** é sinônimo de "não finalizado".
-  /// Quem quer dizer "ainda editável" deve usar `!finalizado`.
-  bool get emAndamento => status == StatusEvento.emAndamento;
-
   bool get finalizado => status == StatusEvento.finalizado;
-
-  String get statusFormatado => status.rotulo;
 
   String get dataInicioFormatada => formatarDataBr(dataInicio);
 
@@ -78,8 +107,8 @@ abstract class Evento {
     final descricaoLimpa = descricao?.trim() ?? '';
 
     return {
-      'dataInicio': dataInicio.toUtc().toIso8601String(),
-      if (dataFim != null) 'dataFim': dataFim!.toUtc().toIso8601String(),
+      'dataInicio': dataParaJson(dataInicio),
+      if (dataFim != null) 'dataFim': dataParaJson(dataFim!),
       if (descricaoLimpa.isNotEmpty) 'descricao': descricaoLimpa,
       if (idSafra != null) 'idSafra': idSafra,
       'responsaveisIds': responsaveis
@@ -89,13 +118,8 @@ abstract class Evento {
     };
   }
 
-  static DateTime? _lerData(dynamic valor) {
-    if (valor == null) return null;
-    return DateTime.tryParse(valor.toString());
-  }
-
-  static int? _lerIdSafra(Map<String, dynamic> json) {
-    return json['safra'] is Map<String, dynamic> ? json['safra']['id'] : null;
+  static int _lerIdSafra(Map<String, dynamic> json) {
+    return json['safra'] is Map<String, dynamic> ? json['safra']['id'] : json['idSafra'];
   }
 
   static List<Pessoa> _lerResponsaveis(Map<String, dynamic> json) {

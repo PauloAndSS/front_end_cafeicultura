@@ -9,11 +9,48 @@ AGUARDANDO RETORNO
 ###############################################################################################################################
 A FAZER
 ###############################################################################################################################
+-> Olhar arquivo por arquivo de views, viewmodels e services para entender e remover comentários/melhorá-los
 
--> olhar com calma a pasta model, principalmente eventos. Entender quais métodos/classes estão repetidas e desnecessárias.
+-> verificar BaseService se é uma classe Deus, e quais as desvantagens, como afetaria o desenvolvimento futuro
 
--> Visualizar services e se há funções que podem ser implementadas, funções confusas, e que podem ser mais simplificadas;
+-> atualizar documentação -> focar em programadores novos que querem entender o código. Por onde começar? O Readme.md faz sentido para isso? Deve ser implementado algum plugin para isso? 
 
--> Visualizar viewmodels e simplificá-la, identificar código repetido e modularizar;
+Implemente a criação da classe de domínio Transacao Financeira e sua subclasse Despesa. TransacaoFinanceira tem id, idPropriedade, dataHoraTransacao, valor, formaPgto e tipoOperacao.  formaPgto é enum de TED, Espécie, Cartão de Crédito, Cartão de Débito, Cheque, Pix, Sacas. Tipo operação é Enum Monetário ou Repasse. Forma de Pagamento em sacas só é possível caso o tipo da operação for repasse. Despesa tem como atributos descricao e beneficiado (pessoa). Iremos implementar para que ao haver o registro de um evento (desde que seja retroativo - hoje ou antes), tenha a possibilidade de incluir a transacaoFinanceira. Agora, Evento tem como atributo um array de transacaoFinanceira. Post de tratocultural: {
+  "idTalhao": 3,
+  "idSafra": 2,
+  "idTipoTrato": 2,
+  "dataInicio": "2024-03-15T08:00:00Z",
+  "dataFim": "2024-03-16T17:00:00Z",
+  "descricao": "Adubação foliar realizada no período da manhã.",
+  "insumosUtilizados": [
+    {
+      "idInsumo": 12,
+      "qtdUsada": 50.5
+    }
+  ],
+  "responsaveisIds": [
+    5,
+    8
+  ],
+  "transacoesFinanceiras": [
+    {
+      "idPropriedade": 1,
+      "valor": 150.5,
+      "formaPagamento": "Pix",
+      "tipoOperacao": "Monetária",
+      "beneficiado": 10,
+      "descricao": "Pagamento de diária do tratorista."
+    }
+  ]
+}
 
--> componentizar a view, olhando grandes elementos em comum, como botões, classes de cores, formulários, telas de "em desenvolvimento"; olhar elementos específicos, presentes somente em talhões/atividades, entre outros. Reaproveitamentos gerais devem ficar na pasta views/widgets; específicos devem ficar dentro de cada feature em /widgets
+O beneficiado pode ter como sugestão um dos responsáveis do evento, mas ele pode escolher outro. A partir da transação financeira, Insumo terá sua CompraDeInsumos, que tem como atributo o Insumo, a Despesa e a qtdComprada. Ao cadastrar insumo, você deve fazer a compra dele.
+Exemplo de post em /api/v1/despesas: {
+  "idPropriedade": 10,
+  "idEvento": 5,
+  "beneficiado": 42,
+  "valor": 1500.5,
+  "descricao": "Pagamento de mão de obra temporária da colheita.",
+  "formaPagamento": "Pix",
+  "tipoOperacao": "Monetária"
+}

@@ -7,11 +7,13 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.
 import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/pessoas_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_propriedades_viewmodel.dart'; 
+import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhoes_viewmodel.dart'; 
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/atividades_mudaram.dart';
 
 import 'package:frond_end_cafeicultura_mobile/views/auth/first_acess.dart';
 import 'package:frond_end_cafeicultura_mobile/views/home/main_screen_view.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -56,11 +58,11 @@ class MeuApp extends StatelessWidget {
               ChangeNotifierProvider(create: (_) => PessoasViewModel()),
               ChangeNotifierProvider(create: (_) => TalhoesViewModel()),
               ChangeNotifierProvider(create: (_) => SafraViewModel()),
+              ChangeNotifierProvider(create: (_) => AtividadesMudaram()),
             ],
             child: child!,
           );
         }
-        
         return child!;
       },
       home: const AuthWrapper(), 
@@ -77,7 +79,7 @@ class AuthWrapper extends StatelessWidget {
 
     if (session.isInitializing) {
       return const Scaffold(
-        backgroundColor: Color(0xFF9FB896),
+        backgroundColor: AppCores.verdeAuth,
         body: Center(child: CircularProgressIndicator(color: Colors.white)),
       );
     }

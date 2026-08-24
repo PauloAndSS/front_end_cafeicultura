@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
+import 'package:frond_end_cafeicultura_mobile/model/talhao.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/agenda_mensal_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/lista_atividades_paginada_viewmodel.dart';
@@ -10,16 +11,16 @@ import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/blocos_de
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/filtro_status_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/calendario/calendario_atividades.dart';
 import 'package:provider/provider.dart';
-
-const _verdePrimario = Color(0xFF67835C);
+import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/atividades_mudaram.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 
 const _margemParaProximaPagina = 300.0;
 
 class ListaAtividadesView<T extends EventoAgricola> extends StatefulWidget {
-  /// Listagem paginada por status.
   final ListaAtividadesDaPropriedadePaginadaViewModel<T> viewModel;
 
-  /// Calendário mensal — cache próprio, por mês.
   final AgendaMensalViewModel<T> agendaViewModel;
 
   final String rotuloCadastrar;
@@ -32,7 +33,7 @@ class ListaAtividadesView<T extends EventoAgricola> extends StatefulWidget {
   final Widget Function(BuildContext context, DateTime? dataInicial)
       construirTelaCadastro;
 
-  final Widget Function(BuildContext context, T atividade, String nomeTalhao)
+  final Widget Function(BuildContext context, T atividade, Talhao? talhao)
       construirTelaDetalhes;
 
   const ListaAtividadesView({
@@ -118,9 +119,7 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
     final propriedadesVM = context.read<PropriedadesUsuarioViewModel>();
 
     if (propriedadesVM.idPropriedadeSelecionada == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecione uma propriedade primeiro.')),
-      );
+      mostrarAviso(context, 'Selecione uma propriedade primeiro.');
       return;
     }
 
@@ -131,7 +130,10 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
       ),
     );
 
-    if (cadastrou == true && mounted) _recarregar();
+    if (cadastrou == true && mounted) {
+      context.read<AtividadesMudaram>().invalidar();
+      _recarregar();
+    }
   }
 
   Future<void> _abrirDetalhes(T atividade) async {
@@ -141,12 +143,15 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
         builder: (context) => widget.construirTelaDetalhes(
           context,
           atividade,
-          _viewModel.nomeDoTalhao(atividade.idTalhao),
+          _viewModel.talhaoPorId(atividade.idTalhao),
         ),
       ),
     );
 
-    if (alterou == true && mounted) _recarregar();
+    if (alterou == true && mounted) {
+      context.read<AtividadesMudaram>().invalidar();
+      _recarregar();
+    }
   }
 
   Future<void> _recarregar() {
@@ -171,7 +176,6 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
   }
 
   void _mudarMes(DateTime mes) {
-    // O dia aceso é do mês que acabou de sair de vista.
     setState(() => _diaSelecionado = null);
 
     final idPropriedade = _idPropriedadeDaAgenda;
@@ -186,12 +190,18 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
 
     final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
 
+    final geracaoDoCache = context.watch<AtividadesMudaram>().geracao;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _viewModel.sincronizarCom(geracaoDoCache);
+      _agendaViewModel.sincronizarCom(geracaoDoCache);
+    });
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppCores.fundo,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _abrirCadastro,
-        backgroundColor: _verdePrimario,
+        backgroundColor: AppCores.verdePrimario,
         icon: const Icon(Icons.add, color: Colors.white),
         label: Text(
           widget.rotuloCadastrar,
@@ -200,10 +210,9 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
       ),
       body: SafeArea(
         child: ListenableBuilder(
-          // Os dois ViewModels desenham partes diferentes da mesma tela.
           listenable: Listenable.merge([_viewModel, _agendaViewModel]),
           builder: (context, _) {
-            return _construirCorpo(_nomeDaPropriedade(propriedadesVM));
+            return _construirCorpo(propriedadesVM.nomeDaPropriedadeSelecionada);
           },
         ),
       ),
@@ -212,7 +221,7 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
 
   Widget _construirCorpo(String nomePropriedade) {
     return RefreshIndicator(
-      color: _verdePrimario,
+      color: AppCores.verdePrimario,
       onRefresh: _recarregar,
       child: CustomScrollView(
         controller: _controladorDeRolagem,
@@ -269,32 +278,16 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
       child: SizedBox(
         height: 160,
         child: Center(
-          child: CircularProgressIndicator(color: _verdePrimario),
+          child: CircularProgressIndicator(color: AppCores.verdePrimario),
         ),
       ),
     );
   }
 
   Widget _construirErroDaListagem(String mensagem) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 32.0),
-      child: Column(
-        children: [
-          Text(
-            mensagem,
-            style: const TextStyle(color: Colors.red),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: _viewModel.tentarNovamente,
-            child: const Text(
-              'Tentar novamente',
-              style: TextStyle(color: _verdePrimario),
-            ),
-          ),
-        ],
-      ),
+    return MensagemDeErro(
+      mensagem: mensagem,
+      aoTentarNovamente: _viewModel.tentarNovamente,
     );
   }
 
@@ -321,68 +314,20 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
         borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          Text(
-            mensagem,
-            style: const TextStyle(color: Colors.red),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: _agendaViewModel.recarregarMesVisivel,
-            child: const Text(
-              'Tentar novamente',
-              style: TextStyle(color: _verdePrimario),
-            ),
-          ),
-        ],
+      child: MensagemDeErro(
+        mensagem: mensagem,
+        aoTentarNovamente: _agendaViewModel.recarregarMesVisivel,
+        padding: EdgeInsets.zero,
       ),
     );
   }
 
   Widget _construirRodapeDaLista() {
-    if (_viewModel.isCarregandoMais) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: _verdePrimario,
-            ),
-          ),
-        ),
-      );
-    }
-
-    final erro = _viewModel.mensagemErro;
-
-    if (erro != null) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 24),
-        child: Column(
-          children: [
-            Text(
-              erro,
-              style: const TextStyle(color: Colors.red),
-              textAlign: TextAlign.center,
-            ),
-            TextButton(
-              onPressed: _viewModel.tentarNovamente,
-              child: const Text(
-                'Tentar novamente',
-                style: TextStyle(color: _verdePrimario),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return const SizedBox.shrink();
+    return RodapePaginacao(
+      carregando: _viewModel.isCarregandoMais,
+      mensagemErro: _viewModel.mensagemErro,
+      aoTentarNovamente: _viewModel.tentarNovamente,
+    );
   }
 
   Widget _construirCard(T atividade) {
@@ -405,18 +350,4 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
     );
   }
 
-  String _nomeDaPropriedade(PropriedadesUsuarioViewModel propriedadesVM) {
-    if (propriedadesVM.idPropriedadeSelecionada == null ||
-        propriedadesVM.propriedades.isEmpty) {
-      return 'esta propriedade';
-    }
-
-    final propriedade = propriedadesVM.propriedades.firstWhere(
-      (propriedade) =>
-          propriedade.id == propriedadesVM.idPropriedadeSelecionada,
-      orElse: () => propriedadesVM.propriedades.first,
-    );
-
-    return propriedade.nome;
-  }
 }

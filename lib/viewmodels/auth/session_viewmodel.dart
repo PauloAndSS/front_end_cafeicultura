@@ -22,7 +22,7 @@ class SessionViewModel extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final idSalvo = prefs.getInt('id_usuario');
     final cookieSalvo = prefs.getString('cookie_sessao'); 
-    
+
     if (idSalvo != null && cookieSalvo != null) {
       _isLoggedIn = true;
       _nomeUsuario = prefs.getString('nome_usuario') ?? 'Produtor';
@@ -45,7 +45,7 @@ class SessionViewModel extends ChangeNotifier {
     _isLoggedIn = true;
     _nomeUsuario = nome;
     _idUsuario = idUsuario;
-    
+
     notifyListeners();
   }
 
@@ -65,16 +65,16 @@ class SessionViewModel extends ChangeNotifier {
     _nomeUsuario = '';
     _idUsuario = null;
     BaseService.sessionCookie = null;
-      
+
     notifyListeners(); 
   }
 
   Future<void> atualizarNomeUsuario(String novoNome) async {
     _nomeUsuario = novoNome;
-    
+
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('nome_usuario', novoNome);
-    
+
     notifyListeners(); 
   }
 }

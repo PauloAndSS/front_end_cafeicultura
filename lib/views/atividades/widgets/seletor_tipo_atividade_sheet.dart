@@ -1,52 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/views/atividades/trato_cultural/cadastrar_trato_cultural_view.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/registro_atividades.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/tipo_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/modal_selecao.dart';
 
-const _verdePrimario = Color(0xFF67835C);
-const _cinzaBorda = Color(0xFFE0E0E0);
-
-/// Um tipo de atividade que pode ser lançado a partir do calendário geral.
-class TipoCadastroAtividade {
-  final String rotulo;
-  final IconData icone;
-
-  /// A data vem do dia tocado no calendário e chega ao formulário já
-  /// preenchida. É nula quando o cadastro é aberto sem dia de origem.
-  final Widget Function(DateTime? dataInicial) construirTela;
-
-  const TipoCadastroAtividade({
-    required this.rotulo,
-    required this.icone,
-    required this.construirTela,
-  });
-}
-
-/// Catálogo do que a home consegue cadastrar hoje.
-///
-/// Existe um item só, e ainda assim o seletor é exibido: a home é a visão de
-/// todos os módulos, e entrar direto no trato cultural ensinaria ao usuário um
-/// caminho que muda de destino quando o segundo módulo entrar. Colheita e os
-/// demais entram aqui — é o único ponto a editar.
-final List<TipoCadastroAtividade> tiposDeCadastroDisponiveis = [
-  TipoCadastroAtividade(
-    rotulo: 'Trato cultural',
-    icone: Icons.grass,
-    construirTela: (dataInicial) =>
-        CadastrarTratoCulturalView(dataInicial: dataInicial),
-  ),
-];
-
-/// Pergunta que tipo de atividade cadastrar. Devolve `null` se o usuário fechar
-/// o painel sem escolher.
-Future<TipoCadastroAtividade?> mostrarSelecaoTipoAtividade({
+Future<TipoAtividade?> mostrarSelecaoTipoAtividade({
   required BuildContext context,
 }) {
-  return showModalBottomSheet<TipoCadastroAtividade>(
+  return mostrarPainelModal<TipoAtividade>(
     context: context,
-    backgroundColor: Colors.white,
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-    ),
-    builder: (context) => const _PainelTiposDeCadastro(),
+    alturaLivre: false,
+    construir: (context) => const _PainelTiposDeCadastro(),
   );
 }
 
@@ -59,15 +23,7 @@ class _PainelTiposDeCadastro extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            width: 40,
-            height: 4,
-            margin: const EdgeInsets.only(top: 12),
-            decoration: BoxDecoration(
-              color: _cinzaBorda,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
+          const AlcaDoPainel(),
           const Padding(
             padding: EdgeInsets.fromLTRB(24, 20, 24, 8),
             child: Align(
@@ -82,11 +38,11 @@ class _PainelTiposDeCadastro extends StatelessWidget {
               ),
             ),
           ),
-          ...tiposDeCadastroDisponiveis.map(
+          ...tiposComCadastro.map(
             (tipo) => ListTile(
-              leading: Icon(tipo.icone, color: _verdePrimario),
+              leading: Icon(tipo.icone, color: AppCores.verdePrimario),
               title: Text(
-                tipo.rotulo,
+                tipo.rotuloSingular,
                 style: const TextStyle(fontSize: 16, color: Colors.black87),
               ),
               trailing: const Icon(Icons.chevron_right, color: Colors.black26),

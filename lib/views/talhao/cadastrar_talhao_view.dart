@@ -4,10 +4,16 @@ import 'package:frond_end_cafeicultura_mobile/model/tamanho.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/cadastrar_talhao_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_propriedades_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhoes_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:provider/provider.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_data.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_de_data.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
 
 class CadastrarTalhaoView extends StatefulWidget {
   const CadastrarTalhaoView({super.key});
@@ -49,25 +55,10 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
   }
 
   Future<void> _selecionarData(BuildContext context) async {
-    final DateTime hoje = DateTime.now();
-    final DateTime? dataEscolhida = await showDatePicker(
+    final dataEscolhida = await selecionarData(
       context: context,
-      initialDate: _dataInicio ?? hoje,
-      firstDate: DateTime(2000),
-      lastDate: hoje,
-      helpText: 'Selecione a data de início do talhão',
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF67835C),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      ajuda: 'Selecione a data de início do talhão',
+      inicial: _dataInicio,
     );
 
     if (dataEscolhida != null && dataEscolhida != _dataInicio) {
@@ -82,21 +73,11 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
   Future<void> _salvar() async {
     if (_formKey.currentState!.validate()) {
       if (_dataInicio == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Selecione a data de início'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        mostrarAviso(context, 'Selecione a data de início');
         return;
       }
       if (_variedadesSelecionadas.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Selecione pelo menos uma variedade'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        mostrarAviso(context, 'Selecione pelo menos uma variedade');
         return;
       }
 
@@ -105,12 +86,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
       final propriedadesVM = context.read<PropriedadesUsuarioViewModel>();
 
       if (propriedadesVM.idPropriedadeSelecionada == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Nenhuma propriedade selecionada.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        mostrarAviso(context, 'Nenhuma propriedade selecionada.');
         return;
       }
 
@@ -148,23 +124,11 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
           propriedadesVM.idPropriedadeSelecionada!,
         );
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Talhão cadastrado com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        mostrarSucesso(context, 'Talhão cadastrado com sucesso!');
         Navigator.of(context).pop();
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _viewModel.mensagemErro ??
-                  'Erro desconhecido ao cadastrar talhão.',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        mostrarErro(context, _viewModel.mensagemErro ??
+                  'Erro desconhecido ao cadastrar talhão.');
       }
     }
   }
@@ -174,11 +138,11 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+        borderSide: const BorderSide(color: AppCores.borda),
       ),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+        borderSide: const BorderSide(color: AppCores.borda),
       ),
     );
   }
@@ -186,12 +150,8 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        title: const Text('Novo Talhão', style: TextStyle(color: Colors.white)),
-        backgroundColor: const Color(0xFF67835C),
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
+      backgroundColor: AppCores.fundo,
+      appBar: const AppBarPadrao(titulo: 'Novo Talhão'),
       body: ListenableBuilder(
         listenable: _viewModel,
         builder: (context, child) {
@@ -218,8 +178,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                     CustomTextField(
                       label: 'Nome do Talhão',
                       controller: _nomeController,
-                      validator: (val) =>
-                          val == null || val.isEmpty ? 'Obrigatório' : null,
+                      validator: Validator.obrigatorio,
                     ),
 
                     Row(
@@ -234,9 +193,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                               decimal: true,
                             ),
                             inputFormatters: [AppMasks.decimal],
-                            validator: (val) => val == null || val.isEmpty
-                                ? 'Obrigatório'
-                                : null,
+                            validator: Validator.obrigatorio,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -285,22 +242,13 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                       controller: _qtdPesController,
                       keyboardType: TextInputType.number,
                       inputFormatters: [AppMasks.inteiroMilhar],
-                      validator: (val) =>
-                          val == null || val.isEmpty ? 'Obrigatório' : null,
+                      validator: Validator.obrigatorio,
                     ),
 
-                    GestureDetector(
-                      onTap: () => _selecionarData(context),
-                      child: AbsorbPointer(
-                        child: CustomTextField(
-                          label: 'Data de Início',
-                          controller: _dataController,
-                          hintText: 'Selecione a data',
-                          readOnly: true,
-                          validator: (val) =>
-                              val == null || val.isEmpty ? 'Obrigatório' : null,
-                        ),
-                      ),
+                    CampoDeData(
+                      label: 'Data de Início',
+                      controller: _dataController,
+                      aoTocar: () => _selecionarData(context),
                     ),
 
                     const Divider(),
@@ -335,6 +283,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                         });
                       },
                       validator: (val) => val == null ? 'Obrigatório' : null,
+                      autovalidateMode: AutovalidateMode.onUserInteraction,
                     ),
                     const SizedBox(height: 16),
 
@@ -342,7 +291,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                       'Variedades',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF67835C),
+                        color: AppCores.verdePrimario,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -352,7 +301,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                             child: Padding(
                               padding: EdgeInsets.all(12.0),
                               child: CircularProgressIndicator(
-                                color: Color(0xFF67835C),
+                                color: AppCores.verdePrimario,
                               ),
                             ),
                           )
@@ -397,7 +346,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                                       ),
                                     ),
                                     selected: isSelected,
-                                    selectedColor: const Color(0xFF8FA67E),
+                                    selectedColor: AppCores.verdeSecundario,
                                     onSelected: (bool selected) {
                                       setState(() {
                                         if (selected) {

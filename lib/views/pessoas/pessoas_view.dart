@@ -13,6 +13,7 @@ import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/views/pessoas/widgets/pessoas_card_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/titulo_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_app_bar.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class PessoasView extends StatefulWidget {
   const PessoasView({super.key});
@@ -87,7 +88,7 @@ class _PessoasViewState extends State<PessoasView> {
                   builder: (context) => DetalhesPessoaView(papelPessoa: item),
                 ),
               );
-              
+
               if (alterou == true && mounted) {
                 context.read<PessoasViewModel>().carregarPessoas(recarregar: true);
               }
@@ -121,13 +122,13 @@ class _PessoasViewState extends State<PessoasView> {
         vm.clientes.isEmpty;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppCores.fundo,
 
       appBar: const CustomAppBar(),
 
       body: vm.isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF8FA67E)),
+              child: CircularProgressIndicator(color: AppCores.verdeSecundario),
             )
           : vm.mensagemErro != null
           ? Center(
@@ -171,14 +172,13 @@ class _PessoasViewState extends State<PessoasView> {
                   ..._buildSecao('Funcionários', vm.funcionarios),
                   ..._buildSecao('Meeiros', vm.meeiros),
                   ..._buildSecao('Prestadores', vm.prestadores),
-                  
 
                   if (vm.isLoadingMore)
                     const SliverToBoxAdapter(
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 24.0),
                         child: Center(
-                          child: CircularProgressIndicator(color: Color(0xFF8FA67E)),
+                          child: CircularProgressIndicator(color: AppCores.verdeSecundario),
                         ),
                       ),
                     ),
@@ -187,7 +187,7 @@ class _PessoasViewState extends State<PessoasView> {
             ),
 
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF8FA67E),
+        backgroundColor: AppCores.verdeSecundario,
         elevation: 2,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
         onPressed: _abrirTelaCadastro,

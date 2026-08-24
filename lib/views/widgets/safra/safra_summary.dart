@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
 
-
 class SafraSummaryCard extends StatelessWidget {
   final Safra safra;
 
@@ -9,8 +8,8 @@ class SafraSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusTexto = safra.status.isNotEmpty ? safra.status : (safra.ativa ? 'Ativa' : 'Inativa');
-    final isEncerrada = safra.isEncerrada;
+    final isEncerrada = safra.encerrada;
+    final statusTexto = isEncerrada ? 'Encerrada' : 'Ativa';
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),

@@ -1,6 +1,7 @@
-import 'package:intl/intl.dart';
+import 'package:frond_end_cafeicultura_mobile/model/periodo.dart';
 import 'package:frond_end_cafeicultura_mobile/model/tamanho.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/formatadores.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 
 class Variedade {
   final int id;
@@ -43,6 +44,20 @@ class Variedade {
   String toString() => descricao;
 }
 
+/// Data de calendário vinda do JSON, já sem hora.
+///
+/// O backend grava data de talhão em meio-dia UTC (veja [dataParaJson]), e esse
+/// instante chega aqui como `DateTime` UTC. Guardar o valor cru fazia o campo
+/// carregar 12:00 para dentro da tela: o `showDatePicker` de encerramento usa
+/// [Talhao.dataInicio] como `firstDate` e o agora local como `lastDate`, e num
+/// talhão iniciado hoje o `firstDate` caía às 09:00 — antes desse horário o
+/// picker estourava a própria assertion e derrubava a tela.
+DateTime? _dataDeCalendario(dynamic valor) {
+  final data = lerDataDoJson(valor);
+
+  return data == null ? null : apenasData(data);
+}
+
 class Talhao {
   final int? id;
   final String nome;
@@ -54,7 +69,6 @@ class Talhao {
   final String especie;
   final List<int>? variedadesIds;
   final List<Variedade>? variedadesCafe;
-  final bool? arquivado;
 
   Talhao({
     this.id,
@@ -67,23 +81,28 @@ class Talhao {
     required this.especie,
     this.variedadesIds,
     this.variedadesCafe,
-    this.arquivado,
   });
 
-  String get qtdPeCafeFormatada {
-    final formatter = NumberFormat('#,##0', 'pt_BR');
-    return formatter.format(qtdPeCafe);
-  }
+  /// Vida do talhão como intervalo: `dataFim` nulo é talhão ainda aberto.
+  ///
+  /// É o que permite perguntar "este talhão estava em pé naquele dia?" sem
+  /// espalhar comparação de data pelas telas.
+  Periodo get periodo => Periodo(inicio: dataInicio, fim: dataFim);
 
-  String get tamanhoFormatado {
-    final formatter = NumberFormat('#,##0.##', 'pt_BR');
-    return '${formatter.format(tamanho.valor)} ${tamanho.medida.nomeExibicao}';
-  }
+  /// Único critério de encerramento do talhão.
+  ///
+  /// O backend também devolve um `arquivado`, que o app ignora: dois marcadores
+  /// para o mesmo estado divergiam na prática — um talhão arquivado sem
+  /// `dataFim` caía na lista de ativos e ainda assim era desenhado como
+  /// encerrado no card.
+  bool get encerrado => dataFim != null;
 
-  String get especieFormatada {
-    if (especie.isEmpty) return 'Não informada';
-    return especie[0].toUpperCase() + especie.substring(1);
-  }
+  String get qtdPeCafeFormatada => formatarInteiro(qtdPeCafe);
+
+  String get tamanhoFormatado => tamanho.formatado;
+
+  String get especieFormatada =>
+      especie.isEmpty ? 'Não informada' : capitalizar(especie);
 
   String get dataInicioFormatada {
     return formatarDataBr(dataInicio);
@@ -114,12 +133,8 @@ String get nomeExibicao {
       nome: json['nome'] ?? '',
       idPropriedade: json['idPropriedade'] ?? 0,
       qtdPeCafe: json['qtdPeCafe'] ?? 0,
-      dataInicio: json['dataInicio'] != null
-          ? DateTime.parse(json['dataInicio'])
-          : DateTime.now(),
-      dataFim: json['dataFim'] != null
-          ? DateTime.parse(json['dataFim'])
-          : null,
+      dataInicio: _dataDeCalendario(json['dataInicio']) ?? hoje(),
+      dataFim: _dataDeCalendario(json['dataFim']),
       tamanho: json['tamanho'] != null
           ? Tamanho.fromJson(json['tamanho'])
           : Tamanho(valor: 0.0, medida: Medida.hectare),
@@ -132,7 +147,6 @@ String get nomeExibicao {
               .map((v) => Variedade.fromJson(v))
               .toList()
           : null,
-      arquivado: json['arquivado'],
     );
   }
 
@@ -142,14 +156,13 @@ String get nomeExibicao {
       'nome': nome,
       'idPropriedade': idPropriedade,
       'qtdPeCafe': qtdPeCafe,
-      'dataInicio': dataInicio.toUtc().toIso8601String(),
-      if (dataFim != null) 'dataFim': dataFim!.toUtc().toIso8601String(),
+      'dataInicio': dataParaJson(dataInicio),
+      if (dataFim != null) 'dataFim': dataParaJson(dataFim!),
       'tamanho': tamanho.toJson(),
       'especie': especie,
       if (variedadesIds != null) 'variedadesIds': variedadesIds,
       if (variedadesCafe != null)
         'variedadesCafe': variedadesCafe!.map((v) => v.toJson()).toList(),
-      if (arquivado != null) 'arquivado': arquivado,
     };
   }
 }

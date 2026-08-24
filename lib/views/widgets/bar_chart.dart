@@ -1,18 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_grafico.dart';
 
-/// Card com gráfico de barras verticais e o valor impresso acima de cada
-/// barra.
-///
-/// É o par do `PieChartCard` para série ordenada: a pizza compara partes de um
-/// todo, este compara a mesma grandeza ao longo de uma sequência (meses, por
-/// exemplo), onde a ordem das fatias significa alguma coisa.
-///
-/// Genérico como ele — recebe um `Map<String, int>` de rótulo para valor e não
-/// sabe nada sobre o domínio — e some sozinho (`SizedBox.shrink`) quando não há
-/// o que mostrar.
-///
-/// Não desenha eixo Y: o número em cima de cada barra já diz a altura, e uma
-/// escala lateral custaria largura que um telefone de 360dp não tem para dar.
 class BarChartCard extends StatelessWidget {
   final String titulo;
   final IconData icone;
@@ -25,58 +14,34 @@ class BarChartCard extends StatelessWidget {
     required this.titulo,
     required this.icone,
     required this.valores,
-    this.cor = const Color(0xFF67835C),
-    this.corTitulo = const Color(0xFF67835C),
+    this.cor = AppCores.verdePrimario,
+    this.corTitulo = AppCores.verdePrimario,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (valores.isEmpty || valores.values.every((v) => v == 0)) {
-      return const SizedBox.shrink();
-    }
-
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icone, size: 18, color: corTitulo),
-                const SizedBox(width: 6),
-                Text(
-                  titulo,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: corTitulo),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              height: 160,
-              width: double.infinity,
-              child: CustomPaint(
-                painter: BarChartPainter(valores: valores, cor: cor),
-              ),
-            ),
-          ],
+    return CartaoGrafico(
+      titulo: titulo,
+      icone: icone,
+      corTitulo: corTitulo,
+      valores: valores,
+      construirGrafico: (context) => SizedBox(
+        height: 160,
+        width: double.infinity,
+        child: CustomPaint(
+          painter: BarChartPainter(valores: valores, cor: cor),
         ),
       ),
     );
   }
 }
 
-/// Desenha as barras, o rótulo de cada uma e o valor no topo, sem depender de
-/// nenhum pacote externo — como o `PieChartPainter`.
 class BarChartPainter extends CustomPainter {
   final Map<String, int> valores;
   final Color cor;
 
   BarChartPainter({required this.valores, required this.cor});
 
-  /// Largura máxima de uma barra. Sem teto, um gráfico de um mês só viraria um
-  /// bloco ocupando a largura inteira do card.
   static const double _larguraMaximaBarra = 48;
 
   static const double _alturaRotulo = 18;
@@ -95,8 +60,6 @@ class BarChartPainter extends CustomPainter {
       return;
     }
 
-    // A área das barras é o que sobra depois de reservar as duas faixas de
-    // texto: o valor em cima e o rótulo embaixo.
     final alturaDisponivel = size.height - _alturaRotulo - _alturaValor;
     if (alturaDisponivel <= 0) {
       return;
@@ -115,9 +78,6 @@ class BarChartPainter extends CustomPainter {
       final alturaBarra = (entrada.value / maiorValor) * alturaDisponivel;
       final topoBarra = _alturaValor + (alturaDisponivel - alturaBarra);
 
-      // Meses sem evento entram como barra zero: sem eles a sequência mentiria
-      // sobre a distribuição no tempo. Só o traço da base é desenhado, para o
-      // rótulo não ficar solto.
       final retangulo = RRect.fromRectAndCorners(
         Rect.fromLTWH(
           centroX - larguraBarra / 2,
@@ -156,7 +116,6 @@ class BarChartPainter extends CustomPainter {
     }
   }
 
-  /// Escreve [texto] centralizado em [centroX], truncando no espaço da fatia.
   void _desenharTexto(
     Canvas canvas,
     String texto,

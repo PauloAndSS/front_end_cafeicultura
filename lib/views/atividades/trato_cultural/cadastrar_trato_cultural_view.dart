@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/tipo_trato.dart';
-import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo_utilizado.dart';
+import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/cadastrar_trato_cultural_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/base/formulario_atividade_view.dart';
-import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/selecionar_insumos_modal.dart';
+import 'package:frond_end_cafeicultura_mobile/views/insumos/selecionar_insumos_modal.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_multiplo_atividade.dart';
 import 'package:provider/provider.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 
 class CadastrarTratoCulturalView extends StatefulWidget {
-  /// Dia escolhido no calendário, quando o cadastro veio de lá.
   final DateTime? dataInicial;
 
   const CadastrarTratoCulturalView({super.key, this.dataInicial});
@@ -44,17 +43,15 @@ class _CadastrarTratoCulturalViewState
       ajudaDataFim: 'Data de término do trato cultural',
       dicaDataFim: 'Trato em andamento',
       mensagemSemTalhoes:
-          'Nenhum talhão ativo nesta propriedade. Cadastre um talhão antes de lançar um trato cultural.',
+          'Nenhum talhão cadastrado nesta propriedade. Cadastre um talhão antes de lançar um trato cultural.',
       mensagemSemSafras:
-          'Nenhuma safra aberta nesta propriedade. Abra uma safra antes de lançar um trato cultural.',
+          'Nenhuma safra cadastrada nesta propriedade. Abra uma safra antes de lançar um trato cultural.',
+      mensagemSemJanela:
+          'Nenhum período com talhão e safra abertos ao mesmo tempo. Confira as datas dos talhões e das safras antes de lançar um trato cultural.',
       camposEspecificosPreenchidos:
           _tipoTratoSelecionado != null || _insumosSelecionados.isNotEmpty,
       construirCamposEspecificos: _construirSeletorTipoTrato,
       construirCamposFinais: _construirSeletorInsumos,
-      // A safra sai de `dados`, não do `SafraViewModel`: quem decide é o
-      // formulário base, entre as safras abertas. Ler a safra selecionada na
-      // aba Safras — que inclui encerradas — gravava o trato justamente na
-      // safra que o usuário estava apenas consultando.
       aoSalvar: (dados) => _viewModel.submeterFormulario(
         dados: dados,
         tipoTrato: _tipoTratoSelecionado!,
@@ -64,9 +61,6 @@ class _CadastrarTratoCulturalViewState
     );
   }
 
-  /// Builder, e não widget pronto: o catálogo de tipos só chega depois do
-  /// `await` do `init`, e é o `ListenableBuilder` da tela base que reconstrói
-  /// isto quando ele chega.
   Widget _construirSeletorTipoTrato(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -88,6 +82,7 @@ class _CadastrarTratoCulturalViewState
           }).toList(),
           onChanged: (valor) => setState(() => _tipoTratoSelecionado = valor),
           validator: (valor) => valor == null ? 'Obrigatório' : null,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
         ),
       ],
     );
@@ -115,12 +110,10 @@ class _CadastrarTratoCulturalViewState
   }
 
   Future<void> _abrirSelecaoInsumos() async {
-    // O id do proprietário sai da sessão aqui, na View: ViewModel não conhece
-    // BuildContext.
     final idProprietario = context.read<SessionViewModel>().idUsuario;
 
     if (idProprietario == null) {
-      _mostrarAviso('Sessão expirada. Entre novamente para cadastrar insumos.');
+      mostrarErro(context, 'Sessão expirada. Entre novamente para cadastrar insumos.');
       return;
     }
 
@@ -134,11 +127,5 @@ class _CadastrarTratoCulturalViewState
     if (escolhidos == null || !mounted) return;
 
     setState(() => _insumosSelecionados = escolhidos);
-  }
-
-  void _mostrarAviso(String mensagem) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensagem), backgroundColor: const Color(0xFFD32F2F)),
-    );
   }
 }

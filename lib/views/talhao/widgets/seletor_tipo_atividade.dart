@@ -1,13 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/model/eventos/tipo_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/tipo_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
-/// Select do tipo de atividade exibido na seção de atividades do talhão.
-///
-/// Usa `DropdownButton` dentro de um `Container` decorado em vez de
-/// `DropdownButtonFormField`: o `value` deste último está deprecado e o
-/// substituto `initialValue` guarda estado interno no `FormField` — reconstruir
-/// com outro valor não mudaria o que aparece na tela. Aqui a seleção é
-/// totalmente controlada por quem usa o widget.
 class SeletorTipoAtividade extends StatelessWidget {
   final TipoAtividade selecionado;
   final ValueChanged<TipoAtividade> onSelecionar;
@@ -25,7 +19,7 @@ class SeletorTipoAtividade extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: const Color(0xFFE0E0E0)),
+        border: Border.all(color: AppCores.borda),
       ),
       child: DropdownButton<TipoAtividade>(
         value: selecionado,
@@ -33,7 +27,7 @@ class SeletorTipoAtividade extends StatelessWidget {
         underline: const SizedBox.shrink(),
         icon: const Icon(
           Icons.keyboard_arrow_down,
-          color: Color(0xFF67835C),
+          color: AppCores.verdePrimario,
         ),
         style: const TextStyle(fontSize: 15, color: Colors.black87),
         items: TipoAtividade.values.map((tipo) {

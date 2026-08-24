@@ -1,317 +1,40 @@
-import 'dart:convert';
-import 'package:frond_end_cafeicultura_mobile/http/dtos/paginacao_dto.dart';
-import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
-import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
-import 'package:frond_end_cafeicultura_mobile/model/eventos/status_evento.dart';
-import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/tipo_trato.dart';
+import 'package:frond_end_cafeicultura_mobile/http/services/eventos/services_evento_agricola_base.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
-import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo_utilizado.dart';
 import 'package:http/http.dart' as http;
 
-class ServicesTratoCultural extends BaseService {
-  late final Uri url = Uri.parse('$baseUrl/tratosculturais');
-  Future<List<TratoCultural>> buscarPorPeriodo(
-    int idPropriedade, {
-    required DateTime filtroInicio,
-    required DateTime filtroFim,
-  }) async {
-    try {
-      final uri = Uri.parse('$url/propriedade/$idPropriedade').replace(
-        queryParameters: {
-          'filtroInicio': filtroInicio.toUtc().toIso8601String(),
-          'filtroFim': filtroFim.toUtc().toIso8601String(),
-        },
-      );
+class ServicesTratoCultural extends ServicesEventoAgricolaBase<TratoCultural> {
+  @override
+  String get recurso => 'tratosculturais';
 
-      final response = await http.get(uri, headers: defaultHeaders);
+  @override
+  String get chaveDaLista => 'tratos';
 
-      if (response.statusCode == 200) {
-        return extrairListaNomeada(
-          response.bodyBytes,
-          'tratos',
-          TratoCultural.fromJson,
-        );
-      } else if (response.statusCode == 404) {
-        return const [];
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao buscar tratos culturais do período.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao buscar tratos culturais. Tente novamente mais tarde.',
-      );
-    }
-  }
+  @override
+  String get rotulo => 'trato cultural';
 
-  Future<ResultadoPaginadoDTO<TratoCultural>> buscarPorStatus(
-    int idPropriedade, {
-    required StatusEvento status,
-    required int pagina,
-  }) async {
-    try {
-      final uri = Uri.parse('$url/propriedade/$idPropriedade').replace(
-        queryParameters: {
-          'status': status.filtroApi,
-          'pagina': pagina.toString(),
-        },
-      );
+  @override
+  String get rotuloPlural => 'tratos culturais';
 
-      final response = await http.get(uri, headers: defaultHeaders);
+  @override
+  TratoCultural Function(Map<String, dynamic>) get fromJson =>
+      TratoCultural.fromJson;
 
-      if (response.statusCode == 200) {
-        return ResultadoPaginadoDTO.deEnvelopePaginado(
-          extrairDadosPaginados(response.bodyBytes),
-          'tratos',
-          TratoCultural.fromJson,
-        );
-      } else if (response.statusCode == 404) {
-        return ResultadoPaginadoDTO(
-          data: const [],
-          total: 0,
-          pagina: pagina,
-          totalPaginas: pagina,
-        );
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao buscar tratos culturais da propriedade.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao buscar tratos culturais. Tente novamente mais tarde.',
-      );
-    }
-  }
-
-  Future<ResultadoPaginadoDTO<TratoCultural>> buscarPorTalhao(
-    int idPropriedade,
-    int idTalhao, {
-    required int pagina,
-    StatusEvento? status,
-  }) async {
-    try {
-      final uri = Uri.parse(
-        '$url/propriedade/$idPropriedade/talhao/$idTalhao',
-      ).replace(
-        queryParameters: {
-          'pagina': pagina.toString(),
-          if (status != null) 'status': status.filtroApi,
-        },
-      );
-
-      final response = await http.get(uri, headers: defaultHeaders);
-
-      if (response.statusCode == 200) {
-        return ResultadoPaginadoDTO.deEnvelopePaginado(
-          extrairDadosPaginados(response.bodyBytes),
-          'tratos',
-          TratoCultural.fromJson,
-        );
-      } else if (response.statusCode == 404) {
-        return ResultadoPaginadoDTO(
-          data: const [],
-          total: 0,
-          pagina: pagina,
-          totalPaginas: pagina,
-        );
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao buscar tratos culturais do talhão.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao buscar tratos culturais do talhão. Tente novamente mais tarde.',
-      );
-    }
-  }
-
-  Future<bool> confirmar(
-    int idTrato, {
-    required DateTime dataInicio,
-    required DateTime dataFim,
-  }) async {
-    return _alterar(
-      idTrato: idTrato,
-      recurso: 'finalizar',
-      corpo: {
-        'dataInicio': _meiaNoiteUtc(dataInicio).toIso8601String(),
-        'dataFim': _meiaNoiteUtc(dataFim).toIso8601String(),
-      },
-      fallbackMsg: 'Erro ao confirmar trato cultural.',
-      acao: 'confirmar trato cultural',
+  Future<List<TipoTrato>> buscarTiposTrato() {
+    return executarRequisicao(
+      enviar: () => http.get(rota('tipos'), headers: defaultHeaders),
+      aoSucesso: (resposta) =>
+          extrairLista(resposta.bodyBytes, TipoTrato.fromJson),
+      erroMsg: 'Erro ao buscar tipos de $rotulo.',
+      acao: 'buscar os tipos de $rotulo',
     );
   }
-
-  Future<bool> alterarDataInicio(int idTrato, DateTime dataInicio) async {
-    return _alterar(
-      idTrato: idTrato,
-      recurso: 'alterarInicio',
-      corpo: {'dataInicio': _meiaNoiteUtc(dataInicio).toIso8601String()},
-      fallbackMsg: 'Erro ao alterar a data de início do trato cultural.',
-      acao: 'alterar a data de início',
-    );
-  }
-
-  DateTime _meiaNoiteUtc(DateTime data) =>
-      DateTime.utc(data.year, data.month, data.day);
-
-  Future<bool> alterarDescricao(int idTrato, String descricao) async {
-    return _alterar(
-      idTrato: idTrato,
-      recurso: 'descricao',
-      corpo: {'descricao': descricao.trim()},
-      fallbackMsg: 'Erro ao alterar a descrição do trato cultural.',
-      acao: 'alterar a descrição',
-    );
-  }
-
-  Future<bool> alterarResponsaveis(
-    int idTrato,
-    List<int> responsaveisIds,
-  ) async {
-    return _alterar(
-      idTrato: idTrato,
-      recurso: 'responsaveis',
-      corpo: {'responsaveisIds': responsaveisIds},
-      fallbackMsg: 'Erro ao alterar os responsáveis do trato cultural.',
-      acao: 'alterar os responsáveis',
-    );
-  }
-
-  Future<bool> alterarInsumos(
-    int idTrato,
-    List<InsumoUtilizado> insumos,
-  ) async {
-    return _alterar(
-      idTrato: idTrato,
-      recurso: 'insumos',
+  Future<bool> alterarInsumos(int idTrato, List<InsumoUtilizado> insumos) {
+    return alterar(
+      id: idTrato,
+      subRota: 'insumos',
       corpo: {'insumos': insumos.map((insumo) => insumo.toJson()).toList()},
-      fallbackMsg: 'Erro ao alterar os insumos do trato cultural.',
+      erroMsg: 'Erro ao alterar os insumos do $rotulo.',
       acao: 'alterar os insumos',
     );
-  }
-
-  Future<bool> _alterar({
-    required int idTrato,
-    required String recurso,
-    required Map<String, dynamic> corpo,
-    required String fallbackMsg,
-    required String acao,
-  }) async {
-    try {
-      final response = await http.patch(
-        Uri.parse('$url/$idTrato/$recurso'),
-        headers: defaultHeaders,
-        body: jsonEncode(corpo),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else {
-        tratarErroRequisicao(response.bodyBytes, fallbackMsg: fallbackMsg);
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao $acao. Tente novamente mais tarde.',
-      );
-    }
-  }
-
-  Future<List<TipoTrato>> buscarTiposTrato() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$url/tipos'),
-        headers: defaultHeaders,
-      );
-
-      if (response.statusCode == 200) {
-        final dados = extrairDadosResposta(response.bodyBytes);
-
-        return (dados as List)
-            .map((json) => TipoTrato.fromJson(json))
-            .toList();
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao buscar tipos de trato cultural.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao buscar tipos de trato cultural. Tente novamente mais tarde.',
-      );
-    }
-  }
-
-  Future<bool> cadastrar(TratoCultural trato) async {
-    try {
-      final response = await http.post(
-        url,
-        headers: defaultHeaders,
-        body: jsonEncode(trato.toJson()),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao cadastrar trato cultural.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao cadastrar trato cultural. Tente novamente mais tarde.',
-      );
-    }
-  }
-
-  /// Apaga o trato cultural.
-  ///
-  /// Nenhum status ganha mensagem fabricada aqui: quem sabe se o trato pode ou
-  /// não sair — vínculo com despesa, safra fechada, o que for — é o backend, e
-  /// `tratarErroRequisicao` já entrega ao usuário o motivo que ele mandou. Um
-  /// `403 → 'não pode ser excluído porque X'` escrito neste arquivo seria regra
-  /// de negócio duplicada, e desatualizada na primeira mudança do servidor.
-  Future<bool> excluir(int idTrato) async {
-    try {
-      final response = await http.delete(
-        Uri.parse('$url/$idTrato'),
-        headers: defaultHeaders,
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        return true;
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao excluir o trato cultural.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao excluir o trato cultural. Tente novamente mais tarde.',
-      );
-    }
   }
 }

@@ -1,49 +1,51 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_propriedade.dart';
 import 'package:frond_end_cafeicultura_mobile/model/propriedade.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/estado_de_carga.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/notifica_se_vivo_mixin.dart';
 
-class PropriedadesUsuarioViewModel extends ChangeNotifier {
-  bool _isLoading = false;
-  String? _mensagemErro;
+class PropriedadesUsuarioViewModel extends ChangeNotifier
+    with NotificaSeVivoMixin, EstadoDeCarregamentoMixin {
   List<Propriedade> _propriedades = [];
   int? _idPropriedadeSelecionada;
 
-  bool get isLoading => _isLoading;
-  String? get mensagemErro => _mensagemErro;
   List<Propriedade> get propriedades => _propriedades;
   int? get idPropriedadeSelecionada => _idPropriedadeSelecionada;
 
+  Propriedade? get propriedadeSelecionada {
+    if (_idPropriedadeSelecionada == null || _propriedades.isEmpty) return null;
+
+    return _propriedades.firstWhere(
+      (p) => p.id == _idPropriedadeSelecionada,
+      orElse: () => _propriedades.first,
+    );
+  }
+
+  String get nomeDaPropriedadeSelecionada =>
+      propriedadeSelecionada?.nome ?? 'esta propriedade';
+
   final _service = ServicesPropriedade();
 
-  Future<void> carregarPropriedades() async {
-    _isLoading = true;
-    _mensagemErro = null;
-    notifyListeners();
+  Future<void> carregarPropriedades() => cargaPrincipal.executar(
+        chamada: () async {
+          _propriedades = await _service.buscarPorProprietario();
+          _corrigirSelecao();
+        },
+        aoFalhar: () {},
+      );
 
-    try {
-      _propriedades = await _service.buscarPorProprietario();
+  void _corrigirSelecao() {
+    if (_propriedades.isEmpty) {
+      _idPropriedadeSelecionada = null;
+      return;
+    }
 
-      if (_propriedades.isNotEmpty) {
-        //se propriedade selecionada for nula
-        final aindaExiste = _propriedades.any(
-          (p) => p.id == _idPropriedadeSelecionada,
-        );
+    final aindaExiste = _propriedades.any(
+      (p) => p.id == _idPropriedadeSelecionada,
+    );
 
-        if (_idPropriedadeSelecionada == null || !aindaExiste) {
-          _idPropriedadeSelecionada = _propriedades.first.id;
-        }
-      } else {
-        _idPropriedadeSelecionada = null;
-      }
-    } on ApiException catch (e) {
-      _mensagemErro = e.mensagem;
-    } catch (e) {
-      _mensagemErro =
-          'Ocorreu um erro interno no aplicativo. Tente novamente mais tarde.';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+    if (_idPropriedadeSelecionada == null || !aindaExiste) {
+      _idPropriedadeSelecionada = _propriedades.first.id;
     }
   }
 
@@ -57,14 +59,13 @@ class PropriedadesUsuarioViewModel extends ChangeNotifier {
       _propriedades.insert(0, propriedadeEscolhida);
     }
 
-    notifyListeners();
+    notificarSeVivo();
   }
 
   void adicionarPropriedadeLocal(Propriedade novaPropriedade) {
     _propriedades.insert(0, novaPropriedade);
     _idPropriedadeSelecionada = novaPropriedade.id;
 
-    notifyListeners();
+    notificarSeVivo();
   }
-
 }

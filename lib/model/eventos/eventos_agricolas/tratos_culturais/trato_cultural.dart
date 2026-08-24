@@ -1,6 +1,33 @@
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
-import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/tipo_trato.dart';
-import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo_utilizado.dart';
+import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
+
+export 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
+
+class TipoTrato {
+  final int? id;
+  final String descricao;
+
+  TipoTrato({
+    required this.id,
+    required this.descricao,
+  });
+
+  TipoTrato.deDescricao(this.descricao) : id = null;
+
+  factory TipoTrato.fromJson(Map<String, dynamic> json) {
+    return TipoTrato(
+      id: json['id'],
+      descricao: json['descricao'] ?? '',
+    );
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      other is TipoTrato && other.id == id && other.descricao == descricao;
+
+  @override
+  int get hashCode => Object.hash(id, descricao);
+}
 
 class TratoCultural extends EventoAgricola {
   final TipoTrato tipoTrato;
@@ -20,7 +47,7 @@ class TratoCultural extends EventoAgricola {
   });
 
   TratoCultural.fromJson(super.json)
-      : tipoTrato = TipoTrato.apenasDescricao(
+      : tipoTrato = TipoTrato.deDescricao(
           json['tipoTrato'] ?? 'Não informado',
         ),
         insumosUtilizados = _lerInsumos(json),

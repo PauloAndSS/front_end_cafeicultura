@@ -1,19 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/carregar_insumos_mixin.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/insumos/carregar_insumos_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
 
-const _verdePrimario = Color(0xFF67835C);
-const _cinzaBorda = Color(0xFFE0E0E0);
-const _vermelhoErro = Color(0xFFD32F2F);
-
-/// A "telinha" de cadastro de insumo.
-///
-/// É um diálogo, e não uma rota empilhada, para o formulário que está por baixo
-/// (o cadastro do trato, com talhão, datas e descrição já preenchidos) continuar
-/// vivo: nada é reconstruído, então nenhum dado se perde ao voltar.
-///
-/// Devolve o [Insumo] criado — já com id — ou `null` se o usuário cancelar.
 Future<Insumo?> mostrarCadastroInsumo({
   required BuildContext context,
   required CarregarInsumosMixin viewModel,
@@ -69,17 +62,9 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
     if (!mounted) return;
 
     if (criado == null) {
-      // O diálogo continua aberto com o que já foi digitado.
       setState(() => _salvando = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.viewModel.mensagemErroInsumos ?? 'Erro ao cadastrar insumo.',
-          ),
-          backgroundColor: _vermelhoErro,
-        ),
-      );
+      mostrarErro(context, widget.viewModel.mensagemErroInsumos ?? 'Erro ao cadastrar insumo.');
       return;
     }
 
@@ -91,7 +76,7 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
     return AlertDialog(
       title: const Text(
         'Novo Insumo',
-        style: TextStyle(color: _verdePrimario, fontWeight: FontWeight.bold),
+        style: TextStyle(color: AppCores.verdePrimario, fontWeight: FontWeight.bold),
       ),
       content: Form(
         key: _formKey,
@@ -103,8 +88,7 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
               label: 'Descrição',
               controller: _descricaoController,
               hintText: 'Ex: Ureia Agrícola 46% N',
-              validator: (valor) =>
-                  valor == null || valor.trim().isEmpty ? 'Obrigatório' : null,
+              validator: Validator.obrigatorio,
             ),
             const Text(
               'Unidade de medida',
@@ -125,11 +109,11 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
                 ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: _cinzaBorda),
+                  borderSide: const BorderSide(color: AppCores.borda),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: _cinzaBorda),
+                  borderSide: const BorderSide(color: AppCores.borda),
                 ),
               ),
               hint: const Text(
@@ -146,26 +130,16 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
                   ? null
                   : (valor) => setState(() => _medidaSelecionada = valor),
               validator: (valor) => valor == null ? 'Obrigatório' : null,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
             ),
           ],
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: _salvando ? null : () => Navigator.of(context).pop(),
-          child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
-        ),
-        TextButton(
-          onPressed: _salvando ? null : _salvar,
-          child: Text(
-            _salvando ? 'Salvando...' : 'Cadastrar',
-            style: const TextStyle(
-              color: _verdePrimario,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ],
+      actions: acoesDeDialogo(
+        context: context,
+        rotuloConfirmar: _salvando ? 'Salvando...' : 'Cadastrar',
+        aoConfirmar: _salvando ? null : _salvar,
+      ),
     );
   }
 }

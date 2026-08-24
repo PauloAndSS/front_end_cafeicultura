@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/formatadores.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/bar_chart.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/pie_chart.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_grafico.dart';
 
 class RelatorioTalhaoWidget extends StatelessWidget {
   final List<EventoAgricola> eventos;
@@ -19,19 +21,10 @@ class RelatorioTalhaoWidget extends StatelessWidget {
     this.onTentarNovamente,
   });
 
-  static const List<Color> _paletaInsumos = [
-    Color(0xFFE07B39),
-    Color(0xFFB2542C),
-    Color(0xFFF2A65A),
-    Color(0xFF8C3B1B),
-    Color(0xFFF5C08A),
-    Color(0xFFD9642F),
-  ];
+  static const List<Color> _paletaInsumos = AppCores.paletaTerrosa;
 
   static const int _maximoDeInsumosNomeados = 5;
 
-  /// Teto de barras com preenchimento de lacunas no gráfico por mês — um ano,
-  /// que é a ordem de grandeza de uma safra.
   static const int _maximoDeMesesContinuos = 12;
 
   @override
@@ -39,7 +32,7 @@ class RelatorioTalhaoWidget extends StatelessWidget {
     if (isLoading) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator(color: Color(0xFF67835C))),
+        child: Center(child: CircularProgressIndicator(color: AppCores.verdePrimario)),
       );
     }
 
@@ -64,9 +57,6 @@ class RelatorioTalhaoWidget extends StatelessWidget {
           valores: _contarPorMes(),
         ),
         const SizedBox(height: 12),
-        // O `PieChartCard` se esconde sozinho quando não há dado, e um card
-        // que evapora sem explicação parece falha de carga. A nota ocupa o
-        // lugar dele dizendo o que de fato aconteceu.
         if (insumos.isEmpty)
           _construirNota('Nenhum insumo registrado nas atividades desta safra.')
         else
@@ -90,10 +80,6 @@ class RelatorioTalhaoWidget extends StatelessWidget {
     );
   }
 
-  /// Os três estados de [StatusEvento], e não o par concluído/pendente: o
-  /// filtro da seção "Atividades", logo abaixo destes cartões, oferece esses
-  /// mesmos três — dois vocabulários de status na mesma tela obrigariam o
-  /// usuário a traduzir um no outro.
   Widget _construirIndicadores() {
     final porStatus = <StatusEvento, int>{
       for (final status in StatusEvento.values) status: 0,
@@ -106,65 +92,35 @@ class RelatorioTalhaoWidget extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _construirCartaoIndicador(
-            'Agendados',
-            '${porStatus[StatusEvento.agendado]}',
-            Icons.event_available,
-            const Color(0xFF8FA67E),
-          ),
+          child: CartaoIndicador(
+                    rotulo: 'Agendados',
+                    valor: '${porStatus[StatusEvento.agendado]}',
+                    icone: Icons.event_available,
+                    cor: AppCores.verdeSecundario,
+                  ),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _construirCartaoIndicador(
-            'Em andamento',
-            '${porStatus[StatusEvento.emAndamento]}',
-            Icons.hourglass_empty,
-            Colors.orange.shade700,
-          ),
+          child: CartaoIndicador(
+                    rotulo: 'Em andamento',
+                    valor: '${porStatus[StatusEvento.emAndamento]}',
+                    icone: Icons.hourglass_empty,
+                    cor: Colors.orange.shade700,
+                  ),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _construirCartaoIndicador(
-            'Finalizados',
-            '${porStatus[StatusEvento.finalizado]}',
-            Icons.check_circle_outline,
-            Colors.green.shade700,
-          ),
+          child: CartaoIndicador(
+                    rotulo: 'Finalizados',
+                    valor: '${porStatus[StatusEvento.finalizado]}',
+                    icone: Icons.check_circle_outline,
+                    cor: Colors.green.shade700,
+                  ),
         ),
       ],
     );
   }
 
-  Widget _construirCartaoIndicador(String rotulo, String valor, IconData icone, Color cor) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
-        child: Column(
-          children: [
-            Icon(icone, color: cor, size: 22),
-            const SizedBox(height: 6),
-            Text(valor, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: cor)),
-            const SizedBox(height: 2),
-            Text(
-              rotulo,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// Contagem de eventos por mês de início, do primeiro ao último mês com
-  /// registro.
-  ///
-  /// Os meses vazios do meio entram com zero de propósito: omiti-los faria
-  /// janeiro, fevereiro e dezembro parecerem consecutivos, e a distribuição no
-  /// tempo é a única coisa que este gráfico existe para mostrar. O intervalo é
-  /// o dos eventos, não o da safra — uma safra de 18 meses geraria 18 barras
-  /// ilegíveis num telefone.
   Map<String, int> _contarPorMes() {
     if (eventos.isEmpty) {
       return const {};
@@ -184,9 +140,6 @@ class RelatorioTalhaoWidget extends StatelessWidget {
     final mesesNoIntervalo =
         (ultimo.year - primeiro.year) * 12 + (ultimo.month - primeiro.month) + 1;
 
-    // Intervalo largo demais: preencher as lacunas de um talhão com dois
-    // eventos separados por três anos daria 37 barras ilegíveis. Aí vale mais
-    // mostrar só os meses com registro, mesmo perdendo a noção de distância.
     if (mesesNoIntervalo > _maximoDeMesesContinuos) {
       return {
         for (final mes in ordenados) formatarMesAbreviado(mes): mesesComEvento[mes]!,
@@ -204,26 +157,16 @@ class RelatorioTalhaoWidget extends StatelessWidget {
     return contagem;
   }
 
-  /// Quantas vezes cada insumo foi aplicado — contagem de aplicações, não soma
-  /// de quantidade.
-  ///
-  /// `qtdUsada` vem com medidas incompatíveis entre insumos (`kg`, `l`, `un`,
-  /// `m³`): somar 5 kg de adubo com 2 L de defensivo daria um número sem
-  /// significado nenhum, e é esse número que a fatia da pizza representaria.
-  /// Contar aplicações responde a pergunta que a tela faz — "o que mais se usa
-  /// neste talhão?" — e ainda é `int`, que é o que o `PieChartCard` recebe.
   Map<String, int> _contarAplicacoesPorInsumo() {
     final aplicacoes = <String, int>{};
 
     for (final evento in eventos) {
       if (evento is! TratoCultural) continue;
 
-      // Uma aplicação por trato, mesmo que o insumo apareça em mais de uma
-      // linha do evento: contar as linhas mediria o lançamento, não o uso.
       final noEvento = <String>{};
 
       for (final insumo in evento.insumosUtilizados) {
-        final descricao = insumo.descricao.trim();
+        final descricao = insumo.insumo.descricao.trim();
         if (descricao.isEmpty) continue;
 
         noEvento.add(descricao);
@@ -273,7 +216,7 @@ class RelatorioTalhaoWidget extends StatelessWidget {
               onPressed: onTentarNovamente,
               child: const Text(
                 'Tentar novamente',
-                style: TextStyle(color: Color(0xFF67835C)),
+                style: TextStyle(color: AppCores.verdePrimario),
               ),
             ),
           ],

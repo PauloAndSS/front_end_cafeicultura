@@ -1,18 +1,14 @@
 import 'package:flutter/widgets.dart';
-import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_propriedade.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/model/propriedade.dart';
 import 'package:frond_end_cafeicultura_mobile/model/tamanho.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/estado_de_carga.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/notifica_se_vivo_mixin.dart';
 
-class CadastrarPropriedadeViewModel extends ChangeNotifier {
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
-
-  String? _mensagemErro;
-  String? get mensagemErro => _mensagemErro;
-
+class CadastrarPropriedadeViewModel extends ChangeNotifier
+    with NotificaSeVivoMixin, EstadoDeCarregamentoMixin {
   final _propriedadeService = ServicesPropriedade();
 
   Future<bool?> cadastrarPropriedade({
@@ -26,42 +22,27 @@ class CadastrarPropriedadeViewModel extends ChangeNotifier {
     required String cidade,
     required UF uf,
     required String pais,
-  }) async {
-    _isLoading = true;
-    _mensagemErro = null;
-    notifyListeners();
+  }) {
+    return cargaPrincipal.executar(
+      chamada: () {
+        final novaPropriedade = Propriedade(
+          nome: nome.trim(),
+          tamanho: Tamanho(
+            valor: valorTamanho,
+            medida: Medida.fromString(medidaTamanho),
+          ),
+          endereco: Endereco(
+            cep: CEP.criar(cep),
+            logradouro: logradouro.trim(),
+            bairro: bairro.trim(),
+            cidade: cidade.trim(),
+            uf: uf,
+          ),
+        );
 
-    try {
-      final tamanho = Tamanho(
-        valor: valorTamanho, 
-        medida: Medida.fromString(medidaTamanho),
-      );
-      
-      final endereco = Endereco(
-        cep: CEP.criar(cep),
-        logradouro: logradouro.trim(),
-        bairro: bairro.trim(),
-        cidade: cidade.trim(),
-        uf: uf,
-      );
-
-      final novaPropriedade = Propriedade(
-        nome: nome.trim(),
-        tamanho: tamanho,
-        endereco: endereco,
-      );
-
-      final resultado = await _propriedadeService.cadastrar(novaPropriedade);
-      return resultado;
-    } on ApiException catch (e) {
-      _mensagemErro = e.mensagem;
-      return false;
-    } catch (e) {
-      _mensagemErro = 'Ocorreu um erro interno no aplicativo. Tente novamente mais tarde.';
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+        return _propriedadeService.cadastrar(novaPropriedade);
+      },
+      aoFalhar: () => false,
+    );
   }
 }

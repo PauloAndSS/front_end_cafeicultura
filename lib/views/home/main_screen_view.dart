@@ -10,6 +10,7 @@ import 'financeiro_view.dart';
 import '../talhao/talhao_view.dart';
 import 'home_view.dart';
 import '../../viewmodels/navegacao_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class MainScreenView extends StatefulWidget {
   const MainScreenView({super.key});
@@ -25,7 +26,7 @@ class _MainScreenViewState extends State<MainScreenView> {
   @override
   void initState() {
     super.initState();
-    
+
     _navViewModel = context.read<NavegacaoViewModel>();
     _pageController = PageController(initialPage: _navViewModel.indiceAtual);
 
@@ -58,24 +59,24 @@ class _MainScreenViewState extends State<MainScreenView> {
 
   void _onPageChanged(int index) {
     if (_navViewModel.indiceAtual != index) {
-      _navViewModel.alterarAba(index); 
+      _navViewModel.alterarAba(index);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final telas = [
-      const HomeView(), 
+      const HomeView(),
       const AtividadesView(),
-      const TalhaoView(),  
-      const ArmazemView(),
+      const TalhaoView(),
       const FinanceiroView(),
+      const ArmazemView(),
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      resizeToAvoidBottomInset: false, 
-      
+      backgroundColor: AppCores.fundo,
+      resizeToAvoidBottomInset: false,
+
       appBar: const CustomAppBar(),
 
       body: PageView(

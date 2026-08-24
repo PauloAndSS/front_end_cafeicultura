@@ -1,17 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_grafico.dart';
 
-/// Card com gráfico de pizza (donut) + legenda lateral com quantidade e
-/// porcentagem por fatia.
-///
-/// É um widget genérico do sistema (não depende de Safra nem de nenhum
-/// outro módulo específico), então pode ser reaproveitado em qualquer
-/// outro relatório/dashboard: basta passar um `Map<String, int>` com o
-/// rótulo de cada fatia e seu valor.
-///
-/// Fica oculto automaticamente (`SizedBox.shrink`) quando não há dados
-/// para mostrar.
 class PieChartCard extends StatelessWidget {
   final String titulo;
   final IconData icone;
@@ -25,71 +17,54 @@ class PieChartCard extends StatelessWidget {
     required this.icone,
     required this.valores,
     required this.paleta,
-    this.corTitulo = const Color(0xFF67835C),
+    this.corTitulo = AppCores.verdePrimario,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (valores.isEmpty || valores.values.every((v) => v == 0)) {
-      return const SizedBox.shrink();
-    }
+    if (CartaoGrafico.semDados(valores)) return const SizedBox.shrink();
 
     final total = valores.values.fold<int>(0, (soma, v) => soma + v);
     final entradas = valores.entries.toList();
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(icone, size: 18, color: corTitulo),
-                const SizedBox(width: 6),
-                Text(
-                  titulo,
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: corTitulo),
-                ),
-              ],
+    return CartaoGrafico(
+      titulo: titulo,
+      icone: icone,
+      corTitulo: corTitulo,
+      valores: valores,
+      construirGrafico: (context) => Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          SizedBox(
+            width: 110,
+            height: 110,
+            child: CustomPaint(
+              painter: PieChartPainter(
+                valores: entradas.map((e) => e.value).toList(),
+                cores: paleta,
+              ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(
-                  width: 110,
-                  height: 110,
-                  child: CustomPaint(
-                    painter: PieChartPainter(
-                      valores: entradas.map((e) => e.value).toList(),
-                      cores: paleta,
+                for (var i = 0; i < entradas.length; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: _LegendaFatia(
+                      cor: paleta[i % paleta.length],
+                      rotulo: entradas[i].key,
+                      valor: entradas[i].value,
+                      porcentagem:
+                          total == 0 ? 0 : (entradas[i].value / total * 100),
                     ),
                   ),
-                ),
-                const SizedBox(width: 20),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      for (var i = 0; i < entradas.length; i++)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: _LegendaFatia(
-                            cor: paleta[i % paleta.length],
-                            rotulo: entradas[i].key,
-                            valor: entradas[i].value,
-                            porcentagem: total == 0 ? 0 : (entradas[i].value / total * 100),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -141,8 +116,6 @@ class _LegendaFatia extends StatelessWidget {
   }
 }
 
-/// Desenha um gráfico de pizza (donut) simples a partir de uma lista de
-/// valores e cores correspondentes, sem depender de nenhum pacote externo.
 class PieChartPainter extends CustomPainter {
   final List<int> valores;
   final List<Color> cores;

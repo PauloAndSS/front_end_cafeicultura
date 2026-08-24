@@ -1,11 +1,13 @@
-// lib/views/eventos/talhao_view.dart (ou o diretório correto)
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_propriedades_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhoes_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/talhao/cadastrar_talhao_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/talhao/detalhes_talhao_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/talhao/widgets/talhao_card.dart';
 import 'package:provider/provider.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 
 enum StatusTalhaoFiltro { ativos, encerrados }
 
@@ -16,10 +18,10 @@ class TalhaoView extends StatefulWidget {
   State<TalhaoView> createState() => _TalhaoViewState();
 }
 
-class _TalhaoViewState extends State<TalhaoView> with AutomaticKeepAliveClientMixin {
-  
+class _TalhaoViewState extends State<TalhaoView>
+    with AutomaticKeepAliveClientMixin {
   @override
-  bool get wantKeepAlive => true; 
+  bool get wantKeepAlive => true;
 
   StatusTalhaoFiltro _filtroSelecionado = StatusTalhaoFiltro.ativos;
   final ScrollController _scrollController = ScrollController();
@@ -54,8 +56,8 @@ class _TalhaoViewState extends State<TalhaoView> with AutomaticKeepAliveClientMi
     final talhoesVM = context.read<TalhoesViewModel>();
 
     if (propriedadesVM.idPropriedadeSelecionada != null &&
-        propriedadesVM.idPropriedadeSelecionada != talhoesVM.idPropriedadeAtual) {
-      
+        propriedadesVM.idPropriedadeSelecionada !=
+            talhoesVM.idPropriedadeAtual) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         talhoesVM.carregarTalhoes(propriedadesVM.idPropriedadeSelecionada!);
       });
@@ -64,36 +66,24 @@ class _TalhaoViewState extends State<TalhaoView> with AutomaticKeepAliveClientMi
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); 
+    super.build(context);
 
     final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
     final talhoesVM = context.watch<TalhoesViewModel>();
 
-    String nomePropriedade = 'esta propriedade';
-    if (propriedadesVM.idPropriedadeSelecionada != null &&
-        propriedadesVM.propriedades.isNotEmpty) {
-      final prop = propriedadesVM.propriedades.firstWhere(
-        (p) => p.id == propriedadesVM.idPropriedadeSelecionada,
-        orElse: () => propriedadesVM.propriedades.first,
-      );
-      nomePropriedade = prop.nome;
-    }
+    final nomePropriedade = propriedadesVM.nomeDaPropriedadeSelecionada;
 
     final talhoesFiltrados = _filtroSelecionado == StatusTalhaoFiltro.ativos
         ? talhoesVM.talhoesAtivos
         : talhoesVM.talhoesEncerrados;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: AppCores.fundo,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           if (propriedadesVM.idPropriedadeSelecionada == null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Selecione uma propriedade primeiro.'),
-              ),
-            );
+            mostrarAviso(context, 'Selecione uma propriedade primeiro.');
             return;
           }
 
@@ -104,7 +94,7 @@ class _TalhaoViewState extends State<TalhaoView> with AutomaticKeepAliveClientMi
             ),
           );
         },
-        backgroundColor: const Color(0xFF67835C),
+        backgroundColor: AppCores.verdePrimario,
         icon: const Icon(Icons.add, color: Colors.white),
         label: const Text('Novo Talhão', style: TextStyle(color: Colors.white)),
       ),
@@ -136,17 +126,17 @@ class _TalhaoViewState extends State<TalhaoView> with AutomaticKeepAliveClientMi
                   },
                   style: ButtonStyle(
                     backgroundColor: WidgetStateProperty.resolveWith<Color>((
-                      states,
+                      estados,
                     ) {
-                      if (states.contains(WidgetState.selected)) {
-                        return const Color(0xFF67835C);
+                      if (estados.contains(WidgetState.selected)) {
+                        return AppCores.verdePrimario;
                       }
                       return Colors.white;
                     }),
                     foregroundColor: WidgetStateProperty.resolveWith<Color>((
-                      states,
+                      estados,
                     ) {
-                      if (states.contains(WidgetState.selected)) {
+                      if (estados.contains(WidgetState.selected)) {
                         return Colors.white;
                       }
                       return Colors.black87;
@@ -164,6 +154,18 @@ class _TalhaoViewState extends State<TalhaoView> with AutomaticKeepAliveClientMi
     );
   }
 
+  bool _temRodape(TalhoesViewModel vm) =>
+      vm.isLoadingMais || vm.mensagemErro != null;
+
+  Widget _construirRodape(TalhoesViewModel vm) {
+    return RodapePaginacao(
+      carregando: vm.isLoadingMais,
+      mensagemErro: vm.mensagemErro,
+      aoTentarNovamente: vm.carregarMaisTalhoes,
+      padding: const EdgeInsets.symmetric(vertical: 16.0),
+    );
+  }
+
   Widget _buildBody(
     TalhoesViewModel vm,
     List talhoesFiltrados,
@@ -171,11 +173,11 @@ class _TalhaoViewState extends State<TalhaoView> with AutomaticKeepAliveClientMi
   ) {
     if (vm.isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: Color(0xFF67835C)),
+        child: CircularProgressIndicator(color: AppCores.verdePrimario),
       );
     }
 
-    if (vm.mensagemErro != null) {
+    if (vm.mensagemErro != null && talhoesFiltrados.isEmpty) {
       return Center(
         child: Text(
           vm.mensagemErro!,
@@ -209,15 +211,10 @@ class _TalhaoViewState extends State<TalhaoView> with AutomaticKeepAliveClientMi
         top: 24.0,
         bottom: 80.0,
       ),
-      itemCount: talhoesFiltrados.length + (vm.isLoadingMais ? 1 : 0),
+      itemCount: talhoesFiltrados.length + (_temRodape(vm) ? 1 : 0),
       itemBuilder: (context, index) {
         if (index == talhoesFiltrados.length) {
-          return const Padding(
-            padding: EdgeInsets.symmetric(vertical: 16.0),
-            child: Center(
-              child: CircularProgressIndicator(color: Color(0xFF67835C)),
-            ),
-          );
+          return _construirRodape(vm);
         }
 
         final talhao = talhoesFiltrados[index];

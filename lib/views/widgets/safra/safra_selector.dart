@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
-
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class SafraSelectorWidget extends StatelessWidget {
   final List<Safra> safras;
   final Safra? safraSelecionada;
   final ValueChanged<Safra> onSelecionar;
-
 
   final bool mostrarAcoes;
 
@@ -67,7 +66,7 @@ class SafraSelectorWidget extends StatelessWidget {
             if (titulo != null) ...[
               Text(
                 titulo!,
-                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF67835C)),
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppCores.verdePrimario),
               ),
               const SizedBox(height: 8),
             ],
@@ -88,10 +87,10 @@ class SafraSelectorWidget extends StatelessWidget {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(color: Color(0xFF67835C), width: 2),
+                  borderSide: const BorderSide(color: AppCores.verdePrimario, width: 2),
                 ),
-                labelStyle: const TextStyle(color: Color(0xFF67835C)),
-                floatingLabelStyle: const TextStyle(color: Color(0xFF67835C)),
+                labelStyle: const TextStyle(color: AppCores.verdePrimario),
+                floatingLabelStyle: const TextStyle(color: AppCores.verdePrimario),
                 labelText: 'Safra selecionada',
               ),
               selectedItemBuilder: (context) {
@@ -114,7 +113,7 @@ class SafraSelectorWidget extends StatelessWidget {
                           Expanded(
                             child: Text(safra.nomeExibicao),
                           ),
-                          if (safra.isEncerrada)
+                          if (safra.encerrada)
                             Container(
                               margin: const EdgeInsets.only(left: 8),
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -129,10 +128,10 @@ class SafraSelectorWidget extends StatelessWidget {
                               margin: const EdgeInsets.only(left: 8),
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF8FA67E).withOpacity(0.15),
+                                color: AppCores.verdeSecundario.withOpacity(0.15),
                                 borderRadius: BorderRadius.circular(999),
                               ),
-                              child: const Text('Ativa', style: TextStyle(fontSize: 11, color: Color(0xFF67835C))),
+                              child: const Text('Ativa', style: TextStyle(fontSize: 11, color: AppCores.verdePrimario)),
                             ),
                         ],
                       ),
@@ -157,7 +156,7 @@ class SafraSelectorWidget extends StatelessWidget {
                       icon: const Icon(Icons.add_circle_outline),
                       label: const Text('Nova safra'),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF8FA67E),
+                        backgroundColor: AppCores.verdeSecundario,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         shape: RoundedRectangleBorder(
@@ -168,14 +167,14 @@ class SafraSelectorWidget extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: (safraSelecionada?.isEncerrada ?? false)
+                    child: (safraSelecionada?.encerrada ?? false)
                         ? OutlinedButton.icon(
                             onPressed: isLoading ? null : onReativarSafra,
                             icon: const Icon(Icons.restart_alt),
                             label: const Text('Reativar safra'),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: const Color(0xFF67835C),
-                              side: const BorderSide(color: Color(0xFF8FA67E)),
+                              foregroundColor: AppCores.verdePrimario,
+                              side: const BorderSide(color: AppCores.verdeSecundario),
                               padding: const EdgeInsets.symmetric(vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),

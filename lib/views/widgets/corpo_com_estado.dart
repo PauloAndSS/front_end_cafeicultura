@@ -1,17 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
-const _verdePrimario = Color(0xFF67835C);
-
-/// Cascata de estados de uma tela que carrega dados: carregando → erro →
-/// vazio → conteúdo.
-///
-/// A ordem é fixa e é justamente o ponto: com as guardas soltas em cada tela,
-/// uma delas acabava testando "vazio" antes de "carregando" e piscava a
-/// mensagem de lista vazia durante a requisição.
-///
-/// O vazio entra por builder porque a moldura muda entre as telas — na aba é
-/// uma frase centralizada, no formulário é ícone + frase + "Tentar novamente".
 class CorpoComEstado extends StatelessWidget {
   final bool isLoading;
   final String? mensagemErro;
@@ -19,7 +9,6 @@ class CorpoComEstado extends StatelessWidget {
   final WidgetBuilder construirVazio;
   final WidgetBuilder construirConteudo;
 
-  /// `null` esconde o botão de retentar na tela de erro.
   final VoidCallback? aoTentarNovamente;
 
   const CorpoComEstado({
@@ -36,7 +25,7 @@ class CorpoComEstado extends StatelessWidget {
   Widget build(BuildContext context) {
     if (isLoading) {
       return const Center(
-        child: CircularProgressIndicator(color: _verdePrimario),
+        child: CircularProgressIndicator(color: AppCores.verdePrimario),
       );
     }
 

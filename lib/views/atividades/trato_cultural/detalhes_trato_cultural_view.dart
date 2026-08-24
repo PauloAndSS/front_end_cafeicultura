@@ -1,25 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
+import 'package:frond_end_cafeicultura_mobile/model/talhao.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/detalhes_trato_cultural_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/base/detalhes_atividade_view.dart';
-import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/blocos_detalhes_atividade.dart';
-import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/selecionar_insumos_modal.dart';
+import 'package:frond_end_cafeicultura_mobile/views/insumos/selecionar_insumos_modal.dart';
 import 'package:provider/provider.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/blocos_detalhe.dart';
 
-/// Detalhes de um trato cultural.
-///
-/// Tudo o que é comum a qualquer atividade — confirmar, datas, descrição,
-/// responsáveis, status — vem de [DetalhesAtividadeView]. Aqui sobram a linha
-/// do tipo e a seção de insumos.
 class DetalhesTratoCulturalView extends StatefulWidget {
   final TratoCultural trato;
-  final String nomeTalhao;
+
+  final Talhao? talhao;
 
   const DetalhesTratoCulturalView({
     super.key,
     required this.trato,
-    required this.nomeTalhao,
+    required this.talhao,
   });
 
   @override
@@ -36,19 +35,11 @@ class _DetalhesTratoCulturalViewState extends State<DetalhesTratoCulturalView> {
     super.dispose();
   }
 
-  void _mostrarErro(String mensagem) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensagem), backgroundColor: const Color(0xFFD32F2F)),
-    );
-  }
-
   Future<void> _editarInsumos() async {
-    // O id do proprietário sai da sessão aqui, na View: ViewModel não conhece
-    // BuildContext.
     final idProprietario = context.read<SessionViewModel>().idUsuario;
 
     if (idProprietario == null) {
-      _mostrarErro('Sessão expirada. Entre novamente para alterar os insumos.');
+      mostrarErro(context, 'Sessão expirada. Entre novamente para alterar os insumos.');
       return;
     }
 
@@ -66,14 +57,9 @@ class _DetalhesTratoCulturalViewState extends State<DetalhesTratoCulturalView> {
     if (!mounted) return;
 
     if (sucesso) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Insumos atualizados com sucesso!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+      mostrarSucesso(context, 'Insumos atualizados com sucesso!');
     } else {
-      _mostrarErro(_viewModel.mensagemErro ?? 'Erro ao alterar os insumos.');
+      mostrarErro(context, _viewModel.mensagemErro ?? 'Erro ao alterar os insumos.');
     }
   }
 
@@ -81,7 +67,7 @@ class _DetalhesTratoCulturalViewState extends State<DetalhesTratoCulturalView> {
   Widget build(BuildContext context) {
     return DetalhesAtividadeView<TratoCultural>(
       viewModel: _viewModel,
-      nomeTalhao: widget.nomeTalhao,
+      talhao: widget.talhao,
       tituloCartao: 'Informações do Trato',
       rotuloBotaoConfirmar: 'Confirmar Trato',
       tituloTelaConfirmar: 'Confirmar Trato Cultural',
@@ -91,13 +77,13 @@ class _DetalhesTratoCulturalViewState extends State<DetalhesTratoCulturalView> {
       mensagemJaFinalizada:
           'Este trato cultural já foi finalizado e não pode mais ser modificado.',
       construirLinhasExtras: (context, trato, editavel) => [
-        LinhaInfoAtividade(rotulo: 'Tipo:', valor: trato.tipoTrato.descricao),
+        LinhaInfo(rotulo: 'Tipo:', valor: trato.tipoTrato.descricao),
       ],
       construirSecoesExtras: (context, trato, editavel) => [
-        const Divider(height: 32, color: Color(0xFFE0E0E0)),
-        SecaoEditavelAtividade(
+        const Divider(height: 32, color: AppCores.borda),
+        SecaoEditavel(
           titulo: 'Insumos utilizados',
-          conteudo: ChipsAtividade(
+          conteudo: ChipsLista(
             rotulos: trato.insumosUtilizados
                 .map((insumo) => insumo.descricaoComQuantidade)
                 .toList(),

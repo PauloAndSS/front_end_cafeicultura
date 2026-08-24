@@ -1,21 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
-const _verdePrimario = Color(0xFF67835C);
-const _verdeSecundario = Color(0xFF8FA67E);
-const _cinzaBorda = Color(0xFFE0E0E0);
-
-/// Campo que abre um modal de seleção e mostra o escolhido como chips.
-///
-/// Responsáveis e insumos usavam duas cópias do mesmo widget, divergindo só no
-/// ícone, no texto e em como o item vira rótulo. Aqui isso entra por parâmetro.
-///
-/// [aoRemover] recebe o item, não o índice: o chamador filtra pela chave que
-/// fizer sentido para o tipo dele (`id` de responsável, `idInsumo` de insumo),
-/// porque nenhum dos dois implementa `==`.
 class SeletorMultiploAtividade<T> extends StatelessWidget {
   final IconData icone;
 
-  /// Texto quando nada foi escolhido — 'Selecionar responsáveis'.
   final String rotuloVazio;
 
   final List<T> selecionados;
@@ -48,11 +36,11 @@ class SeletorMultiploAtividade<T> extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: _cinzaBorda),
+              border: Border.all(color: AppCores.borda),
             ),
             child: Row(
               children: [
-                Icon(icone, color: _verdePrimario),
+                Icon(icone, color: AppCores.verdePrimario),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -81,7 +69,7 @@ class SeletorMultiploAtividade<T> extends StatelessWidget {
                   rotuloItem(item),
                   style: const TextStyle(color: Colors.white, fontSize: 13),
                 ),
-                backgroundColor: _verdeSecundario,
+                backgroundColor: AppCores.verdeSecundario,
                 deleteIconColor: Colors.white,
                 onDeleted: () => aoRemover(item),
               );

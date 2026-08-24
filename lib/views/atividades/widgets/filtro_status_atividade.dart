@@ -1,26 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/model/eventos/status_evento.dart';
+import 'package:frond_end_cafeicultura_mobile/model/eventos/evento.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
-/// Alternador entre os status de atividade.
-///
-/// Usado tanto nas abas de atividade quanto na seção de atividades do detalhe
-/// do talhão — o estado da seleção fica com quem usa.
-///
-/// Filtra pelo mesmo [StatusEvento] que o model calcula: um enum próprio de
-/// filtro seria a mesma regra escrita duas vezes. `null` é o segmento "Todas",
-/// que a seção do talhão oferece e a aba não: lá o filtro é opcional na rota, e
-/// ausência de `status` na query é literalmente "sem filtro".
-///
-/// Sem os ícones que existiam quando eram dois segmentos: com três rótulos,
-/// ícone mais texto não cabe na largura de um telefone comum. Com quatro, nem o
-/// texto inteiro cabe — daí os rótulos curtos e o padding menor a partir do
-/// quarto segmento.
 class FiltroStatusAtividade extends StatelessWidget {
   final StatusEvento? selecionado;
   final ValueChanged<StatusEvento?> onSelecionar;
 
-  /// Os segmentos, na ordem. `StatusEvento.values` (o padrão) é uma
-  /// `List<StatusEvento>`, que serve de `List<StatusEvento?>` por covariância.
   final List<StatusEvento?> filtros;
 
   const FiltroStatusAtividade({
@@ -30,7 +15,6 @@ class FiltroStatusAtividade extends StatelessWidget {
     this.filtros = StatusEvento.values,
   });
 
-  /// A partir de quatro segmentos o texto longo não cabe mais.
   bool get _apertado => filtros.length > 3;
 
   @override
@@ -57,14 +41,14 @@ class FiltroStatusAtividade extends StatelessWidget {
         padding: WidgetStatePropertyAll(
           EdgeInsets.symmetric(horizontal: _apertado ? 4 : 8),
         ),
-        backgroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const Color(0xFF67835C);
+        backgroundColor: WidgetStateProperty.resolveWith<Color>((estados) {
+          if (estados.contains(WidgetState.selected)) {
+            return AppCores.verdePrimario;
           }
           return Colors.white;
         }),
-        foregroundColor: WidgetStateProperty.resolveWith<Color>((states) {
-          if (states.contains(WidgetState.selected)) {
+        foregroundColor: WidgetStateProperty.resolveWith<Color>((estados) {
+          if (estados.contains(WidgetState.selected)) {
             return Colors.white;
           }
           return Colors.black87;

@@ -1,20 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
-import 'package:intl/intl.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
 
-const _verdePrimario = Color(0xFF67835C);
-const _cinzaBorda = Color(0xFFE0E0E0);
-
-/// Pergunta quanto do [insumo] foi utilizado.
-///
-/// É um `StatefulWidget` — e não um `showDialog` com controller local — porque
-/// o future de `showDialog` completa no instante do `pop`, **antes** da
-/// animação de saída (ver `Route.didComplete`). Descartar o controller ali
-/// deixaria o `TextFormField` ainda montado apontando para um `ChangeNotifier`
-/// morto, e a exceção resultante interrompe a desmontagem da subárvore.
-///
-/// Devolve `null` se o usuário cancelar.
 Future<double?> mostrarQuantidadeInsumo({
   required BuildContext context,
   required Insumo insumo,
@@ -60,15 +50,11 @@ class _QuantidadeInsumoDialogState extends State<_QuantidadeInsumoDialog> {
     super.dispose();
   }
 
-  /// O texto tem que sair no mesmo formato que [AppMasks.decimal] produz —
-  /// milhar com ponto, decimal com vírgula e no máximo duas casas —, senão
-  /// editar um valor já salvo começa com a máscara brigando com o próprio
-  /// conteúdo: acima de duas casas ela recusa toda digitação seguinte.
   String _quantidadeInicial() {
     final atual = widget.quantidadeAtual;
     if (atual == null) return '';
 
-    return NumberFormat('#,##0.##', 'pt_BR').format(atual);
+    return formatarDecimal(atual);
   }
 
   void _confirmar() {
@@ -94,7 +80,7 @@ class _QuantidadeInsumoDialogState extends State<_QuantidadeInsumoDialog> {
       title: Text(
         widget.insumo.descricao,
         style: const TextStyle(
-          color: _verdePrimario,
+          color: AppCores.verdePrimario,
           fontWeight: FontWeight.bold,
           fontSize: 18,
         ),
@@ -112,26 +98,19 @@ class _QuantidadeInsumoDialogState extends State<_QuantidadeInsumoDialog> {
             suffixText: widget.insumo.medida.sigla,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: _cinzaBorda),
+              borderSide: const BorderSide(color: AppCores.borda),
             ),
           ),
           validator: _validar,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           onFieldSubmitted: (_) => _confirmar(),
         ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
-        ),
-        TextButton(
-          onPressed: _confirmar,
-          child: const Text(
-            'Confirmar',
-            style: TextStyle(color: _verdePrimario, fontWeight: FontWeight.bold),
-          ),
-        ),
-      ],
+      actions: acoesDeDialogo(
+        context: context,
+        rotuloConfirmar: 'Confirmar',
+        aoConfirmar: _confirmar,
+      ),
     );
   }
 }

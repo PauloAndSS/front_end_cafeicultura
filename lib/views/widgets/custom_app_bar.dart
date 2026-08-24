@@ -7,6 +7,7 @@ import 'package:frond_end_cafeicultura_mobile/views/proprietario/atualizar_dados
 import 'package:frond_end_cafeicultura_mobile/views/safra/safra_view_page.dart';
 import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({super.key});
@@ -47,7 +48,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         : null;
 
     return AppBar(
-      backgroundColor: const Color(0xFF8FA67E),
+      backgroundColor: AppCores.verdeSecundario,
       elevation: 0,
       centerTitle: true,
       title: Image.asset(
@@ -100,12 +101,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                         Icon(
                           Icons.edit_outlined,
                           size: 16,
-                          color: Color(0xFF8FA67E),
+                          color: AppCores.verdeSecundario,
                         ),
                         SizedBox(width: 8),
                         Text(
                           'Editar Atual',
-                          style: TextStyle(color: Color(0xFF8FA67E)),
+                          style: TextStyle(color: AppCores.verdeSecundario),
                         ),
                       ],
                     ),
@@ -115,12 +116,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                   value: -1,
                   child: Row(
                     children: [
-                      Icon(Icons.add, size: 18, color: Color(0xFF8FA67E)),
+                      Icon(Icons.add, size: 18, color: AppCores.verdeSecundario),
                       SizedBox(width: 8),
                       Text(
                         'Nova Propriedade',
                         style: TextStyle(
-                          color: Color(0xFF8FA67E),
+                          color: AppCores.verdeSecundario,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -158,7 +159,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           onPressed: () {},
         ),
 
-        // MENU DE PERFIL (Corrigido)
         PopupMenuButton<String>(
           icon: const Icon(Icons.person_outline, color: Colors.white, size: 26),
           tooltip: 'Perfil',
@@ -187,7 +187,6 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           ],
         ),
 
-        // MENU DE HAMBÚRGUER (Corrigido)
         PopupMenuButton<String>(
           icon: const Icon(Icons.menu, color: Colors.white, size: 28),
           tooltip: 'Menu',
@@ -198,7 +197,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           onSelected: (String escolha) async {
             if (escolha == 'pessoas') {
               _navegarSubstituindo(context, const PessoasView());
-            } else if (escolha == 'safras') { // Adicionado a verificação de safras aqui!
+            } else if (escolha == 'safras') {
               _navegarSubstituindo(context, const SafraViewPage());
             } else if (escolha == 'sair') {
               await session.logout();

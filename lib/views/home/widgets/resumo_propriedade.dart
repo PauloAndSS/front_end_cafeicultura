@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/propriedade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/propriedade/widgets/propriedade_card.dart';
-
-const _verdeSecundario = Color(0xFF8FA67E);
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class ResumoPropriedade extends StatefulWidget {
   final Propriedade propriedade;
@@ -61,7 +60,7 @@ class _ResumoPropriedadeState extends State<ResumoPropriedade> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Row(
               children: [
-                const Icon(Icons.landscape, color: _verdeSecundario, size: 28),
+                const Icon(Icons.landscape, color: AppCores.verdeSecundario, size: 28),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(

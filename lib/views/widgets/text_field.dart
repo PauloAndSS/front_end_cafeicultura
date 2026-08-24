@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class CustomTextField extends StatelessWidget {
   final String label;
@@ -42,12 +43,12 @@ class CustomTextField extends StatelessWidget {
           obscureText: isPassword,
           keyboardType: keyboardType,
           validator: validator,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
           readOnly: readOnly,
           inputFormatters: inputFormatters,
           decoration: InputDecoration(
             hintText: hintText,
             hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
-            // 👇 Adicionado o preenchimento condicional de cor
             filled: readOnly,
             fillColor: readOnly ? Colors.grey.shade200 : Colors.transparent,
 
@@ -57,11 +58,11 @@ class CustomTextField extends StatelessWidget {
             ),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+              borderSide: const BorderSide(color: AppCores.borda),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+              borderSide: const BorderSide(color: AppCores.borda),
             ),
             disabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),

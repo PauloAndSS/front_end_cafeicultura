@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
-import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart'; 
+import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/pie_chart.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_grafico.dart';
 
 class SafraRelatorioWidget extends StatelessWidget {
   final List<EventoAgricola> eventos;
   final bool isLoading;
   final String? mensagemErro;
   final bool mostrarTitulo;
-
-  /// Traduz o `idTalhao` cru do payload em nome exibível.
-  ///
-  /// Vem de fora, e não de um ViewModel lido aqui dentro: este widget é o
-  /// relatório de qualquer lista de eventos, e quem já carregou os talhões é
-  /// a tela que o monta. Mesmo contrato de `atividades_do_dia_sheet.dart`.
   final String Function(int idTalhao) nomeDoTalhao;
 
   const SafraRelatorioWidget({
@@ -33,32 +30,11 @@ class SafraRelatorioWidget extends StatelessWidget {
     'Defensivo',
   ];
 
-  static const List<Color> _paletaTratos = [
-    Color(0xFFE07B39),
-    Color(0xFFB2542C),
-    Color(0xFFF2A65A),
-    Color(0xFF8C3B1B),
-    Color(0xFFF5C08A),
-    Color(0xFFD9642F),
-  ];
+  static const List<Color> _paletaTratos = AppCores.paletaTerrosa;
 
-  static const List<Color> _paletaTalhoes = [
-    Color(0xFF2E6E7A),
-    Color(0xFF4F98A6),
-    Color(0xFF7FC1CC),
-    Color(0xFF1D4C55),
-    Color(0xFFB8DEE3),
-    Color(0xFF3A8492),
-  ];
+  static const List<Color> _paletaTalhoes = AppCores.paletaCiano;
 
-  static const List<Color> _paletaGastos = [
-    Color(0xFF4C6B3A),
-    Color(0xFF7A9A5C),
-    Color(0xFFA9C08A),
-    Color(0xFF335229),
-    Color(0xFFC7D9A9),
-    Color(0xFF5D8A4F),
-  ];
+  static const List<Color> _paletaGastos = AppCores.paletaVerde;
 
   @override
   Widget build(BuildContext context) {
@@ -67,9 +43,13 @@ class SafraRelatorioWidget extends StatelessWidget {
     if (isLoading) {
       conteudo = const Center(child: CircularProgressIndicator());
     } else if (mensagemErro != null) {
-      conteudo = _buildMessageCard(mensagemErro!);
+      conteudo = CartaoDeErro(mensagem: mensagemErro!);
     } else if (eventos.isEmpty) {
-      conteudo = _buildEmptyReportState();
+      conteudo = const CartaoVazio(
+        icone: Icons.description_outlined,
+        mensagem: 'Nada registrado nessa Safra ainda, registre mais dados e '
+            'os relatórios aparecerão por aqui!',
+      );
     } else {
       conteudo = _buildRelatorioCompleto(eventos);
     }
@@ -83,7 +63,7 @@ class SafraRelatorioWidget extends StatelessWidget {
       children: [
         const Text(
           'Relatório da safra',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF67835C)),
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppCores.verdePrimario),
         ),
         const SizedBox(height: 8),
         conteudo,
@@ -110,7 +90,7 @@ class SafraRelatorioWidget extends StatelessWidget {
         const SizedBox(height: 20),
         const Text(
           'Eventos detalhados',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF67835C)),
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppCores.verdePrimario),
         ),
         const SizedBox(height: 12),
         _buildSubtituloGrupoEventos('Pendentes', pendentes.length, Colors.orange.shade700),
@@ -168,35 +148,32 @@ class SafraRelatorioWidget extends StatelessWidget {
     return Row(
       children: [
         Expanded(
-          child: _buildEstatisticaCard('Eventos', '$total', Icons.event_note_outlined, const Color(0xFF67835C)),
+          child: CartaoIndicador(
+                    rotulo: 'Eventos',
+                    valor: '$total',
+                    icone: Icons.event_note_outlined,
+                    cor: AppCores.verdePrimario,
+                  ),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _buildEstatisticaCard('Concluídos', '$concluidos', Icons.check_circle_outline, Colors.green.shade700),
+          child: CartaoIndicador(
+                    rotulo: 'Concluídos',
+                    valor: '$concluidos',
+                    icone: Icons.check_circle_outline,
+                    cor: Colors.green.shade700,
+                  ),
         ),
         const SizedBox(width: 10),
         Expanded(
-          child: _buildEstatisticaCard('Pendentes', '$pendentes', Icons.hourglass_empty, Colors.orange.shade700),
+          child: CartaoIndicador(
+                    rotulo: 'Pendentes',
+                    valor: '$pendentes',
+                    icone: Icons.hourglass_empty,
+                    cor: Colors.orange.shade700,
+                  ),
         ),
       ],
-    );
-  }
-
-  Widget _buildEstatisticaCard(String rotulo, String valor, IconData icone, Color cor) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 6),
-        child: Column(
-          children: [
-            Icon(icone, color: cor, size: 22),
-            const SizedBox(height: 6),
-            Text(valor, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: cor)),
-            const SizedBox(height: 2),
-            Text(rotulo, style: const TextStyle(fontSize: 12, color: Colors.grey), textAlign: TextAlign.center),
-          ],
-        ),
-      ),
     );
   }
 
@@ -239,11 +216,11 @@ class SafraRelatorioWidget extends StatelessWidget {
           children: [
             Row(
               children: const [
-                Icon(Icons.payments_outlined, size: 18, color: Color(0xFF67835C)),
+                Icon(Icons.payments_outlined, size: 18, color: AppCores.verdePrimario),
                 SizedBox(width: 6),
                 Text(
                   'Resumo financeiro da safra',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF67835C)),
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppCores.verdePrimario),
                 ),
               ],
             ),
@@ -251,29 +228,29 @@ class SafraRelatorioWidget extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _buildEstatisticaCard(
-                    'Receita total',
-                    _formatarMoeda(receitaTotal),
-                    Icons.trending_up,
-                    Colors.green.shade700,
+                  child: CartaoIndicador(
+                    rotulo: 'Receita total',
+                    valor: _formatarMoeda(receitaTotal),
+                    icone: Icons.trending_up,
+                    cor: Colors.green.shade700,
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _buildEstatisticaCard(
-                    'Despesa total',
-                    _formatarMoeda(despesaTotal),
-                    Icons.trending_down,
-                    Colors.red.shade700,
+                  child: CartaoIndicador(
+                    rotulo: 'Despesa total',
+                    valor: _formatarMoeda(despesaTotal),
+                    icone: Icons.trending_down,
+                    cor: Colors.red.shade700,
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
-                  child: _buildEstatisticaCard(
-                    'Saldo líquido',
-                    _formatarMoeda(saldo),
-                    Icons.account_balance_wallet_outlined,
-                    saldo >= 0 ? const Color(0xFF67835C) : Colors.red.shade700,
+                  child: CartaoIndicador(
+                    rotulo: 'Saldo líquido',
+                    valor: _formatarMoeda(saldo),
+                    icone: Icons.account_balance_wallet_outlined,
+                    cor: saldo >= 0 ? AppCores.verdePrimario : Colors.red.shade700,
                   ),
                 ),
               ],
@@ -328,22 +305,14 @@ class SafraRelatorioWidget extends StatelessWidget {
   }
 
   Widget _buildGraficoPorTalhao(List<EventoAgricola> eventos) {
-    // A contagem é por id — é a única chave confiável. O nome só entra na
-    // hora de montar a legenda.
     final contagem = <int, int>{};
     for (final evento in eventos) {
       contagem[evento.idTalhao] = (contagem[evento.idTalhao] ?? 0) + 1;
     }
     if (contagem.isEmpty) return const SizedBox.shrink();
 
-    // Ordenar por id mantém a ordem das fatias estável entre rebuilds, e com
-    // ela o casamento de cada talhão com sua cor na paleta.
     final talhoesOrdenados = contagem.keys.toList()..sort();
 
-    // Soma em vez de sobrescrever: dois talhões distintos podem ter o mesmo
-    // `nomeExibicao`, e o `PieChartCard` é indexado por rótulo. Com o rótulo
-    // antigo, montado a partir do id, a colisão era impossível; com nome real
-    // ela passa a ser, e sobrescrever perderia a contagem de uma das fatias.
     final valoresPorNome = <String, int>{};
     for (final id in talhoesOrdenados) {
       final nome = nomeDoTalhao(id);
@@ -356,14 +325,14 @@ class SafraRelatorioWidget extends StatelessWidget {
       paleta: _paletaTalhoes,
     );
   }
-  
+
   String _formatarData(DateTime data) {
     return '${data.day.toString().padLeft(2, '0')}/${data.month.toString().padLeft(2, '0')}/${data.year}';
   }
 
   Widget _buildEventCard(EventoAgricola evento) {
     final isConcluido = evento.dataFim != null;
-    final dataInicioTexto = _formatarData(evento.dataInicio); 
+    final dataInicioTexto = _formatarData(evento.dataInicio);
     final dataFimTexto = evento.dataFim != null ? _formatarData(evento.dataFim!) : null;
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -378,9 +347,6 @@ class SafraRelatorioWidget extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    // `tituloExibicao` é um getter real (não-nulo) da
-                    // classe base `Evento`, sobrescrito por `TratoCultural`
-                    // — não precisa mais do cast dinâmico com fallback.
                     evento.tituloExibicao,
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
                   ),
@@ -410,60 +376,17 @@ class SafraRelatorioWidget extends StatelessWidget {
             ],
             if (evento.responsaveis.isNotEmpty) ...[
               const SizedBox(height: 6),
-              // `responsaveisTexto` já vem pronto de `Evento` (junta os
-              // nomes de exibição de cada `Pessoa`) — sem cast dinâmico.
               Text('Responsável: ${evento.responsaveisTexto}'),
             ],
-            
+
             if (evento is TratoCultural && evento.insumosUtilizados.isNotEmpty) ...[
               const SizedBox(height: 6),
               const Text('Insumos utilizados:', style: TextStyle(fontWeight: FontWeight.w600)),
-              // `InsumoUtilizado` (model/insumos/insumo_utilizado.dart) não
-              // tem um getter `textoQuantidade` — os campos reais são
-              // `descricao` e `qtdFormatada` (ou `descricaoComQuantidade`
-              // já pronto com os dois juntos).
               ...evento.insumosUtilizados.map(
                 (insumo) => Text('• ${insumo.descricaoComQuantidade}'),
               ),
             ],
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMessageCard(String message) {
-    return SizedBox(
-      width: double.infinity,
-      child: Card(
-        color: Colors.red.shade50,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Text(
-            message,
-            style: const TextStyle(color: Colors.red),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildEmptyReportState() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Center(
-          child: Column(
-            children: [
-              const Icon(Icons.description_outlined, size: 44, color: Color(0xFF8FA67E)),
-              const SizedBox(height: 12),
-              const Text(
-                'Nada registrado nessa Safra ainda, registre mais dados e os relatórios aparecerão por aqui!',
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
         ),
       ),
     );

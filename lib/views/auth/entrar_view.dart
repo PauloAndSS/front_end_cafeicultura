@@ -9,6 +9,8 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/text_button_widget.d
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:provider/provider.dart';
 import '../proprietario/cadastrar_dados_basicos_view.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 
 class EntrarView extends StatefulWidget {
   const EntrarView({super.key});
@@ -19,7 +21,7 @@ class EntrarView extends StatefulWidget {
 
 class _EntrarViewState extends State<EntrarView> {
   final _formKey = GlobalKey<FormState>();
-  final _viewModel = EntrarViewmodel(service: ServicesAuth());
+  final _viewModel = EntrarViewModel(service: ServicesAuth());
   final _usuarioController = TextEditingController();
   final _senhaController = TextEditingController();
 
@@ -36,7 +38,6 @@ class _EntrarViewState extends State<EntrarView> {
 
       final session = Provider.of<SessionViewModel>(context, listen: false);
 
-      // 👇 Removemos a busca do PropriedadesUsuarioViewModel daqui
       final sucesso = await _viewModel.fazerLogin(
         _usuarioController.text,
         _senhaController.text,
@@ -46,12 +47,7 @@ class _EntrarViewState extends State<EntrarView> {
       if (sucesso && mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_viewModel.mensagemErro ?? 'Erro ao fazer login.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        mostrarErro(context, _viewModel.mensagemErro ?? 'Erro ao fazer login.');
       }
     }
   }
@@ -59,7 +55,7 @@ class _EntrarViewState extends State<EntrarView> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF9FB896),
+      backgroundColor: AppCores.verdeAuth,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -144,7 +140,7 @@ class _EntrarViewState extends State<EntrarView> {
                               isBold: false,
                               isUnderlined: true,
                               onPressed:
-                                  _entrar, // TODO:  ao implementar esqueci a senha
+                                  _entrar,
                             ),
                             CustomTextButton(
                               text: 'Criar conta',

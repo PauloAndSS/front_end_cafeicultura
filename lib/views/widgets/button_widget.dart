@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
@@ -21,7 +22,7 @@ class CustomButton extends StatelessWidget {
       height: 56,
       child: ElevatedButton(
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? const Color(0xFF67835C),
+          backgroundColor: backgroundColor ?? AppCores.verdePrimario,
           foregroundColor: foregroundColor ?? Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),

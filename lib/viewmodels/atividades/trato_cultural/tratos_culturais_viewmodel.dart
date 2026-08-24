@@ -4,30 +4,19 @@ import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/ev
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/lista_atividades_paginada_viewmodel.dart';
 
-/// Listagem da aba de tratos: um status por vez, uma página por vez.
-///
-/// O laço que percorria todas as páginas saiu daqui. Ele existia porque a aba
-/// mostrava a propriedade inteira e filtrava por status na memória; agora o
-/// status é query param e a rolagem pede a próxima página quando chega ao fim.
 class TratosCulturaisViewModel
     extends ListaAtividadesDaPropriedadePaginadaViewModel<TratoCultural> {
   final _tratoService = ServicesTratoCultural();
 
   @override
-  String get erroInternoAoCarregar =>
-      'Ocorreu um erro interno ao carregar tratos culturais.';
-
-  @override
-  Future<ResultadoPaginadoDTO<TratoCultural>> buscarPagina(
+  Future<ResultadoPaginadoDTO<TratoCultural>> buscarPorStatus(
     int idPropriedade,
-    StatusEvento? status,
+    StatusEvento status,
     int pagina,
   ) {
-    // A aba não oferece o segmento "Todas", então `status` nunca chega nulo —
-    // é o que o `statusAtual` não-nulo desta variante garante.
     return _tratoService.buscarPorStatus(
       idPropriedade,
-      status: status!,
+      status: status,
       pagina: pagina,
     );
   }

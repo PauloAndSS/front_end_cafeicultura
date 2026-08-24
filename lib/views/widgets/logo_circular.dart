@@ -5,7 +5,7 @@ class LogoCircular extends StatelessWidget {
 
   const LogoCircular({
     super.key,
-    this.size = 130.0, // Tamanho base
+    this.size = 130.0,
   });
 
   @override

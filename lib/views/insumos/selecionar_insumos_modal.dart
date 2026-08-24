@@ -1,20 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo_utilizado.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/carregar_insumos_mixin.dart';
-import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/cadastrar_insumo_dialog.dart';
-import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/quantidade_insumo_dialog.dart';
+import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/insumos/carregar_insumos_mixin.dart';
+import 'package:frond_end_cafeicultura_mobile/views/insumos/cadastrar_insumo_dialog.dart';
+import 'package:frond_end_cafeicultura_mobile/views/insumos/quantidade_insumo_dialog.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/modal_selecao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 
-const _verdePrimario = Color(0xFF67835C);
-const _cinzaBorda = Color(0xFFE0E0E0);
-
-/// Abre a seleção de insumos utilizados numa atividade agrícola.
-///
-/// Trabalha com [InsumoUtilizado] na entrada e na saída — e não com ids soltos —
-/// porque a descrição e a medida precisam sobreviver ao PATCH, que devolve só
-/// mensagem de sucesso.
-///
-/// Devolve `null` se o usuário fechar sem confirmar.
 Future<List<InsumoUtilizado>?> mostrarSelecaoInsumos({
   required BuildContext context,
   required CarregarInsumosMixin viewModel,
@@ -55,8 +48,6 @@ class _SelecionarInsumosSheet extends StatefulWidget {
 class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
   final _buscaController = TextEditingController();
 
-  /// Chaveado pelo id do insumo: o mesmo insumo nunca entra duas vezes, e
-  /// remarcar substitui a quantidade em vez de duplicar a linha.
   final Map<int, InsumoUtilizado> _selecionados = {};
 
   String _termoBusca = '';
@@ -107,12 +98,9 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
 
     if (criado == null || !mounted) return;
 
-    // Quem acabou de cadastrar quer usar: já pede a quantidade.
     await _marcar(criado);
   }
 
-  /// Pede a quantidade e registra a seleção. Cancelar o diálogo deixa o insumo
-  /// desmarcado.
   Future<void> _marcar(Insumo insumo) async {
     final id = insumo.id;
     if (id == null) return;
@@ -127,9 +115,7 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
 
     setState(() {
       _selecionados[id] = InsumoUtilizado(
-        idInsumo: id,
-        descricao: insumo.descricao,
-        medida: insumo.medida,
+        insumo: insumo,
         qtdUsada: quantidade,
       );
     });
@@ -147,41 +133,19 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
         ),
         child: Column(
           children: [
-            _construirCabecalho(),
+            const CabecalhoModal(titulo: 'Insumos utilizados'),
             Expanded(
               child: ListenableBuilder(
                 listenable: widget.viewModel,
                 builder: (context, child) => _construirConteudo(),
               ),
             ),
-            _construirRodape(),
+            RodapeConfirmarModal(
+              quantidadeSelecionada: _selecionados.length,
+              aoConfirmar: () => Navigator.of(context).pop(_selecionados.values.toList()),
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _construirCabecalho() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
-      child: Row(
-        children: [
-          const Expanded(
-            child: Text(
-              'Insumos utilizados',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: _verdePrimario,
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.close),
-            onPressed: () => Navigator.of(context).pop(),
-            tooltip: 'Fechar sem alterar',
-          ),
-        ],
       ),
     );
   }
@@ -192,16 +156,12 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
     return Column(
       children: [
         _construirAcaoCadastrar(),
-        // Buscar num catálogo vazio é só ruído na tela.
-        if (temCatalogo) _construirCampoBusca(),
+        if (temCatalogo) CampoBuscaModal(controller: _buscaController, dica: 'Buscar por descrição'),
         Expanded(child: _construirCorpo()),
       ],
     );
   }
 
-  /// Fica fora do corpo, e não dentro do estado vazio, para o cadastro nunca
-  /// depender de o GET ter dado certo: com o catálogo indisponível, esta é a
-  /// única saída da tela.
   Widget _construirAcaoCadastrar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
@@ -213,11 +173,11 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: _verdePrimario),
+            border: Border.all(color: AppCores.verdePrimario),
           ),
           child: const Row(
             children: [
-              Icon(Icons.add_circle_outline, color: _verdePrimario),
+              Icon(Icons.add_circle_outline, color: AppCores.verdePrimario),
               SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -225,36 +185,11 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: _verdePrimario,
+                    color: AppCores.verdePrimario,
                   ),
                 ),
               ),
             ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _construirCampoBusca() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: TextField(
-        controller: _buscaController,
-        decoration: InputDecoration(
-          hintText: 'Buscar por descrição',
-          prefixIcon: const Icon(Icons.search),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 12,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: _cinzaBorda),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: _cinzaBorda),
           ),
         ),
       ),
@@ -266,12 +201,12 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
 
     if (vm.isCarregandoInsumos) {
       return const Center(
-        child: CircularProgressIndicator(color: _verdePrimario),
+        child: CircularProgressIndicator(color: AppCores.verdePrimario),
       );
     }
 
     if (vm.mensagemErroInsumos != null && vm.insumos.isEmpty) {
-      return _construirAviso(
+      return EstadoVazio(
         icone: Icons.cloud_off_outlined,
         mensagem:
             '${vm.mensagemErroInsumos!}\n\nVocê ainda pode cadastrar um insumo novo pelo botão acima.',
@@ -283,7 +218,7 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
     }
 
     if (vm.insumos.isEmpty) {
-      return _construirAviso(
+      return EstadoVazio(
         icone: Icons.inventory_2_outlined,
         mensagem:
             'Você ainda não tem insumos cadastrados.\nCadastre o primeiro para lançá-lo nesta atividade.',
@@ -297,7 +232,7 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
     final visiveis = _filtrar(vm.insumos);
 
     if (visiveis.isEmpty) {
-      return _construirAviso(
+      return EstadoVazio(
         icone: Icons.search_off,
         mensagem: 'Nenhum insumo encontrado com "$_termoBusca".',
         acao: CustomButton(
@@ -315,13 +250,10 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
         final id = insumo.id!;
         final selecionado = _selecionados[id];
 
-        // ListTile em vez de CheckboxListTile: tocar num item já marcado precisa
-        // reabrir a quantidade para edição, e não desmarcá-lo. Desmarcar é o
-        // toque no checkbox.
         return ListTile(
           leading: Checkbox(
             value: selecionado != null,
-            activeColor: _verdePrimario,
+            activeColor: AppCores.verdePrimario,
             onChanged: (marcado) {
               if (marcado == true) {
                 _marcar(insumo);
@@ -343,45 +275,6 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
           onTap: () => _marcar(insumo),
         );
       },
-    );
-  }
-
-  Widget _construirAviso({
-    required IconData icone,
-    required String mensagem,
-    Widget? acao,
-  }) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icone, size: 48, color: Colors.black26),
-            const SizedBox(height: 16),
-            Text(
-              mensagem,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15, color: Colors.black54),
-            ),
-            if (acao != null) ...[const SizedBox(height: 24), acao],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _construirRodape() {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: _cinzaBorda)),
-      ),
-      child: CustomButton(
-        text: 'Confirmar (${_selecionados.length})',
-        onPressed: () =>
-            Navigator.of(context).pop(_selecionados.values.toList()),
-      ),
     );
   }
 }

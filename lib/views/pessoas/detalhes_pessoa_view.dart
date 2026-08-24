@@ -13,6 +13,10 @@ import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/detalhes_pessoa_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/botao_excluir.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/sessao_em_breve_widget.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
 
 class DetalhesPessoaView extends StatefulWidget {
   final PapelPessoa papelPessoa;
@@ -30,7 +34,6 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
   @override
   void initState() {
     super.initState();
-    // 👇 BUSCA OS DADOS COMPLETOS DA API AO ABRIR A TELA
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final tipoPapel = PessoaFactory.obterTipoPapel(widget.papelPessoa);
       _viewModel.buscarPorId(widget.papelPessoa.id!, tipoPapel);
@@ -43,7 +46,6 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
     super.dispose();
   }
 
-  /// Chamado pelo [BotaoExcluir] depois que o usuário confirma no diálogo.
   Future<void> _excluir() async {
     final tipoPapel = PessoaFactory.obterTipoPapel(widget.papelPessoa);
     final sucesso = await _viewModel.excluir(widget.papelPessoa.id!, tipoPapel);
@@ -51,20 +53,10 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
     if (!mounted) return;
 
     if (sucesso) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Pessoa excluída com sucesso.'),
-          backgroundColor: Color(0xFF8FA67E),
-        ),
-      );
+      mostrarSucesso(context, 'Pessoa excluída com sucesso.');
       Navigator.pop(context, true);
     } else if (_viewModel.mensagemErro != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_viewModel.mensagemErro!),
-          backgroundColor: Colors.red,
-        ),
-      );
+      mostrarErro(context, _viewModel.mensagemErro!);
     }
   }
 
@@ -89,6 +81,7 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
               labelText: 'Novo Salário (R\$)',
               hintText: '0,00',
             ),
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (value) {
               if (value == null || value.trim().isEmpty)
                 return 'Informe o valor';
@@ -98,29 +91,17 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
             },
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              'Cancelar',
-              style: TextStyle(color: Colors.black54),
-            ),
-          ),
-          TextButton(
-            onPressed: () {
-              if (formKey.currentState!.validate()) {
-                Navigator.pop(context, true);
-              }
-            },
-            child: const Text(
-              'Salvar',
-              style: TextStyle(
-                color: Color(0xFF8FA67E),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
+        actions: acoesDeDialogo(
+          context: context,
+          rotuloConfirmar: 'Salvar',
+          corConfirmar: AppCores.verdeSecundario,
+          aoCancelar: () => Navigator.pop(context, false),
+          aoConfirmar: () {
+            if (formKey.currentState!.validate()) {
+              Navigator.pop(context, true);
+            }
+          },
+        ),
       ),
     );
 
@@ -137,21 +118,11 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
 
       if (sucesso && mounted) {
         _houveAlteracao = true;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Salário atualizado com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        mostrarSucesso(context, 'Salário atualizado com sucesso!');
         final tipoPapel = PessoaFactory.obterTipoPapel(widget.papelPessoa);
         await _viewModel.buscarPorId(funcionario.id!, tipoPapel);
       } else if (mounted && _viewModel.mensagemErro != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_viewModel.mensagemErro!),
-            backgroundColor: Colors.red,
-          ),
-        );
+        mostrarErro(context, _viewModel.mensagemErro!);
       }
     }
   }
@@ -206,11 +177,11 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
         Navigator.pop(context, _houveAlteracao);
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F5F5),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFFF5F5F5),
-          elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.black87),
+        backgroundColor: AppCores.fundo,
+        appBar: AppBarPadrao(
+          cor: AppCores.fundo,
+          corConteudo: Colors.black87,
+          elevacao: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.pop(context, _houveAlteracao),
@@ -221,7 +192,7 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
           builder: (context, child) {
             if (_viewModel.isLoading) {
               return const Center(
-                child: CircularProgressIndicator(color: Color(0xFF8FA67E)),
+                child: CircularProgressIndicator(color: AppCores.verdeSecundario),
               );
             }
 
@@ -330,7 +301,7 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
                                   icon: const Icon(
                                     Icons.edit,
                                     size: 22,
-                                    color: Color(0xFF8FA67E),
+                                    color: AppCores.verdeSecundario,
                                   ),
                                   padding: EdgeInsets.zero,
                                   constraints: const BoxConstraints(),

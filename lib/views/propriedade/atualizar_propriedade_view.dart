@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/model/tamanho.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/atualizar_propriedade_viewmodel.dart';
@@ -8,8 +9,12 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedad
 import 'package:frond_end_cafeicultura_mobile/views/widgets/botao_excluir.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/uf_dropdown.dart';
 import 'package:provider/provider.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_endereco.dart';
 
 class AtualizarPropriedadeView extends StatefulWidget {
   final int idPropriedade;
@@ -42,21 +47,21 @@ class _AtualizarPropriedadeViewState extends State<AtualizarPropriedadeView> {
 
   Future<void> _carregarDadosIniciais() async {
     await _viewModel.carregarPropriedade(widget.idPropriedade);
-    
+
     final prop = _viewModel.propriedade;
     if (prop != null) {
       _nomeController.text = prop.nome;
-      _tamanhoValorController.text = prop.tamanho.valor.toString();
-      
-      _tamanhoMedida = prop.tamanho.medida; 
-      
-      _cepController.text = prop.endereco.cep.formatado; 
-      
+      _tamanhoValorController.text = formatarDecimal(prop.tamanho.valor);
+
+      _tamanhoMedida = prop.tamanho.medida;
+
+      _cepController.text = prop.endereco.cep.formatado;
+
       _logradouroController.text = prop.endereco.logradouro;
       _bairroController.text = prop.endereco.bairro;
       _cidadeController.text = prop.endereco.cidade;
-      
-      _ufSelecionada = prop.endereco.uf; 
+
+      _ufSelecionada = prop.endereco.uf;
     }
   }
 
@@ -70,33 +75,21 @@ class _AtualizarPropriedadeViewState extends State<AtualizarPropriedadeView> {
     _cidadeController.dispose();
     super.dispose();
   }
-  
-  /// Chamado pelo [BotaoExcluir] depois que o usuário confirma no diálogo.
+
   Future<void> _excluirPropriedade() async {
     final sucesso = await _viewModel.excluir(widget.idPropriedade);
 
     if (!mounted) return;
 
     if (sucesso) {
-      // Atualiza a lista na tela anterior
       Provider.of<PropriedadesUsuarioViewModel>(context, listen: false)
           .carregarPropriedades();
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Propriedade excluída com sucesso!'),
-          backgroundColor: Color(0xFF8FA67E),
-        ),
-      );
+      mostrarSucesso(context, 'Propriedade excluída com sucesso!');
 
       Navigator.of(context).pop();
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_viewModel.mensagemErro ?? 'Erro ao excluir propriedade.'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      mostrarErro(context, _viewModel.mensagemErro ?? 'Erro ao excluir propriedade.');
     }
   }
 
@@ -104,9 +97,7 @@ class _AtualizarPropriedadeViewState extends State<AtualizarPropriedadeView> {
     final prop = _viewModel.propriedade;
     if (prop == null) return false;
 
-    // Converte o tamanho atual para número seguro
-    final tamanhoAtual = double.tryParse(_tamanhoValorController.text.replaceAll(',', '.')) ?? 0.0;
-    // Remove o traço do CEP digitado para comparar com os números limpos do banco
+    final tamanhoAtual = AppMasks.paraDouble(_tamanhoValorController.text) ?? 0.0;
     final cepAtualLimpo = _cepController.text.replaceAll(RegExp(r'[^0-9]'), '');
 
     if (_nomeController.text != prop.nome) return true;
@@ -118,49 +109,25 @@ class _AtualizarPropriedadeViewState extends State<AtualizarPropriedadeView> {
     if (_cidadeController.text != prop.endereco.cidade) return true;
     if (_ufSelecionada != prop.endereco.uf) return true;
 
-    return false; // Retorna falso se tudo estiver exatamente igual ao banco
+    return false;
   }
 
-  // 👇 NOVA FUNÇÃO: O Diálogo de confirmação de saída
-  Future<bool?> _mostrarDialogoConfirmacao() {
-    return showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Descartar alterações?'),
-          content: const Text(
-            'Você fez modificações nos dados. Se sair agora, todas as alterações não salvas serão perdidas.',
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
-                'Sair',
-                style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
-              ),
-            ),
-          ],
-        );
-      },
+  Future<bool> _mostrarDialogoConfirmacao() {
+    return confirmarDescarte(
+      context,
+      mensagem:
+          'Você fez modificações nos dados. Se sair agora, todas as alterações não salvas serão perdidas.',
     );
   }
-
   void _salvarAlteracoes() async {
-    if (_formKey.currentState!.validate() && _ufSelecionada != null) {
+    if (_formKey.currentState!.validate()) {
       FocusScope.of(context).unfocus();
 
       final sucesso = await _viewModel.atualizarPropriedadeCompleta(
         id: widget.idPropriedade,
         nome: _nomeController.text,
         tamanho: Tamanho(
-          valor: double.tryParse(_tamanhoValorController.text.replaceAll(',', '.')) ?? 0.0,
+          valor: AppMasks.paraDouble(_tamanhoValorController.text) ?? 0.0,
           medida: _tamanhoMedida,
         ),
         endereco: Endereco(
@@ -177,56 +144,38 @@ class _AtualizarPropriedadeViewState extends State<AtualizarPropriedadeView> {
         Provider.of<PropriedadesUsuarioViewModel>(context, listen: false)
             .carregarPropriedades();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Propriedade atualizada com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        mostrarSucesso(context, 'Propriedade atualizada com sucesso!');
         Navigator.of(context).pop();
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_viewModel.mensagemErro ?? 'Erro ao atualizar propriedade.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        mostrarErro(context, _viewModel.mensagemErro ?? 'Erro ao atualizar propriedade.');
       }
-    } else if (_ufSelecionada == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Selecione o Estado (UF).'), backgroundColor: Colors.red),
-      );
     }
   }
 
 @override
   Widget build(BuildContext context) {
-    // 👇 ADICIONADO: PopScope envolvendo toda a tela
     return PopScope(
-      canPop: false, 
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
 
-        // Verifica se teve mudança
         if (_temAlteracoes()) {
           final querSair = await _mostrarDialogoConfirmacao();
           if (querSair == true && context.mounted) {
             Navigator.of(context).pop();
           }
         } else {
-          // Se não mudou nada, apenas volta sem incomodar o usuário
           if (context.mounted) {
             Navigator.of(context).pop();
           }
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF9FB896),
-        appBar: AppBar(
-          title: const Text('Editar Propriedade', style: TextStyle(color: Colors.white)),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.white),
+        backgroundColor: AppCores.verdeAuth,
+        appBar: const AppBarPadrao(
+          titulo: 'Editar Propriedade',
+          cor: Colors.transparent,
+          elevacao: 0,
         ),
         body: SafeArea(
           child: Center(
@@ -265,16 +214,16 @@ class _AtualizarPropriedadeViewState extends State<AtualizarPropriedadeView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Dados Gerais', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF67835C))),
+            const Text('Dados Gerais', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppCores.verdePrimario)),
             const SizedBox(height: 16),
-            
+
             CustomTextField(
-              label: 'Nome da Propriedade', 
-              controller: _nomeController, 
+              label: 'Nome da Propriedade',
+              controller: _nomeController,
               validator: Validator.validarNome
             ),
             const SizedBox(height: 16),
-            
+
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -284,8 +233,8 @@ class _AtualizarPropriedadeViewState extends State<AtualizarPropriedadeView> {
                     label: 'Tamanho',
                     controller: _tamanhoValorController,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [AppMasks.inteiroMilhar],
-                    validator: (value) => value == null || value.isEmpty ? 'Obrigatório' : null,
+                    inputFormatters: [AppMasks.decimal],
+                    validator: Validator.obrigatorio,
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -308,7 +257,7 @@ class _AtualizarPropriedadeViewState extends State<AtualizarPropriedadeView> {
                         items: Medida.values.map((Medida medida) {
                           return DropdownMenuItem<Medida>(
                             value: medida,
-                            child: Text(medida.name), 
+                            child: Text(medida.name),
                           );
                         }).toList(),
                         onChanged: (Medida? novaMedida) {
@@ -322,60 +271,26 @@ class _AtualizarPropriedadeViewState extends State<AtualizarPropriedadeView> {
                 ),
               ],
             ),
-            
+
             const Padding(padding: EdgeInsets.symmetric(vertical: 24.0), child: Divider()),
-            
-            const Text('Endereço', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF67835C))),
+
+            const Text('Endereço', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: AppCores.verdePrimario)),
             const SizedBox(height: 16),
-            
-            CustomTextField(
-              label: 'CEP',
-              controller: _cepController,
-              keyboardType: TextInputType.number,
-              inputFormatters: [AppMasks.cep],
-              validator: Validator.validarCEP,
+
+            BlocoEndereco(
+              controllerCep: _cepController,
+              controllerLogradouro: _logradouroController,
+              controllerBairro: _bairroController,
+              controllerCidade: _cidadeController,
+              uf: _ufSelecionada,
+              aoSelecionarUf: (novo) => setState(() => _ufSelecionada = novo),
+              dicaLogradouro: 'Rodovia, estrada, número, etc.',
+              dicaBairro: 'Digite o bairro ou localidade',
             ),
             const SizedBox(height: 16),
-            
-            CustomTextField(
-              label: 'Logradouro (Rua, Av.)',
-              controller: _logradouroController,
-              validator: (value) => value == null || value.isEmpty ? 'Obrigatório' : null,
-            ),
-            const SizedBox(height: 16),
-            
-            CustomTextField(
-              label: 'Bairro',
-              controller: _bairroController,
-              validator: (value) => value == null || value.isEmpty ? 'Obrigatório' : null,
-            ),
-            const SizedBox(height: 16),
-            
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: CustomTextField(
-                    label: 'Cidade',
-                    controller: _cidadeController,
-                    validator: (value) => value == null || value.isEmpty ? 'Obrigatória' : null,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 1,
-                  child: UfDropdown(
-                    value: _ufSelecionada,
-                    onChanged: (novoValor) => setState(() => _ufSelecionada = novoValor),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 32),
             CustomButton(
               text: _viewModel.isLoading ? "Salvando..." : "Salvar Alterações",
-              onPressed: _viewModel.isLoading ? null : _salvarAlteracoes, 
+              onPressed: _viewModel.isLoading ? null : _salvarAlteracoes,
             ),
             BotaoExcluir(
               titulo: 'Excluir Propriedade?',

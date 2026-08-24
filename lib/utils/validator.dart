@@ -3,7 +3,13 @@ import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
 
 class Validator {
-  
+  static String? obrigatorio(String? value, [String? mensagem]) {
+    if (value == null || value.trim().isEmpty) {
+      return mensagem ?? 'Obrigatório';
+    }
+    return null;
+  }
+
     static String? validarEmail(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'O e-mail é obrigatório';

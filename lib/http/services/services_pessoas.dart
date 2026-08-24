@@ -1,8 +1,8 @@
 import 'dart:convert';
 
 import 'package:frond_end_cafeicultura_mobile/http/dtos/paginacao_dto.dart';
-import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/cliente.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/fornecedor.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/funcionario.dart';
@@ -12,449 +12,162 @@ import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pe
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/prestador.dart';
 import 'package:http/http.dart' as http;
 
+
 class ServicesPessoa extends BaseService {
-  late final Uri url = Uri.parse('$baseUrl/pessoas');
+  @override
+  String get recurso => 'pessoas';
 
   Future<ResultadoPaginadoDTO<PapelPessoa>> buscarPorProprietario({
-  int pagina = 1,
-  int limite = 20,
-}) async {
-    late final Uri url = Uri.parse('$baseUrl/pessoas?pagina=$pagina&limite=$limite');
-    try {
-      final response = await http.get(url, headers: defaultHeaders);
-      if (response.statusCode == 200) {
-      final Map<String, dynamic> jsonResponse = extrairDadosPaginados(response.bodyBytes);
-      return ResultadoPaginadoDTO<PapelPessoa>.fromJson(
-          jsonResponse,
-          (jsonItem) => PapelPessoaFactory.fromJson(jsonItem),
-        );
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao buscar dados.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao buscar dados das pessoas. Tente novamente mais tarde.',
-      );
-    }
+    int pagina = 1,
+    int limite = 20,
+  }) {
+    return executarRequisicao(
+      enviar: () => http.get(
+        rota('', {'pagina': '$pagina', 'limite': '$limite'}),
+        headers: defaultHeaders,
+      ),
+      aoSucesso: (resposta) => ResultadoPaginadoDTO<PapelPessoa>.fromJson(
+        extrairDadosPaginados(resposta.bodyBytes),
+        PapelPessoaFactory.fromJson,
+      ),
+      // Proprietário sem nenhuma pessoa cadastrada: 404 com corpo JSON.
+      // `totalPaginas` igual à página pedida encerra a rolagem infinita de
+      // quem consome (`temMaisResponsaveis`).
+      aoListaVazia: () => ResultadoPaginadoDTO<PapelPessoa>(
+        data: const [],
+        total: 0,
+        pagina: pagina,
+        totalPaginas: pagina,
+      ),
+      erroMsg: 'Erro ao buscar dados.',
+      acao: 'buscar dados das pessoas',
+    );
   }
 }
 
-class ServicesFornecedor extends BaseService {
-  late final Uri url = Uri.parse('$baseUrl/fornecedores');
+abstract class ServicePapelPessoa<T extends PapelPessoa> extends BaseService {
+  
+  T Function(Map<String, dynamic>) get montar;
 
-  Future<bool> cadastrar(Fornecedor fornecedor) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$url'),
+  String get rotulo;
+
+  String? get conflitoDeCadastro => null;
+
+  String get impedimentoDeExclusao =>
+      '$_rotuloCapitalizado possui atividades e/ou despesas cadastradas '
+      'e não pode ser excluído.';
+
+  Future<bool> cadastrar(T papel) {
+    return executarRequisicao(
+      enviar: () => http.post(
+        url,
         headers: defaultHeaders,
-        body: jsonEncode(fornecedor.toJson()),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao cadastrar fornecedor.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao cadastrar fornecedor. Tente novamente mais tarde.',
-      );
-    }
+        body: jsonEncode(papel.toJson()),
+      ),
+      aoSucesso: (_) => true,
+      errosPorStatus: {409: ?conflitoDeCadastro},
+      erroMsg: 'Erro ao cadastrar $rotulo.',
+      acao: 'cadastrar $rotulo',
+    );
   }
 
-  Future<Fornecedor> buscarPorId(int id) async {
-    final urlGet = Uri.parse('$url/$id/');
-    try {
-      final response = await http.get(urlGet, headers: defaultHeaders);
-      if (response.statusCode == 200) {
-        final dadosFornecedor = extrairDadosResposta(response.bodyBytes);
-        return Fornecedor.fromJson(dadosFornecedor);
-      } else if (response.statusCode == 404) {
-        throw ApiException('Fornecedor não encontrado.');
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao buscar dados do fornecedor.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao buscar fornecedor. Tente novamente mais tarde.',
-      );
-    }
+  Future<T> buscarPorId(int id) {
+    return executarRequisicao(
+      enviar: () => http.get(rota('$id'), headers: defaultHeaders),
+      aoSucesso: (resposta) => extrairObjeto(resposta.bodyBytes, montar),
+      errosPorStatus: {404: '$_rotuloCapitalizado não encontrado.'},
+      erroMsg: 'Erro ao buscar dados do $rotulo.',
+      acao: 'buscar $rotulo',
+    );
   }
 
-  Future<bool> excluir(int id) async {
-    final urlDelete = Uri.parse('$url/$id/');
-    try {
-      final response = await http.delete(urlDelete, headers: defaultHeaders);
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        return true;
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao excluir fornecedor.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao excluir fornecedor. Tente novamente mais tarde.',
-      );
-    }
+  Future<bool> excluir(int id) {
+    return executarRequisicao(
+      enviar: () => http.delete(rota('$id'), headers: defaultHeaders),
+      aoSucesso: (_) => true,
+      errosPorStatus: {403: impedimentoDeExclusao},
+      erroMsg: 'Erro ao excluir $rotulo.',
+      acao: 'excluir $rotulo',
+    );
   }
+
+  String get _rotuloCapitalizado => capitalizar(rotulo);
 }
 
-class ServicesFuncionario extends BaseService {
-  late final Uri url = Uri.parse('$baseUrl/funcionarios');
+class ServicesFornecedor extends ServicePapelPessoa<Fornecedor> {
+  @override
+  String get recurso => 'fornecedores';
 
-  Future<bool> cadastrar(Funcionario funcionario) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$url'),
-        headers: defaultHeaders,
-        body: jsonEncode(funcionario.toJson()),
-      );
+  @override
+  String get rotulo => 'fornecedor';
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else if (response.statusCode == 409) {
-        throw ApiException('CPF já cadastrado no sistema.');
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao cadastrar funcionário.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao cadastrar funcionário. Tente novamente mais tarde.',
-      );
-    }
-  }
+  @override
+  Fornecedor Function(Map<String, dynamic>) get montar => Fornecedor.fromJson;
+}
 
-  Future<Funcionario> buscarPorId(int id) async {
-    final urlGet = Uri.parse('$url/$id/');
-    try {
-      final response = await http.get(urlGet, headers: defaultHeaders);
-      if (response.statusCode == 200) {
-        final dadosFuncionario = extrairDadosResposta(response.bodyBytes);
-        return Funcionario.fromJson(dadosFuncionario);
-      } else if (response.statusCode == 404) {
-        throw ApiException('Funcionário não encontrado.');
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao buscar dados do funcionário.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao buscar funcionário. Tente novamente mais tarde.',
-      );
-    }
-  }
+class ServicesFuncionario extends ServicePapelPessoa<Funcionario> {
+  @override
+  String get recurso => 'funcionarios';
 
-  Future<bool> excluir(int id) async {
-    final urlDelete = Uri.parse('$url/$id/');
-    try {
-      final response = await http.delete(urlDelete, headers: defaultHeaders);
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        return true;
-      } else if(response.statusCode == 403){
-        throw ApiException('Funcionario possui atividades e/ou despesas cadastradas e não pode ser excluído.');
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao excluir funcionário.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao excluir funcionário. Tente novamente mais tarde.',
-      );
-    }
-  }
+  @override
+  String get rotulo => 'funcionário';
 
-  Future<bool> atualizarSalario(int id, double salario) async {
-    final urlPut = Uri.parse('$url/$id/salario');
-    try {
-      final response = await http.put(
-        urlPut,
+  @override
+  Funcionario Function(Map<String, dynamic>) get montar => Funcionario.fromJson;
+  @override
+  String get conflitoDeCadastro => 'CPF já cadastrado no sistema.';
+
+
+  Future<bool> atualizarSalario(int id, double salario) {
+    return executarRequisicao(
+      enviar: () => http.put(
+        rota('$id/salario'),
         headers: defaultHeaders,
         body: jsonEncode({'salario': salario}),
-      );
-
-      if (response.statusCode == 200) {
-        return true;
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao atualizar salário do funcionário.',
-        );
-      }
-  } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao atualizar salário do funcionário. Tente novamente mais tarde.',
-      );
-    }
+      ),
+      aoSucesso: (_) => true,
+      erroMsg: 'Erro ao atualizar salário do funcionário.',
+      acao: 'atualizar salário do funcionário',
+    );
   }
 }
 
-// ==========================================
-// SERVIÇO DE CLIENTE
-// ==========================================
-class ServicesCliente extends BaseService {
-  late final Uri url = Uri.parse('$baseUrl/clientes');
+class ServicesCliente extends ServicePapelPessoa<Cliente> {
+  @override
+  String get recurso => 'clientes';
 
-  Future<bool> cadastrar(Cliente cliente) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$url'),
-        headers: defaultHeaders,
-        body: jsonEncode(cliente.toJson()),
-      );
+  @override
+  String get rotulo => 'cliente';
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao cadastrar cliente.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao cadastrar cliente. Tente novamente mais tarde.',
-      );
-    }
-  }
+  @override
+  Cliente Function(Map<String, dynamic>) get montar => Cliente.fromJson;
 
-  Future<Cliente> buscarPorId(int id) async {
-    final urlGet = Uri.parse('$url/$id/');
-    try {
-      final response = await http.get(urlGet, headers: defaultHeaders);
-      if (response.statusCode == 200) {
-        final dadosCliente = extrairDadosResposta(response.bodyBytes);
-        return Cliente.fromJson(dadosCliente);
-      } else if (response.statusCode == 404) {
-        throw ApiException('Cliente não encontrado.');
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao buscar dados do cliente.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao buscar cliente. Tente novamente mais tarde.',
-      );
-    }
-  }
-
-  Future<bool> excluir(int id) async {
-    final urlDelete = Uri.parse('$url/$id/');
-    try {
-      final response = await http.delete(urlDelete, headers: defaultHeaders);
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        return true;
-      } else if(response.statusCode == 403) {
-        throw ApiException('Cliente possui atividades e/ou despesas cadastradas e não pode ser excluído.');
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao excluir cliente.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao excluir cliente. Tente novamente mais tarde.',
-      );
-    }
-  }
 }
 
-// ==========================================
-// SERVIÇO DE MEEIRO
-// ==========================================
-class ServicesMeeiro extends BaseService {
-  late final Uri url = Uri.parse('$baseUrl/meeiros');
+class ServicesMeeiro extends ServicePapelPessoa<Meeiro> {
+  @override
+  String get recurso => 'meeiros';
 
-  Future<bool> cadastrar(Meeiro meeiro) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$url'),
-        headers: defaultHeaders,
-        body: jsonEncode(meeiro.toJson()),
-      );
+  @override
+  String get rotulo => 'meeiro';
 
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else if (response.statusCode == 409){
-        throw ApiException('CPF já cadastrado no sistema.');
-      }else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao cadastrar Meeiro.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao cadastrar Meeiro. Tente novamente mais tarde.',
-      );
-    }
-  }
+  @override
+  Meeiro Function(Map<String, dynamic>) get montar => Meeiro.fromJson;
 
-  Future<Meeiro> buscarPorId(int id) async {
-    final urlGet = Uri.parse('$url/$id/');
-    try {
-      final response = await http.get(urlGet, headers: defaultHeaders);
-      if (response.statusCode == 200) {
-        final dadosMeeiro = extrairDadosResposta(response.bodyBytes);
-        return Meeiro.fromJson(dadosMeeiro);
-      } else if (response.statusCode == 404) {
-        throw ApiException('Meeiro não encontrado.');
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao buscar dados do meeiro.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao buscar meeiro. Tente novamente mais tarde.',
-      );
-    }
-  }
+  @override
+  String get conflitoDeCadastro => 'CPF já cadastrado no sistema.';
 
-  Future<bool> excluir(int id) async {
-    final urlDelete = Uri.parse('$url/$id/');
-    try {
-      final response = await http.delete(urlDelete, headers: defaultHeaders);
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        return true;
-      } else if(response.statusCode == 403){
-        throw ApiException('Meeiro possui atividades e/ou despesas cadastradas e não pode ser excluído.');
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao excluir meeiro.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao excluir meeiro. Tente novamente mais tarde.',
-      );
-    }
-  }
 }
 
-// ==========================================
-// SERVIÇO DE PRESTADOR DE SERVIÇO
-// ==========================================
-class ServicesPrestadorDeServico extends BaseService {
-  late final Uri url = Uri.parse('$baseUrl/prestadores');
+class ServicesPrestadorDeServico extends ServicePapelPessoa<PrestadorDeServico> {
+  @override
+  String get recurso => 'prestadores';
 
-  Future<bool> cadastrar(PrestadorDeServico prestador) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$url'),
-        headers: defaultHeaders,
-        body: jsonEncode(prestador.toJson()),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao cadastrar prestador de serviço.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao cadastrar prestador de serviço. Tente novamente mais tarde.',
-      );
-    }
-  }
+  @override
+  String get rotulo => 'prestador de serviço';
 
-  Future<PrestadorDeServico> buscarPorId(int id) async {
-    final urlGet = Uri.parse('$url/$id/');
-    try {
-      final response = await http.get(urlGet, headers: defaultHeaders);
-      if (response.statusCode == 200) {
-        final dadosPrestador = extrairDadosResposta(response.bodyBytes);
-        return PrestadorDeServico.fromJson(dadosPrestador);
-      } else if (response.statusCode == 404) {
-        throw ApiException('Prestador de serviço não encontrado.');
-      } else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao buscar dados do prestador de serviço.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao buscar prestador de serviço. Tente novamente mais tarde.',
-      );
-    }
-  }
+  @override
+  PrestadorDeServico Function(Map<String, dynamic>) get montar =>
+      PrestadorDeServico.fromJson;
 
-  Future<bool> excluir(int id) async {
-    final urlDelete = Uri.parse('$url/$id/');
-    try {
-      final response = await http.delete(urlDelete, headers: defaultHeaders);
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        return true;
-      } else if(response.statusCode == 403){
-        throw ApiException('Prestador de serviço possui atividades e/ou despesas cadastradas e não pode ser excluído.');
-      }else {
-        tratarErroRequisicao(
-          response.bodyBytes,
-          fallbackMsg: 'Erro ao excluir Prestador de Serviço.',
-        );
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw ApiException(
-        'Falha na comunicação ao excluir Prestador de Serviço. Tente novamente mais tarde.',
-      );
-    }
-  }
 }

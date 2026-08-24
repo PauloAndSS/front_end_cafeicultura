@@ -1,77 +1,53 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/model/eventos/dados_formulario_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/base/dados_formulario_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
+import 'package:frond_end_cafeicultura_mobile/model/periodo.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
+import 'package:frond_end_cafeicultura_mobile/model/talhao.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/formatadores.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/cadastrar_atividade_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/corpo_com_estado.dart';
-import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/selecionar_responsaveis_modal.dart';
-import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_data_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/corpo_com_estado.dart';
+import 'package:frond_end_cafeicultura_mobile/views/pessoas/selecionar_responsaveis_modal.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_data.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_multiplo_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:provider/provider.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_de_data.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
 
-const _verdePrimario = Color(0xFF67835C);
-const _verdeSecundario = Color(0xFF8FA67E);
-const _cinzaBorda = Color(0xFFE0E0E0);
-const _vermelhoErro = Color(0xFFD32F2F);
-
-/// Formulário de cadastro de uma atividade agrícola.
-///
-/// Talhão, datas, descrição e responsáveis são iguais em toda atividade; o que
-/// muda entra pelos slots de campo específico — [construirCamposEspecificos]
-/// logo abaixo do talhão e [construirCamposFinais] depois dos responsáveis.
-///
-/// [construirCamposEspecificos] é um **builder**, não um `Widget` pronto: o
-/// `ListenableBuilder` do ViewModel vive aqui dentro, então um widget montado
-/// pela tela concreta congelaria no estado do ViewModel naquele frame — na
-/// prática, um dropdown de catálogo eternamente vazio, porque a lista só chega
-/// depois do `await`.
 class FormularioAtividadeView extends StatefulWidget {
   final CadastrarAtividadeViewModel viewModel;
 
-  /// Dia escolhido no calendário, quando o cadastro veio de lá: entra no campo
-  /// de data de início já preenchido, e continua editável.
   final DateTime? dataInicial;
 
   final String titulo;
   final String rotuloBotaoSalvar;
   final String mensagemSucesso;
 
-  /// 'Data de início do trato cultural' — cabeçalho do calendário.
   final String ajudaDataInicio;
   final String ajudaDataFim;
 
-  /// 'Trato em andamento' — placeholder do campo de data de término.
   final String dicaDataFim;
 
-  /// Frase do estado vazio quando a propriedade não tem talhão ativo.
   final String mensagemSemTalhoes;
 
-  /// Frase do estado vazio quando a propriedade não tem safra aberta.
-  ///
-  /// Bloquear é mais honesto do que deixar preencher: sem safra ativa o
-  /// lançamento não tem onde entrar, e descobrir isso depois de escolher
-  /// talhão, data, tipo e insumos é o pior momento possível.
   final String mensagemSemSafras;
 
-  /// Campos do tipo concreto, logo abaixo do talhão.
+  final String mensagemSemJanela;
+
   final WidgetBuilder? construirCamposEspecificos;
 
-  /// Campos do tipo concreto que ficam no fim do formulário, depois dos
-  /// responsáveis — os insumos do trato cultural, por exemplo.
   final WidgetBuilder? construirCamposFinais;
 
-  /// Validação do que não é `FormField` — os `validator` do [Form] já rodam
-  /// sozinhos. Devolver `false` cancela o salvamento.
   final bool Function()? validarCamposEspecificos;
 
-  /// Entra na confirmação de saída: sem isto, sair com apenas o campo
-  /// específico preenchido não pediria confirmação.
   final bool camposEspecificosPreenchidos;
 
   final Future<bool> Function(DadosFormularioAtividade dados) aoSalvar;
@@ -87,6 +63,7 @@ class FormularioAtividadeView extends StatefulWidget {
     required this.dicaDataFim,
     required this.mensagemSemTalhoes,
     required this.mensagemSemSafras,
+    required this.mensagemSemJanela,
     required this.aoSalvar,
     this.dataInicial,
     this.construirCamposEspecificos,
@@ -107,26 +84,23 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
   final _dataInicioController = TextEditingController();
   final _dataFimController = TextEditingController();
 
-  int? _idTalhaoSelecionado;
+  Talhao? _talhaoSelecionado;
 
-  /// Só tem valor quando a propriedade tem mais de uma safra aberta: com uma
-  /// só não há dropdown, e [_resolverSafra] a devolve sem passar por aqui.
   Safra? _safraSelecionada;
 
   DateTime? _dataInicio;
   DateTime? _dataFim;
 
+  List<Periodo> _janelas = const [];
+
+  bool _conferiuDataInicial = false;
+
   List<Pessoa> _responsaveisSelecionados = [];
 
-  /// Libera o `pop` depois de salvar: sem isto o usuário confirmaria um
-  /// "descartar cadastro?" logo após o cadastro ter dado certo.
   bool _salvou = false;
 
   CadastrarAtividadeViewModel get _viewModel => widget.viewModel;
 
-  /// Espelha se a descrição tem texto. Sem isto o `canPop` do [PopScope], que
-  /// é calculado no `build`, não enxergaria a digitação: sair com só a
-  /// descrição preenchida descartaria o formulário sem avisar.
   bool _descricaoPreenchida = false;
 
   @override
@@ -147,7 +121,6 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     });
   }
 
-  /// Só reconstrói na transição vazio ↔ preenchido, não a cada tecla.
   void _aoDigitarDescricao() {
     final preenchida = _descricaoController.text.trim().isNotEmpty;
 
@@ -165,30 +138,14 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     super.dispose();
   }
 
-  /// A data compara com [FormularioAtividadeView.dataInicial], e não com nulo:
-  /// o formulário aberto pelo calendário já nasce com ela preenchida, e voltar
-  /// sem ter tocado em nada pediria confirmação de descarte à toa.
   bool get _temAlteracoes =>
-      _idTalhaoSelecionado != null ||
+      _talhaoSelecionado != null ||
       _safraSelecionada != null ||
       _dataInicio != widget.dataInicial ||
       _descricaoPreenchida ||
       _responsaveisSelecionados.isNotEmpty ||
       widget.camposEspecificosPreenchidos;
 
-  void _mostrarAviso(String mensagem) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensagem), backgroundColor: _vermelhoErro),
-    );
-  }
-
-  /// Recarrega as duas fontes do formulário: talhões e catálogos pelo
-  /// ViewModel da tela, safras pelo ViewModel global.
-  ///
-  /// A safra vai com `forcarAtualizacao` de propósito. O cache de sessão do
-  /// `SafraViewModel` devolveria a mesma lista de antes, e o usuário que
-  /// acabou de abrir uma safra em outra aba continuaria vendo o estado vazio —
-  /// justamente na tela em que este botão é a única saída.
   void _recarregarDados() {
     final propriedadesViewModel = context.read<PropriedadesUsuarioViewModel>();
 
@@ -203,67 +160,129 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
         );
   }
 
-  /// A safra em que o lançamento vai cair, ou `null` se ainda indefinida.
-  ///
-  /// Com uma ativa só não há o que perguntar. Com duas ou mais vale a escolha
-  /// do usuário — desde que ela ainda esteja na lista: uma recarga pode ter
-  /// encerrado a safra escolhida, e continuar apontando para ela gravaria em
-  /// safra fechada, que é o caso que este seletor existe para impedir.
-  Safra? _resolverSafra(List<Safra> ativas) {
-    if (ativas.length == 1) return ativas.first;
+  List<Talhao> _talhoesDisponiveis() =>
+      _dataInicio == null ? const [] : _viewModel.talhoesAbertosEm(_dataInicio!);
 
-    return ativas.contains(_safraSelecionada) ? _safraSelecionada : null;
+  List<Safra> _safrasDisponiveis(SafraViewModel safraViewModel) =>
+      _dataInicio == null
+          ? const []
+          : safraViewModel.safrasAbertasEm(_dataInicio!);
+
+  Talhao? _resolverTalhao(List<Talhao> disponiveis) {
+    if (disponiveis.length == 1) return disponiveis.first;
+
+    final escolhido = _talhaoSelecionado;
+
+    if (escolhido == null) return null;
+
+    for (final talhao in disponiveis) {
+      if (talhao.id == escolhido.id) return talhao;
+    }
+
+    return null;
   }
 
-  /// Data de término só existe em lançamento retroativo: o que ainda vai
-  /// acontecer não tem como já ter terminado. Início hoje entra aqui — a
-  /// atividade de um dia só, feita e fechada no mesmo dia.
+  Talhao? _talhaoDoLancamento() => _resolverTalhao(_talhoesDisponiveis());
+
+  Safra? _resolverSafra(List<Safra> disponiveis) {
+    if (disponiveis.length == 1) return disponiveis.first;
+
+    return disponiveis.contains(_safraSelecionada) ? _safraSelecionada : null;
+  }
+
+  Safra? _safraDoLancamento() =>
+      _resolverSafra(_safrasDisponiveis(context.read<SafraViewModel>()));
+
   bool get _aceitaDataFim => _dataInicio != null && !ehFutura(_dataInicio!);
 
+  DateTime? _fimDoEscopo(Talhao? talhao, Safra? safra) =>
+      menorData(talhao?.dataFim, safra?.dataFim);
+
+  bool _dataFimObrigatoria(Talhao? talhao, Safra? safra) =>
+      _fimDoEscopo(talhao, safra) != null;
+
+  DateTime _tetoDataFim(Talhao? talhao, Safra? safra) =>
+      menorData(hoje(), _fimDoEscopo(talhao, safra)) ?? hoje();
+
   Future<void> _selecionarDataInicio() async {
-    final escolhida = await selecionarDataAtividade(
+    if (_janelas.isEmpty) return;
+
+    final escolhida = await selecionarData(
       context: context,
       ajuda: widget.ajudaDataInicio,
-      inicial: _dataInicio,
-      maxima: limiteAgendamento,
+      inicial: _diaValidoMaisProximo(_dataInicio ?? hoje()),
+      minima: _primeiroDiaLancavel,
+      maxima: menorData(limiteAgendamento, _ultimoDiaLancavel),
+      diaSelecionavel: _aceitaDia,
     );
 
-    if (escolhida == null) return;
+    if (escolhida == null || !mounted) return;
 
     setState(() {
       _dataInicio = escolhida;
       _dataInicioController.text = formatarDataBr(escolhida);
 
-      // Um término anterior ao novo início deixaria de fazer sentido, e um
-      // início no futuro faz o campo de término sumir — em qualquer dos dois
-      // casos o que já estava escolhido precisa cair junto.
-      if (_dataFim != null && (_dataFim!.isBefore(escolhida) || !_aceitaDataFim)) {
-        _limparDataFim();
-      }
+      _descartarEscopoForaDaData(escolhida);
+      _ajustarDataFimAoEscopo();
     });
   }
 
-  /// Só chamado de dentro de um `setState` ou de um `onPressed` que já
-  /// reconstrói — o campo em si é `readOnly`, quem guarda o valor é [_dataFim].
+  void _descartarEscopoForaDaData(DateTime dia) {
+    if (_talhaoSelecionado != null && !_talhaoSelecionado!.periodo.contem(dia)) {
+      _talhaoSelecionado = null;
+    }
+
+    if (_safraSelecionada != null &&
+        !(_safraSelecionada!.periodo?.contem(dia) ?? false)) {
+      _safraSelecionada = null;
+    }
+  }
+
   void _limparDataFim() {
     _dataFim = null;
     _dataFimController.clear();
   }
 
+  void _ajustarDataFimAoEscopo() {
+    if (_dataFim == null) return;
+
+    final teto = _tetoDataFim(_talhaoDoLancamento(), _safraDoLancamento());
+
+    if (!_aceitaDataFim ||
+        _dataFim!.isBefore(_dataInicio!) ||
+        _dataFim!.isAfter(teto)) {
+      _limparDataFim();
+    }
+  }
+
   Future<void> _selecionarDataFim() async {
-    // O campo não é montado sem data de início, então não há guarda a fazer.
-    final escolhida = await selecionarDataAtividade(
+    final escolhida = await selecionarData(
       context: context,
       ajuda: widget.ajudaDataFim,
       inicial: _dataFim ?? _dataInicio,
       minima: _dataInicio,
+      maxima: _tetoDataFim(_talhaoDoLancamento(), _safraDoLancamento()),
     );
 
-    if (escolhida == null) return;
+    if (escolhida == null || !mounted) return;
 
     setState(() {
       _dataFim = escolhida;
       _dataFimController.text = formatarDataBr(escolhida);
+    });
+  }
+
+  void _aoSelecionarTalhao(Talhao? talhao) {
+    setState(() {
+      _talhaoSelecionado = talhao;
+      _ajustarDataFimAoEscopo();
+    });
+  }
+
+  void _aoSelecionarSafra(Safra? safra) {
+    setState(() {
+      _safraSelecionada = safra;
+      _ajustarDataFimAoEscopo();
     });
   }
 
@@ -280,36 +299,13 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
   }
 
   Future<void> _confirmarSaida() async {
-    final descartar = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Descartar cadastro?'),
-        content: const Text(
-          'Os dados preenchidos serão perdidos.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              'Continuar editando',
-              style: TextStyle(color: Colors.grey),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Descartar',
-              style: TextStyle(
-                color: _vermelhoErro,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
+    final descartar = await confirmarDescarte(
+      context,
+      titulo: 'Descartar cadastro?',
+      mensagem: 'Os dados preenchidos serão perdidos.',
     );
 
-    if (descartar == true && mounted) Navigator.of(context).pop();
+    if (descartar && mounted) Navigator.of(context).pop();
   }
 
   Future<void> _salvar() async {
@@ -318,17 +314,29 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     if (widget.validarCamposEspecificos?.call() == false) return;
 
     if (_dataInicio == null) {
-      _mostrarAviso('Selecione a data de início.');
+      mostrarAviso(context, 'Selecione a data de início.');
       return;
     }
 
-    // O `validator` do dropdown já barra o caso de duas ou mais safras sem
-    // escolha, e o de uma só nunca chega aqui nulo. A guarda é a rede para o
-    // dia em que um terceiro caminho aparecer.
-    final safra = _resolverSafra(context.read<SafraViewModel>().safrasAtivas);
+    final talhao = _talhaoDoLancamento();
+
+    if (talhao?.id == null) {
+      mostrarAviso(context, 'Selecione o talhão do lançamento.');
+      return;
+    }
+
+    final safra = _safraDoLancamento();
 
     if (safra?.id == null) {
-      _mostrarAviso('Selecione a safra do lançamento.');
+      mostrarAviso(context, 'Selecione a safra do lançamento.');
+      return;
+    }
+
+    if (_dataFimObrigatoria(talhao, safra) && _dataFim == null) {
+      mostrarAviso(
+        context,
+        'Informe a data de término: o talhão ou a safra deste lançamento já foi encerrado.',
+      );
       return;
     }
 
@@ -336,7 +344,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
 
     final sucesso = await widget.aoSalvar(
       DadosFormularioAtividade(
-        idTalhao: _idTalhaoSelecionado!,
+        idTalhao: talhao!.id!,
         idSafra: safra!.id!,
         dataInicio: _dataInicio!,
         dataFim: _dataFim,
@@ -348,7 +356,8 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     if (!mounted) return;
 
     if (!sucesso) {
-      _mostrarAviso(
+      mostrarErro(
+        context,
         _viewModel.mensagemErro ?? 'Erro desconhecido ao salvar a atividade.',
       );
       return;
@@ -356,13 +365,33 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
 
     _salvou = true;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(widget.mensagemSucesso),
-        backgroundColor: Colors.green,
-      ),
-    );
+    mostrarSucesso(context, widget.mensagemSucesso);
     Navigator.of(context).pop(true);
+  }
+
+  void _conferirDataInicial(bool carregando) {
+    if (_conferiuDataInicial || carregando || _janelas.isEmpty) return;
+
+    _conferiuDataInicial = true;
+
+    if (_dataInicio == null || _aceitaDia(_dataInicio!)) return;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+
+      setState(() {
+        _dataInicio = null;
+        _dataInicioController.clear();
+        _talhaoSelecionado = null;
+        _safraSelecionada = null;
+        _limparDataFim();
+      });
+
+      mostrarAviso(
+        context,
+        'O dia escolhido não tem talhão e safra abertos ao mesmo tempo. Selecione outra data de início.',
+      );
+    });
   }
 
   @override
@@ -371,9 +400,6 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     final idPropriedade =
         context.watch<PropriedadesUsuarioViewModel>().idPropriedadeSelecionada;
 
-    // Mesma garantia que a home faz em `home_view.dart:74`. Sem ela, quem abre
-    // o formulário direto pelo calendário num app recém-aberto veria "nenhuma
-    // safra ativa" numa propriedade que tem safra aberta.
     if (idPropriedade != null &&
         (idPropriedade != safraViewModel.propriedadeIdAtual ||
             !safraViewModel.dadosCarregados)) {
@@ -382,8 +408,6 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
       });
     }
 
-    final safrasAtivas = safraViewModel.safrasAtivas;
-
     return PopScope(
       canPop: _salvou || !_temAlteracoes,
       onPopInvokedWithResult: (didPop, _) {
@@ -391,32 +415,29 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
         _confirmarSaida();
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F5F5),
-        appBar: AppBar(
-          title: Text(
-            widget.titulo,
-            style: const TextStyle(color: Colors.white),
-          ),
-          backgroundColor: _verdePrimario,
-          iconTheme: const IconThemeData(color: Colors.white),
-        ),
+        backgroundColor: AppCores.fundo,
+        appBar: AppBarPadrao(titulo: widget.titulo),
         body: ListenableBuilder(
           listenable: _viewModel,
           builder: (context, child) {
+            _janelas = _calcularJanelas(
+              _viewModel.talhoes,
+              safraViewModel.safras,
+            );
+
+            final carregando =
+                _viewModel.isCarregandoDados || safraViewModel.isLoading;
+
+            _conferirDataInicial(carregando);
+
             return CorpoComEstado(
-              // O carregamento da safra entra junto: sem ele, o estado vazio
-              // de safra pisca durante a requisição — exatamente o defeito que
-              // esta cascata de estados foi criada para eliminar.
-              isLoading:
-                  _viewModel.isCarregandoDados || safraViewModel.isLoading,
-              // O erro do formulário aparece no estado vazio junto da frase de
-              // "cadastre um talhão": as duas situações levam à mesma saída.
+              isLoading: carregando,
               mensagemErro: null,
-              vazio: _viewModel.talhoesAtivos.isEmpty || safrasAtivas.isEmpty,
-              construirVazio: (_) => _construirEstadoVazio(),
+              vazio: _janelas.isEmpty,
+              construirVazio: (_) => _construirEstadoVazio(safraViewModel),
               construirConteudo: (_) => SingleChildScrollView(
                 padding: const EdgeInsets.all(24),
-                child: _construirFormulario(safrasAtivas),
+                child: _construirFormulario(safraViewModel),
               ),
             );
           },
@@ -425,13 +446,20 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     );
   }
 
-  Widget _construirEstadoVazio() {
-    // Talhão antes de safra: é a checagem que já existia, e é a que o
-    // ViewModel da tela sabe explicar com o próprio erro de carregamento.
+  Widget _construirEstadoVazio(SafraViewModel safraViewModel) {
+    final semTalhoes =
+        _viewModel.talhoes.where((talhao) => talhao.id != null).isEmpty;
+
+    final semSafras = safraViewModel.safras
+        .where((safra) => safra.id != null && safra.periodo != null)
+        .isEmpty;
+
     final mensagem = _viewModel.mensagemErro ??
-        (_viewModel.talhoesAtivos.isEmpty
+        (semTalhoes
             ? widget.mensagemSemTalhoes
-            : widget.mensagemSemSafras);
+            : semSafras
+                ? widget.mensagemSemSafras
+                : widget.mensagemSemJanela);
 
     return Center(
       child: Padding(
@@ -439,7 +467,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.eco_outlined, size: 56, color: _verdeSecundario),
+            const Icon(Icons.eco_outlined, size: 56, color: AppCores.verdeSecundario),
             const SizedBox(height: 16),
             Text(
               mensagem,
@@ -460,7 +488,58 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     );
   }
 
-  Widget _construirFormulario(List<Safra> safrasAtivas) {
+  Widget _construirCampoDeEscopo<T>({
+    required String rotulo,
+    required List<T> disponiveis,
+    required T? selecionado,
+    required String Function(T item) rotuloItem,
+    required String dicaSelecionar,
+    required ValueChanged<T?> aoSelecionar,
+  }) {
+    final semData = _dataInicio == null;
+
+    if (!semData && disponiveis.length == 1) {
+      return _CampoFixoAtividade(
+        rotulo: rotulo,
+        valor: rotuloItem(disponiveis.first),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        construirRotuloAtividade(rotulo),
+        DropdownButtonFormField<T>(
+          key: ValueKey('$rotulo-$_dataInicio'),
+          initialValue: selecionado,
+          isExpanded: true,
+          decoration: decoracaoSeletorAtividade(),
+          hint: Text(
+            semData ? 'Escolha a data de início primeiro' : dicaSelecionar,
+            style: const TextStyle(color: Colors.black26, fontSize: 14),
+          ),
+          items: disponiveis.map((item) {
+            return DropdownMenuItem(
+              value: item,
+              child: Text(rotuloItem(item), overflow: TextOverflow.ellipsis),
+            );
+          }).toList(),
+          onChanged: semData ? null : aoSelecionar,
+          validator: (valor) => valor == null ? 'Obrigatório' : null,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _construirFormulario(SafraViewModel safraViewModel) {
+    final talhoesDisponiveis = _talhoesDisponiveis();
+    final safrasDisponiveis = _safrasDisponiveis(safraViewModel);
+
+    final talhaoDoLancamento = _resolverTalhao(talhoesDisponiveis);
+    final safraDoLancamento = _resolverSafra(safrasDisponiveis);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -479,101 +558,56 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            construirRotuloAtividade('Talhão'),
-            DropdownButtonFormField<int>(
-              initialValue: _idTalhaoSelecionado,
-              isExpanded: true,
-              decoration: decoracaoSeletorAtividade(),
-              hint: const Text(
-                'Selecione o talhão',
-                style: TextStyle(color: Colors.black26, fontSize: 14),
-              ),
-              items: _viewModel.talhoesAtivos.map((talhao) {
-                return DropdownMenuItem(
-                  value: talhao.id,
-                  child: Text(
-                    talhao.nomeExibicao,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                );
-              }).toList(),
-              onChanged: (valor) =>
-                  setState(() => _idTalhaoSelecionado = valor),
-              validator: (valor) => valor == null ? 'Obrigatório' : null,
+            CampoDeData(
+              label: 'Data de início',
+              controller: _dataInicioController,
+              aoTocar: _selecionarDataInicio,
             ),
-            const SizedBox(height: 16),
 
-            // Talhão e safra são as duas dimensões de escopo do lançamento, e
-            // por isso ficam juntas. Com uma safra aberta só o dropdown não
-            // aparece: não há escolha a fazer, e um campo de opção única é
-            // trabalho pedido ao usuário em troca de nada.
-            //
-            // Sem selo de "Ativa": aqui toda safra da lista é ativa. O selo só
-            // informa no seletor da tela de safras, onde as duas convivem.
-            if (safrasAtivas.length > 1) ...[
-              construirRotuloAtividade('Safra'),
-              DropdownButtonFormField<Safra>(
-                initialValue: _resolverSafra(safrasAtivas),
-                isExpanded: true,
-                decoration: decoracaoSeletorAtividade(),
-                hint: const Text(
-                  'Selecione a safra',
-                  style: TextStyle(color: Colors.black26, fontSize: 14),
-                ),
-                items: safrasAtivas.map((safra) {
-                  return DropdownMenuItem(
-                    value: safra,
-                    child: Text(
-                      safra.nomeExibicao,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  );
-                }).toList(),
-                onChanged: (valor) => setState(() => _safraSelecionada = valor),
-                validator: (valor) => valor == null ? 'Obrigatório' : null,
-              ),
-              const SizedBox(height: 16),
-            ],
+            _construirCampoDeEscopo<Talhao>(
+              rotulo: 'Talhão',
+              disponiveis: talhoesDisponiveis,
+              selecionado: talhaoDoLancamento,
+              rotuloItem: (talhao) => talhao.nomeExibicao,
+              dicaSelecionar: 'Selecione o talhão',
+              aoSelecionar: _aoSelecionarTalhao,
+            ),
+
+            _construirCampoDeEscopo<Safra>(
+              rotulo: 'Safra',
+              disponiveis: safrasDisponiveis,
+              selecionado: safraDoLancamento,
+              rotuloItem: (safra) => safra.nomeExibicao,
+              dicaSelecionar: 'Selecione a safra',
+              aoSelecionar: _aoSelecionarSafra,
+            ),
 
             if (widget.construirCamposEspecificos != null) ...[
               widget.construirCamposEspecificos!(context),
               const SizedBox(height: 16),
             ],
 
-            GestureDetector(
-              onTap: _selecionarDataInicio,
-              child: AbsorbPointer(
-                child: CustomTextField(
-                  label: 'Data de início',
-                  controller: _dataInicioController,
-                  hintText: 'Selecione a data',
-                  readOnly: true,
-                  validator: (valor) =>
-                      valor == null || valor.isEmpty ? 'Obrigatório' : null,
-                ),
-              ),
-            ),
-
             if (_aceitaDataFim) ...[
-              GestureDetector(
-                onTap: _selecionarDataFim,
-                child: AbsorbPointer(
-                  child: CustomTextField(
-                    label: 'Data de término (opcional)',
-                    controller: _dataFimController,
-                    hintText: widget.dicaDataFim,
-                    readOnly: true,
-                  ),
-                ),
+              CampoDeData(
+                label: _dataFimObrigatoria(talhaoDoLancamento, safraDoLancamento)
+                    ? 'Data de término'
+                    : 'Data de término (opcional)',
+                controller: _dataFimController,
+                aoTocar: _selecionarDataFim,
+                hintText: widget.dicaDataFim,
+                obrigatorio: false,
               ),
-              if (_dataFim != null)
+              if (_dataFimObrigatoria(talhaoDoLancamento, safraDoLancamento))
+                const _AvisoEscopoEncerrado()
+              else if (_dataFim != null)
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton.icon(
                     onPressed: () => setState(_limparDataFim),
                     icon: const Icon(Icons.close, size: 16),
                     label: const Text('Remover data de término'),
-                    style: TextButton.styleFrom(foregroundColor: _verdePrimario),
+                    style:
+                        TextButton.styleFrom(foregroundColor: AppCores.verdePrimario),
                   ),
                 ),
             ] else if (_dataInicio != null)
@@ -622,14 +656,132 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
       ),
     );
   }
+
+  DateTime? get _primeiroDiaLancavel =>
+      _janelas.isEmpty ? null : _janelas.first.inicio;
+
+  DateTime? get _ultimoDiaLancavel =>
+      _janelas.isEmpty ? null : _janelas.last.fim;
+
+  bool _aceitaDia(DateTime dia) =>
+      _janelas.any((periodo) => periodo.contem(dia));
+
+  static List<Periodo> _calcularJanelas(
+    List<Talhao> talhoes,
+    List<Safra> safras,
+  ) {
+    final periodosDeTalhao = talhoes
+        .where((talhao) => talhao.id != null)
+        .map((talhao) => talhao.periodo)
+        .toList();
+
+    final periodosDeSafra = safras
+        .where((safra) => safra.id != null)
+        .map((safra) => safra.periodo)
+        .whereType<Periodo>()
+        .toList();
+
+    final coexistencias = <Periodo>[];
+
+    for (final talhao in periodosDeTalhao) {
+      for (final safra in periodosDeSafra) {
+        final coexistencia = talhao.intersecao(safra);
+
+        if (coexistencia != null) coexistencias.add(coexistencia);
+      }
+    }
+
+    return _unirJanelas(coexistencias);
+  }
+
+  DateTime? _diaValidoMaisProximo(DateTime referencia) {
+    if (_janelas.isEmpty) return null;
+
+    final dia = apenasData(referencia);
+
+    if (_aceitaDia(dia)) return dia;
+
+    DateTime? anterior;
+    DateTime? posterior;
+
+    for (final periodo in _janelas) {
+      if (periodo.inicio.isAfter(dia)) {
+        posterior = periodo.inicio;
+        break;
+      }
+
+      anterior = periodo.fim;
+    }
+
+    if (anterior == null) return posterior;
+    if (posterior == null) return anterior;
+
+    return dia.difference(anterior) <= posterior.difference(dia)
+        ? anterior
+        : posterior;
+  }
+
+  static List<Periodo> _unirJanelas(List<Periodo> coexistencias) {
+    if (coexistencias.isEmpty) return const [];
+
+    final ordenados = List<Periodo>.from(coexistencias)
+      ..sort((a, b) => a.inicio.compareTo(b.inicio));
+
+    final unidos = <Periodo>[ordenados.first];
+
+    for (final atual in ordenados.skip(1)) {
+      final anterior = unidos.last;
+
+      if (anterior.emAberto) continue;
+
+      final encostam = !atual.inicio.isAfter(diaSeguinte(anterior.fim!));
+
+      if (encostam) {
+        unidos[unidos.length - 1] = Periodo(
+          inicio: anterior.inicio,
+          fim: maiorData(anterior.fim, atual.fim),
+        );
+        continue;
+      }
+
+      unidos.add(atual);
+    }
+
+    return List.unmodifiable(unidos);
+  }
 }
 
-/// Explica o sumiço do campo de término quando a data de início é futura.
-///
-/// Sem isto o campo simplesmente desaparece ao escolher uma data futura, e o
-/// usuário fica sem saber se a tela quebrou.
 class _AvisoAgendamento extends StatelessWidget {
   const _AvisoAgendamento();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _CaixaAvisoAtividade(
+      icone: Icons.event_available,
+      texto: 'Atividade agendada. A data de término é informada na '
+          'confirmação, depois que ela começar.',
+    );
+  }
+}
+
+class _AvisoEscopoEncerrado extends StatelessWidget {
+  const _AvisoEscopoEncerrado();
+
+  @override
+  Widget build(BuildContext context) {
+    return const _CaixaAvisoAtividade(
+      icone: Icons.event_busy,
+      texto: 'O talhão ou a safra deste lançamento já foi encerrado: informe '
+          'a data de término, que não pode passar desse encerramento.',
+    );
+  }
+}
+
+class _CaixaAvisoAtividade extends StatelessWidget {
+  final IconData icone;
+  final String texto;
+
+  const _CaixaAvisoAtividade({required this.icone, required this.texto});
 
   @override
   Widget build(BuildContext context) {
@@ -638,18 +790,17 @@ class _AvisoAgendamento extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: _verdeSecundario.withValues(alpha: 0.12),
+        color: AppCores.verdeSecundario.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.event_available, size: 20, color: _verdePrimario),
-          SizedBox(width: 12),
+          Icon(icone, size: 20, color: AppCores.verdePrimario),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
-              'Atividade agendada. A data de término é informada na '
-              'confirmação, depois que ela começar.',
-              style: TextStyle(fontSize: 13, color: Colors.black87),
+              texto,
+              style: const TextStyle(fontSize: 13, color: Colors.black87),
             ),
           ),
         ],
@@ -658,10 +809,35 @@ class _AvisoAgendamento extends StatelessWidget {
   }
 }
 
-/// Rótulo acima de um campo do formulário de atividade.
-///
-/// Público para a tela concreta rotular os campos específicos dela com o mesmo
-/// estilo dos comuns.
+class _CampoFixoAtividade extends StatelessWidget {
+  final String rotulo;
+  final String valor;
+
+  const _CampoFixoAtividade({required this.rotulo, required this.valor});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        construirRotuloAtividade(rotulo),
+        InputDecorator(
+          decoration: decoracaoSeletorAtividade().copyWith(
+            filled: true,
+            fillColor: Colors.grey.shade200,
+          ),
+          child: Text(
+            valor,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontSize: 16, color: Colors.black87),
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+}
+
 Widget construirRotuloAtividade(String texto) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 8),
@@ -676,17 +852,16 @@ Widget construirRotuloAtividade(String texto) {
   );
 }
 
-/// Moldura dos dropdowns do formulário de atividade.
 InputDecoration decoracaoSeletorAtividade() {
   return InputDecoration(
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: _cinzaBorda),
+      borderSide: const BorderSide(color: AppCores.borda),
     ),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: _cinzaBorda),
+      borderSide: const BorderSide(color: AppCores.borda),
     ),
   );
 }

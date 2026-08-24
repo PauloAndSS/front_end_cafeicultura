@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class EmDesenvolvimentoWidget extends StatelessWidget {
   final String titulo;
@@ -11,14 +12,14 @@ class EmDesenvolvimentoWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.construction, size: 64, color: Color(0xFF8FA67E)),
+          const Icon(Icons.construction, size: 64, color: AppCores.verdeSecundario),
           const SizedBox(height: 16),
           Text(
             titulo,
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF67835C),
+              color: AppCores.verdePrimario,
             ),
           ),
           const SizedBox(height: 8),

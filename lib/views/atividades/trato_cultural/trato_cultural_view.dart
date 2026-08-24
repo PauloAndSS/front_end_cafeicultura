@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
-import 'package:frond_end_cafeicultura_mobile/model/eventos/status_evento.dart';
+import 'package:frond_end_cafeicultura_mobile/model/eventos/evento.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/agenda_tratos_culturais_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/tratos_culturais_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/base/lista_atividades_view.dart';
@@ -37,8 +37,8 @@ class _TratoCulturalViewState extends State<TratoCulturalView> {
       iconeCard: Icons.grass,
       construirTelaCadastro: (_, dataInicial) =>
           CadastrarTratoCulturalView(dataInicial: dataInicial),
-      construirTelaDetalhes: (_, trato, nomeTalhao) =>
-          DetalhesTratoCulturalView(trato: trato, nomeTalhao: nomeTalhao),
+      construirTelaDetalhes: (_, trato, talhao) =>
+          DetalhesTratoCulturalView(trato: trato, talhao: talhao),
     );
   }
   String _descricaoDoStatus(StatusEvento status) => switch (status) {

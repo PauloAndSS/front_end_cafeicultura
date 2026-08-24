@@ -1,67 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/evento.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/formatadores.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/calendario/seletor_mes_ano.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
-const _verdePrimario = Color(0xFF67835C);
-const _verdeSecundario = Color(0xFF8FA67E);
-
-/// Até onde o calendário deixa navegar. Não é regra de negócio — é só um teto
-/// para a rolagem não ser infinita, do mesmo tamanho do que o agendamento de
-/// atividade já usa.
 const _anosDeMargem = 5;
 
-/// Calendário mensal de atividades.
-///
-/// **Só mês.** Semana e quinzena existiram e saíram: o marcador é um ponto
-/// colorido, não um horário, então períodos mais curtos mostravam a mesma
-/// informação com mais espaço em branco — e o seletor de amplitude custava uma
-/// linha inteira do card para oferecer uma escolha que não mudava nada.
-///
-/// **Não busca nada.** Recebe as atividades já carregadas e avisa, por
-/// [aoMudarMes], quando o usuário navegou para outro mês — é quem usa que decide
-/// se isso vira requisição. Foi assim, e não com um ViewModel embutido, para o
-/// mesmo widget servir à home (que carrega da rota de eventos gerais) e às abas
-/// de atividade (que já têm a coleção inteira em memória e não buscam nada).
-///
-/// O pacote que desenha a grade fica contido neste arquivo: quem monta o
-/// calendário fala em [Evento] e [DateTime], não em `CalendarFormat`.
 class CalendarioAtividades<T extends Evento> extends StatefulWidget {
-  /// Atividades do período já carregado. Trocar esta lista redesenha os
-  /// marcadores.
   final List<T> atividades;
-
-  /// Dia destacado na grade.
-  ///
-  /// Controlado por quem usa, e não guardado aqui dentro, porque limpar a
-  /// seleção é decisão de fora: a aba de atividade zera o dia ao mudar de mês
-  /// para a lista abaixo da grade não continuar presa a um dia que saiu de
-  /// vista.
   final DateTime? diaSelecionado;
 
-  /// Mês em que a grade abre. `null` abre no corrente.
-  ///
-  /// Serve para quem precisa sobreviver a uma remontagem: se a tela troca o
-  /// calendário por um spinner durante uma recarga, sem isto a grade volta para
-  /// hoje e desencontra do resto da tela, que continua no mês de antes.
   final DateTime? mesInicial;
 
-  /// Chamado quando o mês visível muda — por seta, por swipe ou pelo seletor de
-  /// mês.
   final void Function(DateTime primeiroDiaDoMes)? aoMudarMes;
 
-  /// Toque num dia, com as atividades daquele dia já filtradas.
   final void Function(DateTime dia, List<T> doDia) aoSelecionarDia;
 
-  /// Mostra um indicador fino no cabeçalho, sem apagar a grade. Substituir o
-  /// calendário inteiro por um spinner faria a tela piscar a cada troca de mês.
   final bool carregando;
 
-  /// Cor do marcador de cada atividade. Injetada em vez de importada porque a
-  /// regra de cor mora no domínio de atividades, e este widget não depende
-  /// dele.
   final Color Function(T atividade)? corDoMarcador;
 
   const CalendarioAtividades({
@@ -82,15 +40,9 @@ class CalendarioAtividades<T extends Evento> extends StatefulWidget {
 
 class _CalendarioAtividadesState<T extends Evento>
     extends State<CalendarioAtividades<T>> {
-  /// Abre em hoje quando ninguém disse o contrário — é o que faz o mês corrente
-  /// ser o padrão.
-  ///
-  /// Segue privado mesmo com o dia selecionado tendo subido para quem usa: isto
-  /// aqui é a página visível, não a seleção. Rolar o mês sem tocar em dia
-  /// nenhum muda este campo e não muda aquele.
+
   late DateTime _diaFocado = widget.mesInicial ?? hoje();
 
-  /// Atividades indexadas pelo dia em que começam.
   late Map<DateTime, List<T>> _porDia = _agruparPorDia(widget.atividades);
 
   @override
@@ -102,13 +54,6 @@ class _CalendarioAtividadesState<T extends Evento>
     }
   }
 
-  /// Agrupa pela **data de início**, que é a única data que toda atividade tem:
-  /// a de término só existe depois de finalizada.
-  ///
-  /// A chave passa por [apenasData] sem `toLocal()` antes. As datas chegam do
-  /// backend em UTC, gravadas como meia-noite do dia escolhido; convertidas
-  /// para o fuso de Brasília, virariam 21h do dia anterior e a atividade
-  /// apareceria um dia cedo.
   Map<DateTime, List<T>> _agruparPorDia(List<T> atividades) {
     final agrupadas = <DateTime, List<T>>{};
 
@@ -184,12 +129,8 @@ class _CalendarioAtividadesState<T extends Evento>
       lastDay: _ultimoDia,
       calendarFormat: CalendarFormat.month,
 
-      // Um formato só na lista: o pacote traz o próprio botão de alternância e
-      // ele ofereceria semana e quinzena de volta, que é justamente o que saiu.
       availableCalendarFormats: const {CalendarFormat.month: ''},
 
-      // Só arrasto horizontal. O vertical, ligado por padrão, encolhe a grade
-      // para semana — o mesmo formato que este calendário não tem mais.
       availableGestures: AvailableGestures.horizontalSwipe,
 
       startingDayOfWeek: StartingDayOfWeek.sunday,
@@ -197,14 +138,11 @@ class _CalendarioAtividadesState<T extends Evento>
       selectedDayPredicate: (dia) => isSameDay(widget.diaSelecionado, dia),
       onDaySelected: _aoSelecionarDia,
       onPageChanged: _aoTrocarPagina,
-      // Sem `onHeaderTapped`: o pacote só o liga no título padrão — com
-      // `headerTitleBuilder` presente, aquele ramo nunca é construído. O toque
-      // mora dentro de `_construirTitulo`.
       headerStyle: const HeaderStyle(
         formatButtonVisible: false,
         headerPadding: EdgeInsets.symmetric(vertical: 12),
-        leftChevronIcon: Icon(Icons.chevron_left, color: _verdePrimario),
-        rightChevronIcon: Icon(Icons.chevron_right, color: _verdePrimario),
+        leftChevronIcon: Icon(Icons.chevron_left, color: AppCores.verdePrimario),
+        rightChevronIcon: Icon(Icons.chevron_right, color: AppCores.verdePrimario),
       ),
       calendarBuilders: CalendarBuilders<T>(
         headerTitleBuilder: _construirTitulo,
@@ -220,11 +158,11 @@ class _CalendarioAtividadesState<T extends Evento>
         markerSize: 6,
         markerMargin: const EdgeInsets.symmetric(horizontal: 1),
         todayDecoration: const BoxDecoration(
-          color: _verdeSecundario,
+          color: AppCores.verdeSecundario,
           shape: BoxShape.circle,
         ),
         selectedDecoration: const BoxDecoration(
-          color: _verdePrimario,
+          color: AppCores.verdePrimario,
           shape: BoxShape.circle,
         ),
         weekendTextStyle: const TextStyle(color: Colors.black54),
@@ -232,8 +170,6 @@ class _CalendarioAtividadesState<T extends Evento>
     );
   }
 
-  /// Título do cabeçalho, que é também o botão do seletor de mês/ano — daí a
-  /// seta ao lado do texto.
   Widget _construirTitulo(BuildContext context, DateTime mes) {
     final titulo = Row(
       mainAxisSize: MainAxisSize.min,
@@ -246,7 +182,7 @@ class _CalendarioAtividadesState<T extends Evento>
             color: Colors.black87,
           ),
         ),
-        const Icon(Icons.arrow_drop_down, color: _verdePrimario),
+        const Icon(Icons.arrow_drop_down, color: AppCores.verdePrimario),
         if (widget.carregando) ...[
           const SizedBox(width: 8),
           const SizedBox(
@@ -254,7 +190,7 @@ class _CalendarioAtividadesState<T extends Evento>
             height: 14,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: _verdePrimario,
+              color: AppCores.verdePrimario,
             ),
           ),
         ],
@@ -274,7 +210,7 @@ class _CalendarioAtividadesState<T extends Evento>
   }
 
   Widget? _construirMarcador(BuildContext context, DateTime dia, T atividade) {
-    final cor = widget.corDoMarcador?.call(atividade) ?? _verdePrimario;
+    final cor = widget.corDoMarcador?.call(atividade) ?? AppCores.verdePrimario;
 
     return Container(
       width: 6,

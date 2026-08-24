@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/proprietario/cadastrar_dados_basicos_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
@@ -8,8 +7,12 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
-import 'package:provider/provider.dart'; 
+import 'package:provider/provider.dart';
 import '../auth/entrar_view.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_identificacao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_contato.dart';
 
 class CadastrarUsuarioView extends StatefulWidget {
   const CadastrarUsuarioView({super.key});
@@ -19,7 +22,7 @@ class CadastrarUsuarioView extends StatefulWidget {
 }
 
 class _CadastrarUsuarioViewState extends State<CadastrarUsuarioView> {
-  final _viewModel = CadastrarUsuarioViewModel();
+  final _viewModel = CadastrarDadosBasicosViewModel();
   final _formKey = GlobalKey<FormState>();
 
   final _emailController = TextEditingController();
@@ -76,12 +79,7 @@ void _cadastrarDadosBasicos() async {
           ),
         );
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-           SnackBar(
-            content: Text(_viewModel.mensagemErro ?? 'Erro desconhecido.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        mostrarErro(context, _viewModel.mensagemErro ?? 'Erro desconhecido.');
       }
     }
   }
@@ -89,7 +87,7 @@ void _cadastrarDadosBasicos() async {
 @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF9FB896), 
+      backgroundColor: AppCores.verdeAuth,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -118,7 +116,6 @@ void _cadastrarDadosBasicos() async {
         key: _formKey,
         child: Column(
           children: [
-            // Seletor de Tipo de Conta (PF ou PJ)
             ListenableBuilder(
               listenable: _viewModel,
               builder: (context, _) {
@@ -128,24 +125,24 @@ void _cadastrarDadosBasicos() async {
                     const Text(
                       'Tipo de Conta',
                       style: TextStyle(
-                        fontSize: 16, 
-                        fontWeight: FontWeight.w600, 
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                         color: Colors.black87,
                       ),
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<TipoPessoa>(
                       initialValue: _viewModel.tipoPessoaAtual,
-                      icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF67835C)), // Cor do tema
+                      icon: const Icon(Icons.keyboard_arrow_down, color: AppCores.verdePrimario),
                       decoration: InputDecoration(
                         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                          borderSide: const BorderSide(color: AppCores.borda),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+                          borderSide: const BorderSide(color: AppCores.borda),
                         ),
                       ),
                       items: const [
@@ -172,80 +169,33 @@ void _cadastrarDadosBasicos() async {
 
             ListenableBuilder(
               listenable: _viewModel,
-              builder: (context, _) {
-                if (_viewModel.tipoPessoaAtual == TipoPessoa.fisica) {
-                  return Column(
-                    children: [
-                      CustomTextField(
-                        label: 'Nome Completo', 
-                        controller: _nomeController,
-                        validator: Validator.validarNome,
-                        hintText: 'Digite seu nome completo',
-                      ),
-                      CustomTextField(
-                        label: 'CPF', 
-                        controller: _cpfController,
-                        keyboardType: TextInputType.number,
-                        validator: Validator.validarCPF,
-                        inputFormatters: [AppMasks.cpf],
-                        hintText: '000.000.000-00',
-                      ),
-                    ],
-                  );
-                } else {
-                  return Column(
-                    children: [
-                      CustomTextField(
-                        label: 'Razão Social', 
-                        controller: _razaoSocialController,
-                        validator: Validator.validarRazaoSocial,
-                        hintText: 'Digite sua razão social',
-                      ),
-                      CustomTextField(
-                        label: 'CNPJ', 
-                        controller: _cnpjController,
-                        keyboardType: TextInputType.number,
-                        validator: Validator.validarCNPJ,
-                        inputFormatters: [AppMasks.cnpj],
-                        hintText: '00.000.000/0000-00',
-                      ),
-                      CustomTextField(
-                        label: 'Inscrição Estadual (Opcional)', 
-                        controller: _inscricaoEstadualController,
-                        keyboardType: TextInputType.number,
-                        validator: Validator.validarInscEstadual,
-                        hintText: 'Digite sua inscrição estadual (Opcional)',
-                      ),
-                    ],
-                  );
-                }
-              },
+              builder: (context, _) => BlocoIdentificacao(
+                pessoaFisica: _viewModel.tipoPessoaAtual == TipoPessoa.fisica,
+                controllerNome: _nomeController,
+                controllerRazaoSocial: _razaoSocialController,
+                controllerCpf: _cpfController,
+                controllerCnpj: _cnpjController,
+                controllerInscricaoEstadual: _inscricaoEstadualController,
+                dicaNome: 'Digite seu nome completo',
+                dicaRazaoSocial: 'Digite sua razão social',
+              ),
             ),
 
-            CustomTextField(
-              label: 'E-mail', 
-              controller: _emailController,
-              keyboardType: TextInputType.emailAddress,
-              validator: Validator.validarEmail,
-              hintText: 'Digite seu e-mail',
+            BlocoContato(
+              controllerEmail: _emailController,
+              controllerTelefone: _telefoneController,
+              dicaEmail: 'Digite seu e-mail',
+              dicaTelefone: 'Digite seu telefone',
             ),
             CustomTextField(
-              label: 'Telefone', 
-              controller: _telefoneController,
-              keyboardType: TextInputType.phone,
-              validator: Validator.validarTelefone,
-              inputFormatters: [AppMasks.telefone],
-              hintText: 'Digite seu telefone',
-            ),
-            CustomTextField(
-              label: 'Senha', 
+              label: 'Senha',
               controller: _senhaController,
               isPassword: true,
               validator: Validator.validarSenha,
               hintText: 'Digite sua senha',
             ),
             CustomTextField(
-              label: 'Confirmar Senha', 
+              label: 'Confirmar Senha',
               controller: _confirmarSenhaController,
               isPassword: true,
               validator: (value) => Validator.validarConfirmacaoSenha(value, _senhaController.text),
@@ -258,7 +208,7 @@ void _cadastrarDadosBasicos() async {
               listenable: _viewModel,
               builder: (context, _) {
                 if (_viewModel.isLoading) {
-                  return const CircularProgressIndicator(color: Color(0xFF67835C));
+                  return const CircularProgressIndicator(color: AppCores.verdePrimario);
                 }
                 return CustomButton(
                   text: "Continuar Cadastro",
@@ -266,16 +216,15 @@ void _cadastrarDadosBasicos() async {
                 );
               },
             ),
-            
+
             const SizedBox(height: 20),
 
-            // Link para Login
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Text("Já tem uma conta? "),
                 CustomTextButton(
-                  text: "Entrar", 
+                  text: "Entrar",
                   onPressed: () => Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => const EntrarView()),

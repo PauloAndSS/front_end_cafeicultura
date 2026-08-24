@@ -1,14 +1,11 @@
 import 'package:frond_end_cafeicultura_mobile/http/services/eventos/services_trato_cultural.dart';
-import 'package:frond_end_cafeicultura_mobile/model/eventos/dados_formulario_atividade.dart';
-import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/tipo_trato.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/base/dados_formulario_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
-import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo_utilizado.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/cadastrar_atividade_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/carregar_insumos_mixin.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/insumos/carregar_insumos_mixin.dart';
 
 class CadastrarTratoCulturalViewModel extends CadastrarAtividadeViewModel
     with CarregarInsumosMixin {
-
   final _tratoService = ServicesTratoCultural();
 
   List<TipoTrato> _tiposTrato = [];
@@ -17,7 +14,6 @@ class CadastrarTratoCulturalViewModel extends CadastrarAtividadeViewModel
   @override
   String get atividadeIndefinida => 'um trato cultural';
 
-  /// O catálogo de tipos é o que distingue este formulário dos demais.
   @override
   Future<void> carregarDadosEspecificos(int idPropriedade) async {
     _tiposTrato = await _tratoService.buscarTiposTrato();
@@ -44,7 +40,6 @@ class CadastrarTratoCulturalViewModel extends CadastrarAtividadeViewModel
 
         return _tratoService.cadastrar(trato);
       },
-      erroInterno: 'Ocorreu um erro interno ao cadastrar trato cultural.',
     );
   }
 }

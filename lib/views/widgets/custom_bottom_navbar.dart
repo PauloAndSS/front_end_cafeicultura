@@ -2,14 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/views/home/main_screen_view.dart';
 import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final bool ocultarSelecao;
 
-  const CustomBottomNavBar({
-    super.key,
-    this.ocultarSelecao = false,
-  });
+  const CustomBottomNavBar({super.key, this.ocultarSelecao = false});
 
   void _onTabTapped(BuildContext context, int index) {
     final navVM = context.read<NavegacaoViewModel>();
@@ -29,7 +27,6 @@ class CustomBottomNavBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // O footer observa o estado global sozinho
     final navVM = context.watch<NavegacaoViewModel>();
     final int currentIndex = navVM.indiceAtual;
 
@@ -37,34 +34,30 @@ class CustomBottomNavBar extends StatelessWidget {
       borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
       child: NavigationBarTheme(
         data: NavigationBarThemeData(
-          backgroundColor: const Color(0xFF8FA67E),
+          backgroundColor: AppCores.verdeSecundario,
           indicatorColor: !ocultarSelecao
               ? Colors.white.withValues(alpha: 0.18)
               : Colors.transparent,
-          labelTextStyle: WidgetStateProperty.resolveWith(
-            (states) {
-              if (!ocultarSelecao && states.contains(WidgetState.selected)) {
-                return const TextStyle(
-                  color: Colors.white,
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                );
-              }
+          labelTextStyle: WidgetStateProperty.resolveWith((states) {
+            if (!ocultarSelecao && states.contains(WidgetState.selected)) {
               return const TextStyle(
-                color: Colors.white70,
+                color: Colors.white,
                 fontSize: 13,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.bold,
               );
-            },
-          ),
-          iconTheme: WidgetStateProperty.resolveWith(
-            (states) {
-              if (!ocultarSelecao && states.contains(WidgetState.selected)) {
-                return const IconThemeData(color: Colors.white, size: 30);
-              }
-              return const IconThemeData(color: Colors.white70, size: 26);
-            },
-          ),
+            }
+            return const TextStyle(
+              color: Colors.white70,
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+            );
+          }),
+          iconTheme: WidgetStateProperty.resolveWith((states) {
+            if (!ocultarSelecao && states.contains(WidgetState.selected)) {
+              return const IconThemeData(color: Colors.white, size: 30);
+            }
+            return const IconThemeData(color: Colors.white70, size: 26);
+          }),
         ),
         child: NavigationBar(
           height: 70,
@@ -89,14 +82,14 @@ class CustomBottomNavBar extends StatelessWidget {
               label: 'Talhões',
             ),
             NavigationDestination(
-              icon: Icon(Icons.warehouse_outlined),
-              selectedIcon: Icon(Icons.warehouse),
-              label: 'Armazém',
-            ),
-            NavigationDestination(
               icon: Icon(Icons.attach_money_outlined),
               selectedIcon: Icon(Icons.attach_money),
               label: 'Financeiro',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.warehouse_outlined),
+              selectedIcon: Icon(Icons.warehouse),
+              label: 'Armazém',
             ),
           ],
         ),

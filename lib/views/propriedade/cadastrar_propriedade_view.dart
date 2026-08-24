@@ -9,8 +9,12 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/uf_dropdown.dart';
 import 'package:provider/provider.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_endereco.dart';
 
 class CadastrarPropriedadeView extends StatefulWidget {
   const CadastrarPropriedadeView({super.key});
@@ -56,7 +60,7 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
   }
 
   void _salvarPropriedade() async {
-    if (_formKey.currentState!.validate() && _ufSelecionada != null) {
+    if (_formKey.currentState!.validate()) {
       FocusScope.of(context).unfocus();
 
       final session = Provider.of<SessionViewModel>(context, listen: false);
@@ -64,11 +68,7 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
       final resultado = await _viewModel.cadastrarPropriedade(
         session: session,
         nome: _nomeController.text,
-        valorTamanho:
-            double.tryParse(
-              _tamanhoValorController.text.replaceAll(',', '.'),
-            ) ??
-            0.0,
+        valorTamanho: AppMasks.paraDouble(_tamanhoValorController.text) ?? 0.0,
         medidaTamanho: _tamanhoMedida.jsonValue,
         cep: _cepController.text,
         logradouro: _logradouroController.text,
@@ -82,70 +82,22 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
         Provider.of<PropriedadesUsuarioViewModel>(context, listen: false)
             .carregarPropriedades();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Propriedade cadastrada com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        mostrarSucesso(context, 'Propriedade cadastrada com sucesso!');
         Navigator.of(context).pop();
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _viewModel.mensagemErro ??
-                  'Erro desconhecido ao cadastrar propriedade.',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        mostrarErro(context, _viewModel.mensagemErro ??
+                  'Erro desconhecido ao cadastrar propriedade.');
       }
-    } else if (_ufSelecionada == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Selecione o Estado (UF).'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 
-  Future<bool?> _mostrarDialogoConfirmacao() {
-    return showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Descartar alterações?'),
-          content: const Text(
-            'Se você sair agora, todos os dados preenchidos serão perdidos.',
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(false),
-              child: const Text(
-                'Cancelar',
-                style: TextStyle(color: Colors.grey),
-              ),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              child: const Text(
-                'Sair',
-                style: TextStyle(
-                  color: Colors.red,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ],
-        );
-      },
+  Future<bool> _mostrarDialogoConfirmacao() {
+    return confirmarDescarte(
+      context,
+      mensagem:
+          'Se você sair agora, todos os dados preenchidos serão perdidos.',
     );
   }
-
   @override
   Widget build(BuildContext context) {
     return PopScope(
@@ -167,15 +119,14 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF9FB896),
-        appBar: AppBar(
-          title: const Text(
+        backgroundColor: AppCores.verdeAuth,
+        appBar: const AppBarPadrao(
+          tituloWidget: Text(
             'Nova Propriedade',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+            style: TextStyle(fontWeight: FontWeight.w600),
           ),
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.white),
+          cor: Colors.transparent,
+          elevacao: 0,
         ),
         body: SafeArea(
           child: Center(
@@ -215,7 +166,7 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF67835C),
+                color: AppCores.verdePrimario,
               ),
             ),
             const SizedBox(height: 16),
@@ -238,10 +189,9 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    inputFormatters: [AppMasks.inteiroMilhar],
-                    hintText: 'Ex: 15.5',
-                    validator: (val) =>
-                        val == null || val.isEmpty ? 'Obrigatório' : null,
+                    inputFormatters: [AppMasks.decimal],
+                    hintText: 'Ex: 15,5',
+                    validator: Validator.obrigatorio,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -264,7 +214,7 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
                         isExpanded: true,
                         icon: const Icon(
                           Icons.keyboard_arrow_down,
-                          color: Color(0xFF67835C),
+                          color: AppCores.verdePrimario,
                         ),
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.symmetric(
@@ -274,13 +224,13 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: const BorderSide(
-                              color: Color(0xFFE0E0E0),
+                              color: AppCores.borda,
                             ),
                           ),
                           enabledBorder: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(8),
                             borderSide: const BorderSide(
-                              color: Color(0xFFE0E0E0),
+                              color: AppCores.borda,
                             ),
                           ),
                         ),
@@ -307,7 +257,7 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
 
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 24.0),
-              child: Divider(height: 1, thickness: 1, color: Color(0xFFE0E0E0)),
+              child: Divider(height: 1, thickness: 1, color: AppCores.borda),
             ),
 
             const Text(
@@ -315,59 +265,20 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF67835C),
+                color: AppCores.verdePrimario,
               ),
             ),
             const SizedBox(height: 16),
 
-            CustomTextField(
-              label: 'CEP',
-              controller: _cepController,
-              keyboardType: TextInputType.number,
-              validator: Validator.validarCEP,
-              inputFormatters: [AppMasks.cep],
-              hintText: 'Digite o CEP (apenas números)',
-            ),
-
-            CustomTextField(
-              label: 'Logradouro',
-              controller: _logradouroController,
-              validator: Validator.validarNome,
-              hintText: 'Rodovia, estrada, número, etc.',
-            ),
-
-            CustomTextField(
-              label: 'Bairro',
-              controller: _bairroController,
-              validator: Validator.validarNome,
-              hintText: 'Digite o bairro ou localidade',
-            ),
-
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: CustomTextField(
-                    label: 'Cidade',
-                    controller: _cidadeController,
-                    validator: Validator.validarNome,
-                    hintText: 'Nome da cidade',
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 1,
-                  child: UfDropdown(
-                    value: _ufSelecionada,
-                    onChanged: (UF? newValue) {
-                      setState(() {
-                        _ufSelecionada = newValue;
-                      });
-                    },
-                  ),
-                ),
-              ],
+            BlocoEndereco(
+              controllerCep: _cepController,
+              controllerLogradouro: _logradouroController,
+              controllerBairro: _bairroController,
+              controllerCidade: _cidadeController,
+              uf: _ufSelecionada,
+              aoSelecionarUf: (novo) => setState(() => _ufSelecionada = novo),
+              dicaLogradouro: 'Rodovia, estrada, número, etc.',
+              dicaBairro: 'Digite o bairro ou localidade',
             ),
 
             const SizedBox(height: 24),
@@ -377,7 +288,7 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
               builder: (context, _) {
                 if (_viewModel.isLoading) {
                   return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF67835C)),
+                    child: CircularProgressIndicator(color: AppCores.verdePrimario),
                   );
                 }
 

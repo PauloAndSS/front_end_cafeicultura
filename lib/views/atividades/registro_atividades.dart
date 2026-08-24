@@ -1,32 +1,47 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/model/eventos/tipo_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/tipo_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/trato_cultural/cadastrar_trato_cultural_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/trato_cultural/trato_cultural_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/atividade_em_desenvolvimento.dart';
 
-/// Telas de listagem por tipo de atividade.
-///
-/// Esta tabela — e não um `bool` no enum — é o que define "implementado".
-/// O que ela corrige: a versão anterior fazia
-/// `if (tipo.implementado) return const TratoCulturalView();`, que devolveria a
-/// tela de trato cultural para **qualquer** tipo marcado como implementado.
-/// Funcionava só enquanto houvesse um tipo só.
-///
-/// Para ligar uma atividade nova, basta uma linha aqui.
-const Map<TipoAtividade, WidgetBuilder> telasDeAtividade = {
-  TipoAtividade.tratosCulturais: _construirTratoCultural,
+class RegistroAtividade {
+  final WidgetBuilder construirListagem;
+
+  final Widget Function(DateTime? dataInicial)? construirCadastro;
+
+  const RegistroAtividade({
+    required this.construirListagem,
+    this.construirCadastro,
+  });
+}
+
+const Map<TipoAtividade, RegistroAtividade> registroAtividades = {
+  TipoAtividade.tratosCulturais: RegistroAtividade(
+    construirListagem: _listagemTratoCultural,
+    construirCadastro: _cadastroTratoCultural,
+  ),
 };
 
-Widget _construirTratoCultural(BuildContext context) =>
+Widget _listagemTratoCultural(BuildContext context) =>
     const TratoCulturalView();
 
+Widget _cadastroTratoCultural(DateTime? dataInicial) =>
+    CadastrarTratoCulturalView(dataInicial: dataInicial);
+
 bool atividadeImplementada(TipoAtividade tipo) =>
-    telasDeAtividade.containsKey(tipo);
+    registroAtividades.containsKey(tipo);
 
-/// Devolve a tela do [tipo], ou o placeholder se ele ainda não tiver uma.
 Widget construirTelaAtividade(BuildContext context, TipoAtividade tipo) {
-  final construtor = telasDeAtividade[tipo];
+  final registro = registroAtividades[tipo];
 
-  if (construtor == null) return AtividadeEmDesenvolvimento(tipo: tipo);
+  if (registro == null) return AtividadeEmDesenvolvimento(tipo: tipo);
 
-  return construtor(context);
+  return registro.construirListagem(context);
 }
+
+Iterable<TipoAtividade> get tiposComCadastro => registroAtividades.entries
+    .where((entrada) => entrada.value.construirCadastro != null)
+    .map((entrada) => entrada.key);
+
+Widget construirCadastroAtividade(TipoAtividade tipo, DateTime? dataInicial) =>
+    registroAtividades[tipo]!.construirCadastro!(dataInicial);

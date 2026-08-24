@@ -1,3 +1,5 @@
+import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
+
 enum MedidaInsumo {
   unidade('un', 'Unidade (un)'),
   quilograma('kg', 'Quilograma (kg)'),
@@ -25,6 +27,7 @@ enum MedidaInsumo {
   }
 }
 
+/// Linha do catálogo de insumos de um proprietário.
 class Insumo {
 
   final int? id;
@@ -33,9 +36,8 @@ class Insumo {
 
   Insumo({this.id, required this.descricao, required this.medida});
 
-  Map<String, dynamic> toJson(int idProprietario) {
+  Map<String, dynamic> toJson() {
     return {
-      'idProprietario': idProprietario,
       'descricao': descricao,
       'medida': medida.sigla,
     };
@@ -51,4 +53,43 @@ class Insumo {
 
   @override
   String toString() => descricao;
+}
+
+/// Quanto de um insumo um evento consumiu.
+class InsumoUtilizado {
+  final Insumo insumo;
+
+  final double qtdUsada;
+
+  const InsumoUtilizado({required this.insumo, required this.qtdUsada});
+
+  int get idInsumo => insumo.id!;
+
+  String get qtdFormatada =>
+      '${formatarDecimal(qtdUsada)} ${insumo.medida.sigla}';
+
+  String get descricaoComQuantidade => '${insumo.descricao} — $qtdFormatada';
+
+  Map<String, dynamic> toJson() => {'idInsumo': idInsumo, 'qtdUsada': qtdUsada};
+
+  factory InsumoUtilizado.fromJson(Map<String, dynamic> json) {
+    final aninhado = json['insumo'];
+
+    return InsumoUtilizado(
+      insumo: Insumo.fromJson(
+        aninhado is Map<String, dynamic> ? aninhado : json,
+      ),
+      qtdUsada: _paraDouble(json['qtdUsada'] ?? json['quantidade']),
+    );
+  }
+
+  static double _paraDouble(dynamic valor) {
+    if (valor is num) return valor.toDouble();
+    if (valor is String) return double.tryParse(valor) ?? 0.0;
+
+    return 0.0;
+  }
+
+  @override
+  String toString() => descricaoComQuantidade;
 }

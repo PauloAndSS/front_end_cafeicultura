@@ -1,17 +1,15 @@
-// lib/views/talhao/detalhes_talhao_view.dart
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
-import 'package:frond_end_cafeicultura_mobile/model/eventos/status_evento.dart';
-import 'package:frond_end_cafeicultura_mobile/model/eventos/tipo_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/model/eventos/evento.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/tipo_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/model/talhao.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/formatadores.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/tratos_culturais_do_talhao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/detalhes_talhao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/relatorio_talhao_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_propriedades_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/registro_atividades.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/trato_cultural/detalhes_trato_cultural_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/atividade_card.dart';
@@ -23,9 +21,18 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_selector.dart';
 import 'package:provider/provider.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/atividades_mudaram.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_data.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/blocos_detalhe.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_detalhe.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_entidade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/abas_padrao.dart';
 
-/// Distância do fim da rolagem em que a próxima página já é pedida — a mesma
-/// da aba de atividades, para as duas telas paginarem com a mesma folga.
 const _margemParaProximaPagina = 300.0;
 
 class DetalhesTalhaoView extends StatefulWidget {
@@ -41,32 +48,19 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     with SingleTickerProviderStateMixin {
   final _viewModel = DetalhesTalhaoViewModel();
 
-  /// ViewModel próprio para as atividades: o `isLoading` de [_viewModel] já
-  /// desabilita os botões de encerrar/excluir, e recarregar a lista não pode
-  /// bloquear essas ações.
   final _atividadesViewModel = TratosCulturaisDoTalhaoViewModel();
 
-  /// Terceiro ViewModel, pelo mesmo motivo do segundo: o relatório é uma
-  /// requisição independente da lista de atividades, e um `isLoading`
-  /// compartilhado faria o spinner de um esconder o conteúdo do outro.
   final _relatorioViewModel = RelatorioTalhaoViewModel();
 
   static const int _abaAtividades = 0;
   static const int _abaRelatorio = 1;
 
-  /// `TabController` próprio, e não o `DefaultTabController` que a Home e a aba
-  /// de atividades usam: a carga sob demanda do relatório precisa de um
-  /// listener de troca de aba, e pedir o controller herdado dentro do mesmo
-  /// `build` que o cria seria acesso circular.
   late final TabController _abas = TabController(
     length: 2,
     initialIndex: _abaAtividades,
     vsync: this,
   );
 
-  /// O relatório é buscado no primeiro toque na aba, não na abertura da tela:
-  /// quem abre o talhão para lançar ou conferir uma atividade nunca paga a
-  /// requisição do relatório, que é a mais cara das duas.
   bool _relatorioSolicitado = false;
 
   TipoAtividade _tipoAtividade = TipoAtividade.tratosCulturais;
@@ -77,8 +71,6 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
 
     _abas.addListener(_aoTrocarAba);
 
-    // carregar notifica de forma síncrona: chamar aqui direto dispararia
-    // rebuild no meio do primeiro frame.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _carregarAtividades();
     });
@@ -99,29 +91,12 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
 
     _relatorioSolicitado = true;
 
-    // O listener dispara do ticker da animação da aba, que pode estar no meio
-    // de um layout, e `carregarDadosDaPropriedade` notifica de forma síncrona.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _carregarRelatorio();
     });
   }
 
-  /// Pede a próxima página quando a rolagem da aba de atividades se aproxima
-  /// do fim.
-  ///
-  /// Notificação, e não `ScrollController`: dentro do corpo de um
-  /// [NestedScrollView] quem manda no scrollable interno é o
-  /// `PrimaryScrollController` injetado por ele — passar um controller próprio
-  /// desconectaria o cabeçalho da rolagem das abas.
-  ///
-  /// Retorna sempre `false`. O [NestedScrollView] depende de as notificações
-  /// continuarem subindo para coordenar cabeçalho e corpo; consumir aqui
-  /// travaria a rolagem da tela inteira.
-  ///
-  /// As duas guardas extras importam: um tipo de atividade sem tela
-  /// implementada não tem o que paginar, e um erro pendente espera o botão em
-  /// vez de retentar a cada pixel rolado.
-  bool _aoRolar(ScrollNotification notificacao) {
+  bool _onScroll(ScrollNotification notificacao) {
     final metrica = notificacao.metrics;
 
     if (metrica.axis != Axis.vertical) return false;
@@ -135,13 +110,10 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     return false;
   }
 
-  /// Gancho de extensão do select: cada tipo novo entra como um `case`. Os
-  /// ainda não implementados não disparam requisição — é o que mantém a
-  /// abertura da tela barata.
-  void _carregarTipoSelecionado({bool forcar = false}) {
+  void _carregarTipoSelecionado() {
     switch (_tipoAtividade) {
       case TipoAtividade.tratosCulturais:
-        _carregarAtividades(forcar: forcar);
+        _carregarAtividades();
       case TipoAtividade.colheitas:
       case TipoAtividade.preSecagens:
       case TipoAtividade.despolpagens:
@@ -152,7 +124,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     }
   }
 
-  void _carregarAtividades({bool forcar = false}) {
+  void _carregarAtividades() {
     final idPropriedade = context
         .read<PropriedadesUsuarioViewModel>()
         .idPropriedadeSelecionada;
@@ -160,14 +132,9 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
 
     if (idPropriedade == null || idTalhao == null) return;
 
-    _atividadesViewModel.carregar(idPropriedade, idTalhao, forcar: forcar);
+    _atividadesViewModel.carregar(idPropriedade, idTalhao);
   }
 
-  /// Primeira carga do relatório, na safra de trabalho do usuário.
-  ///
-  /// A lista de safras vem do [SafraViewModel] global, mas a seleção daqui em
-  /// diante é do [_relatorioViewModel]: trocar a safra deste relatório não
-  /// pode mudar em que safra o próximo trato cultural será cadastrado.
   void _carregarRelatorio() {
     final idPropriedade = context
         .read<PropriedadesUsuarioViewModel>()
@@ -178,9 +145,6 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
 
     final safraVM = context.read<SafraViewModel>();
 
-    // Chegando aqui sem passar pela Home, a lista de safras pode nunca ter
-    // sido buscada. O cache de sessão do ViewModel absorve a chamada extra
-    // quando ela já foi feita.
     if (!safraVM.dadosCarregados || safraVM.propriedadeIdAtual != idPropriedade) {
       safraVM.carregarDadosDaPropriedade(idPropriedade);
       return;
@@ -210,123 +174,48 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
       MaterialPageRoute(
         builder: (_) => DetalhesTratoCulturalView(
           trato: trato,
-          nomeTalhao: widget.talhao.nomeExibicao,
+          talhao: widget.talhao,
         ),
       ),
     );
 
-    // forcar: o trato pode ter sido finalizado ou editado lá dentro, então o
-    // cache está velho.
-    // O relatório vai junto: um trato confirmado lá dentro muda a contagem de
-    // "Em andamento"/"Finalizados", e deixar só a lista atualizar deixaria as
-    // duas abas discordando uma da outra. Se a aba do relatório nunca foi
-    // aberta, `recarregar` sai cedo por não haver safra selecionada — o no-op
-    // é intencional, e é o que preserva a carga sob demanda.
     if (alterou == true && mounted) {
-      _carregarAtividades(forcar: true);
+      context.read<AtividadesMudaram>().invalidar();
       _relatorioViewModel.recarregar();
     }
   }
 
   void _onSucesso(String mensagem) {
-    final propriedadesVM = context.read<PropriedadesUsuarioViewModel>();
-    if (propriedadesVM.idPropriedadeSelecionada != null) {
-      context.read<TalhoesViewModel>().carregarTalhoes(
-        propriedadesVM.idPropriedadeSelecionada!,
-      );
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(mensagem),
-        backgroundColor: Colors.green,
-      ),
-    );
+    mostrarSucesso(context, mensagem);
 
     Navigator.of(context).pop(true);
   }
 
-  void _onErro(String mensagem) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(mensagem),
-        backgroundColor: Colors.red,
-      ),
-    );
-  }
-
-  /// Sem parâmetro de contexto: o `context` do State é o mesmo que o `mounted`
-  /// daqui protege. Recebê-lo de fora fazia o guard proteger um contexto e o
-  /// diálogo usar outro.
   Future<void> _confirmarEncerramento() async {
-    final DateTime hoje = DateTime.now();
-
-    final DateTime? dataFimEscolhida = await showDatePicker(
+    final dataFimEscolhida = await selecionarData(
       context: context,
-      initialDate: hoje,
-      firstDate: widget.talhao.dataInicio,
-      lastDate: hoje,
-      helpText: 'Selecione a data de encerramento do talhão',
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: Color(0xFF67835C),
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      ajuda: 'Selecione a data de encerramento do talhão',
+      minima: widget.talhao.dataInicio,
     );
 
     if (dataFimEscolhida == null) return;
     if (!mounted) return;
 
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Encerrar Talhão'),
-        // A consequência vem junto da pergunta, e não depois dela: encerrar
-        // parece reversível pelo nome, e não é — o talhão vira somente leitura.
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Deseja realmente encerrar o talhão "${widget.talhao.nomeExibicao}" '
-              'na data ${formatarDataBr(dataFimEscolhida)}?',
-            ),
-            const SizedBox(height: 16),
-            const CaixaAvisoAtencao(
-              mensagem: 'Depois de encerrado, você não poderá mais registrar '
-                  'atividades nem fazer alterações neste talhão — apenas '
-                  'visualizá-lo.',
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancelar', style: TextStyle(color: Colors.grey)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Encerrar',
-              style: TextStyle(
-                color: Color(0xFFD32F2F),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
+    final confirmar = await confirmarAcao(
+      context,
+      titulo: 'Encerrar Talhão',
+      mensagem:
+          'Deseja realmente encerrar o talhão "${widget.talhao.nomeExibicao}" '
+          'na data ${formatarDataBr(dataFimEscolhida)}?',
+      rotuloConfirmar: 'Encerrar',
+      complemento: const CaixaAvisoAtencao(
+        mensagem: 'Depois de encerrado, você não poderá mais registrar '
+            'atividades nem fazer alterações neste talhão — apenas '
+            'visualizá-lo.',
       ),
     );
 
-    if (confirmar == true) {
+    if (confirmar) {
       final sucesso = await _viewModel.encerrar(
         widget.talhao.id!,
         dataFimEscolhida,
@@ -337,16 +226,11 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
       if (sucesso == true) {
         _onSucesso('Talhão encerrado com sucesso!');
       } else {
-        _onErro(_viewModel.mensagemErro ?? 'Erro ao encerrar talhão.');
+        mostrarErro(context, _viewModel.mensagemErro ?? 'Erro ao encerrar talhão.');
       }
     }
   }
 
-  /// Chamado pelo [BotaoExcluir] depois que o usuário confirma no diálogo.
-  ///
-  /// O erro mantém a tela aberta de propósito: a recusa mais comum é o 403 de
-  /// "há atividades cadastradas nele", e é aqui que o usuário vê a lista que
-  /// precisa limpar antes de tentar de novo.
   Future<void> _excluir() async {
     final sucesso = await _viewModel.excluir(widget.talhao.id!);
 
@@ -355,29 +239,22 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     if (sucesso == true) {
       _onSucesso('Talhão excluído com sucesso!');
     } else {
-      _onErro(_viewModel.mensagemErro ?? 'Erro ao excluir talhão.');
+      mostrarErro(context, _viewModel.mensagemErro ?? 'Erro ao excluir talhão.');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final bool estaEncerrado = widget.talhao.dataFim != null || widget.talhao.arquivado == true;
+    final bool estaEncerrado = widget.talhao.encerrado;
+
+    final geracaoDoCache = context.watch<AtividadesMudaram>().geracao;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _atividadesViewModel.sincronizarCom(geracaoDoCache);
+    });
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      appBar: AppBar(
-        title: Text(
-          widget.talhao.nomeExibicao,
-          style: const TextStyle(color: Colors.white),
-        ),
-        backgroundColor: const Color(0xFF67835C),
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      // NestedScrollView: o cadastro do talhão e suas ações são cabeçalho —
-      // rolam junto e saem de vista —, enquanto a TabBar gruda no topo e cada
-      // aba mantém a própria rolagem. Antes eram três blocos empilhados numa
-      // rolagem só, e chegar ao primeiro card de atividade custava passar pelo
-      // dashboard inteiro.
+      backgroundColor: AppCores.fundo,
+      appBar: AppBarPadrao(titulo: widget.talhao.nomeExibicao),
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverPadding(
@@ -390,25 +267,14 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
               ),
             ),
           ),
-          // O absorber é o par obrigatório do injector das abas: sem ele o topo
-          // do conteúdo de cada aba fica escondido atrás da TabBar fixa.
           SliverOverlapAbsorber(
             handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
             sliver: SliverPersistentHeader(
               pinned: true,
               delegate: _CabecalhoAbas(
-                TabBar(
+                abasPadrao(
                   controller: _abas,
-                  labelColor: const Color(0xFF67835C),
-                  unselectedLabelColor: Colors.grey,
-                  indicatorColor: const Color(0xFF67835C),
-                  indicatorWeight: 3.0,
-                  dividerColor: Colors.transparent,
-                  labelStyle: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                  tabs: const [
+                  abas: const [
                     Tab(text: 'Atividades'),
                     Tab(text: 'Relatório'),
                   ],
@@ -428,72 +294,60 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     );
   }
 
-  /// Cadastro do talhão e as duas ações destrutivas — o que rola e sai de vista
-  /// acima das abas.
   Widget _construirCabecalhoTalhao(bool estaEncerrado) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.05),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
+        CartaoDetalhe(
+          titulo: 'Informações do Talhão',
+          selo: estaEncerrado
+              ? const BadgeTexto(texto: 'Encerrado', cor: Colors.red)
+              : null,
+          conteudo: [
+            LinhaInfo(
+              rotulo: 'Nome:',
+              valor: widget.talhao.nomeExibicao,
+              padding: EdgeInsets.zero,
+            ),
+            const SizedBox(height: 12),
+            LinhaInfo(
+              rotulo: 'Espécie:',
+              valor: widget.talhao.especieFormatada,
+              padding: EdgeInsets.zero,
+            ),
+            const SizedBox(height: 12),
+            LinhaInfo(
+              rotulo: 'Variedades de Café:',
+              valor: widget.talhao.variedadesTexto,
+              padding: EdgeInsets.zero,
+            ),
+            const SizedBox(height: 12),
+            LinhaInfo(
+              rotulo: 'Quantidade de Pés:',
+              valor: widget.talhao.qtdPeCafeFormatada,
+              padding: EdgeInsets.zero,
+            ),
+            const SizedBox(height: 12),
+            LinhaInfo(
+              rotulo: 'Tamanho:',
+              valor: widget.talhao.tamanhoFormatado,
+              padding: EdgeInsets.zero,
+            ),
+            const SizedBox(height: 12),
+            LinhaInfo(
+              rotulo: 'Data de Início:',
+              valor: widget.talhao.dataInicioFormatada,
+              padding: EdgeInsets.zero,
+            ),
+            if (widget.talhao.dataFimFormatada != null) ...[
+              const SizedBox(height: 12),
+              LinhaInfo(
+                rotulo: 'Data de Encerramento:',
+                valor: widget.talhao.dataFimFormatada!,
+                padding: EdgeInsets.zero,
               ),
             ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Informações do Talhão',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF67835C),
-                    ),
-                  ),
-                  if (estaEncerrado)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Text(
-                        'Encerrado',
-                        style: TextStyle(color: Colors.red, fontSize: 12, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                ],
-              ),
-              const Divider(height: 24),
-              _buildInfoRow('Nome:', widget.talhao.nomeExibicao),
-              const SizedBox(height: 12),
-              _buildInfoRow('Espécie:', widget.talhao.especieFormatada),
-              const SizedBox(height: 12),
-              _buildInfoRow('Variedades de Café:', widget.talhao.variedadesTexto),
-              const SizedBox(height: 12),
-              _buildInfoRow('Quantidade de Pés:', widget.talhao.qtdPeCafeFormatada),
-              const SizedBox(height: 12),
-              _buildInfoRow('Tamanho:', widget.talhao.tamanhoFormatado),
-              const SizedBox(height: 12),
-              _buildInfoRow('Data de Início:', widget.talhao.dataInicioFormatada),
-              if (widget.talhao.dataFimFormatada != null) ...[
-                const SizedBox(height: 12),
-                _buildInfoRow('Data de Encerramento:', widget.talhao.dataFimFormatada!),
-              ],
-            ],
-          ),
+          ],
         ),
         const SizedBox(height: 32),
 
@@ -519,9 +373,6 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
             ),
           ),
 
-        // Discreto e abaixo do encerrar: excluir apaga o talhão e o histórico
-        // junto, e não é o que o usuário veio fazer aqui. Com dois botões de
-        // largura total, a ação irreversível tinha o mesmo peso da reversível.
         BotaoExcluir(
           titulo: 'Excluir Talhão?',
           mensagem:
@@ -534,17 +385,10 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
       ],
     );
   }
-
-  /// Aba da esquerda: o registro atividade a atividade, com rolagem infinita.
-  ///
-  /// O [Builder] existe para o [SliverOverlapInjector] achar o handle — ele só
-  /// é visível a partir de um contexto abaixo do [NestedScrollView], e o
-  /// contexto do `build` do State está acima. A [PageStorageKey] guarda a
-  /// posição da rolagem, que o [TabBarView] descartaria ao reconstruir a aba.
   Widget _construirAbaAtividades() {
     return Builder(
       builder: (context) => NotificationListener<ScrollNotification>(
-        onNotification: _aoRolar,
+        onNotification: _onScroll,
         child: CustomScrollView(
           key: const PageStorageKey('atividades'),
           physics: const AlwaysScrollableScrollPhysics(),
@@ -574,7 +418,6 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     );
   }
 
-  /// Aba da direita: os mesmos eventos, agregados.
   Widget _construirAbaRelatorio() {
     return Builder(
       builder: (context) => CustomScrollView(
@@ -589,7 +432,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
             sliver: SliverToBoxAdapter(
               child: ListenableBuilder(
                 listenable: _relatorioViewModel,
-                builder: (context, child) => _construirSecaoRelatorio(),
+                builder: (context, child) => _construirSecaoRelatorio(context),
               ),
             ),
           ),
@@ -598,18 +441,12 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     );
   }
 
-  /// Relatório agregado do talhão na safra escolhida.
-  ///
-  /// Sem título próprio: o rótulo da aba logo acima já diz o que é isto, e
-  /// repeti-lo só empurraria o seletor para baixo.
-  Widget _construirSecaoRelatorio() {
+  Widget _construirSecaoRelatorio(BuildContext context) {
     final safraVM = context.watch<SafraViewModel>();
     final idPropriedade = context
         .watch<PropriedadesUsuarioViewModel>()
         .idPropriedadeSelecionada;
 
-    // Caixa neutra, e não `SizedBox.shrink()`: como aba inteira, sumir deixaria
-    // uma tela em branco que se lê como falha de carregamento.
     if (idPropriedade == null) {
       return _construirCaixaAviso(
         'Selecione uma propriedade para ver o relatório.',
@@ -619,7 +456,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     if (safraVM.isLoading) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator(color: Color(0xFF67835C))),
+        child: Center(child: CircularProgressIndicator(color: AppCores.verdePrimario)),
       );
     }
 
@@ -627,10 +464,6 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
       return _construirCaixaAviso('Nenhuma safra cadastrada nesta propriedade.');
     }
 
-    // As safras podem ter chegado depois do toque na aba — foi o próprio
-    // `_carregarRelatorio` que pediu a lista. Este é o ponto em que a resposta
-    // vira a primeira seleção; sem ele o relatório ficaria esperando um toque
-    // no dropdown que o usuário não tem motivo para dar.
     if (_relatorioViewModel.safraSelecionada == null && safraVM.safraSelecionada != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _selecionarSafraDoRelatorio(safraVM.safraSelecionada);
@@ -658,12 +491,6 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     );
   }
 
-  /// Seletor de tipo e segmentado de status, sem título — quem nomeia a seção
-  /// agora é a aba.
-  ///
-  /// O filtro vai ao servidor: em vez de guardar a seleção num campo do State e
-  /// repartir uma lista já baixada, ele delega ao ViewModel, que mantém uma
-  /// página por status. `null` é o segmento "Todas".
   Widget _construirCabecalhoAtividades() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -691,8 +518,6 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
   }
 
   Widget _construirSliverAtividades() {
-    // Antes da cascata de estado: sem esta guarda, o spinner e o erro dos
-    // tratos culturais vazariam para os tipos ainda não implementados.
     if (!atividadeImplementada(_tipoAtividade)) {
       return SliverToBoxAdapter(child: _construirTipoEmDesenvolvimento());
     }
@@ -702,7 +527,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 24),
           child: Center(
-            child: CircularProgressIndicator(color: Color(0xFF67835C)),
+            child: CircularProgressIndicator(color: AppCores.verdePrimario),
           ),
         ),
       );
@@ -720,7 +545,6 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
       );
     }
 
-    // O item extra é o rodapé: indicador da próxima página, ou o erro dela.
     return SliverList.builder(
       itemCount: atividades.length + 1,
       itemBuilder: (context, indice) => indice < atividades.length
@@ -734,59 +558,20 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     );
   }
 
-  /// Erro com a lista vazia — ocupa o lugar dos cards.
-  ///
-  /// O botão é obrigatório, e não enfeite: o ViewModel paginado não retenta
-  /// sozinho depois de uma falha (buscar de novo a cada rebuild transformaria
-  /// uma rota fora do ar numa requisição por frame), então sem ele a seção
-  /// ficaria travada no erro até o usuário sair da tela e voltar.
   Widget _construirErroAtividades(String mensagem) {
-    return Padding(
+    return MensagemDeErro(
+      mensagem: mensagem,
+      aoTentarNovamente: _atividadesViewModel.tentarNovamente,
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-      child: Column(
-        children: [
-          Text(
-            mensagem,
-            style: const TextStyle(color: Colors.red),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          TextButton(
-            onPressed: _atividadesViewModel.tentarNovamente,
-            child: const Text(
-              'Tentar novamente',
-              style: TextStyle(color: Color(0xFF67835C)),
-            ),
-          ),
-        ],
-      ),
     );
   }
 
-  /// Rodapé da lista: o que a rolagem infinita tem a dizer sem arrancar os
-  /// cards já visíveis da tela.
   Widget _construirRodapeAtividades() {
-    if (_atividadesViewModel.isCarregandoMais) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(
-          child: SizedBox(
-            width: 24,
-            height: 24,
-            child: CircularProgressIndicator(
-              strokeWidth: 2,
-              color: Color(0xFF67835C),
-            ),
-          ),
-        ),
-      );
-    }
-
-    final erro = _atividadesViewModel.mensagemErro;
-
-    if (erro != null) return _construirErroAtividades(erro);
-
-    return const SizedBox.shrink();
+    return RodapePaginacao(
+      carregando: _atividadesViewModel.isCarregandoMais,
+      mensagemErro: _atividadesViewModel.mensagemErro,
+      aoTentarNovamente: _atividadesViewModel.tentarNovamente,
+    );
   }
 
   Widget _construirTipoEmDesenvolvimento() {
@@ -794,8 +579,6 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
   }
 
   Widget _construirAtividadesVazias() {
-    // No segmento "Todas" não há adjetivo a acrescentar: a frase é sobre o
-    // talhão inteiro, não sobre um recorte dele.
     final statusTexto = switch (_atividadesViewModel.statusAtual) {
       StatusEvento.agendado => ' agendada',
       StatusEvento.emAndamento => ' em andamento',
@@ -808,9 +591,6 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     );
   }
 
-  /// Caixa neutra usada tanto para lista vazia quanto para tipo ainda não
-  /// implementado ou aba de relatório sem recorte possível — mesma moldura, só
-  /// muda o texto.
   Widget _construirCaixaAviso(String mensagem) {
     return Container(
       width: double.infinity,
@@ -829,36 +609,8 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
       ),
     );
   }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontWeight: FontWeight.w600,
-            color: Colors.black54,
-            fontSize: 15,
-          ),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            value,
-            style: const TextStyle(color: Colors.black87, fontSize: 15),
-            textAlign: TextAlign.end,
-          ),
-        ),
-      ],
-    );
-  }
 }
 
-/// A [TabBar] fixada no topo do corpo, entre o cabeçalho que rola e a aba.
-///
-/// O fundo branco é obrigatório: o header fica pinado sobre o `0xFFF5F5F5` da
-/// tela e, sem ele, os cards passariam por baixo dos rótulos ao rolar.
 class _CabecalhoAbas extends SliverPersistentHeaderDelegate {
   final TabBar abas;
 

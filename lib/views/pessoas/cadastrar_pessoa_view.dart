@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/cadastrar_pessoa_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/masks.dart'; 
-import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/cliente.dart';
@@ -11,6 +10,11 @@ import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/meeiro.d
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/prestador.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_identificacao.dart';
 
 class CadastrarPessoaView extends StatefulWidget {
   const CadastrarPessoaView({super.key});
@@ -20,7 +24,7 @@ class CadastrarPessoaView extends StatefulWidget {
 }
 
 class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
-  final _viewModel = CadastroPessoaViewModel();
+  final _viewModel = CadastrarPessoaViewModel();
   final _formKey = GlobalKey<FormState>();
 
   bool _isPessoaFisica = true;
@@ -57,39 +61,13 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
         _viewModel.papelSelecionado != null;
   }
 
-  Future<bool> _mostrarDialogoConfirmacao() async {
-    final resultado = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Descartar alterações?'),
-        content: const Text(
+  Future<bool> _mostrarDialogoConfirmacao() {
+    return confirmarDescarte(
+      context,
+      mensagem:
           'Você preencheu alguns dados. Se sair agora, tudo será perdido. Deseja realmente sair?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text(
-              'Continuar Editando',
-              style: TextStyle(
-                color: Color(0xFF8FA67E),
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text(
-              'Sair sem Salvar',
-              style: TextStyle(color: Colors.red),
-            ),
-          ),
-        ],
-      ),
     );
-    return resultado ?? false;
   }
-
   void _salvar() async {
     if (_formKey.currentState!.validate()) {
       FocusScope.of(context).unfocus();
@@ -133,20 +111,10 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
       );
 
       if (sucesso && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Pessoa cadastrada com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        mostrarSucesso(context, 'Pessoa cadastrada com sucesso!');
         Navigator.pop(context, true);
       } else if (mounted && _viewModel.mensagemErro != null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_viewModel.mensagemErro!),
-            backgroundColor: Colors.red,
-          ),
-        );
+        mostrarErro(context, _viewModel.mensagemErro!);
       }
     }
   }
@@ -170,10 +138,11 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F5F5),
-        appBar: AppBar(
-          backgroundColor: const Color(0xFF9FB896),
-          title: const Text('Cadastrar Pessoa'),
+        backgroundColor: AppCores.fundo,
+        appBar: const AppBarPadrao(
+          titulo: 'Cadastrar Pessoa',
+          cor: AppCores.verdeAuth,
+          corConteudo: null,
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -188,8 +157,8 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
               child: ListenableBuilder(
                 listenable: _viewModel,
                 builder: (context, _) {
-                  
-                  final bool forcarPessoaFisica = 
+
+                  final bool forcarPessoaFisica =
                       _viewModel.papelSelecionado == TipoPapel.funcionario ||
                       _viewModel.papelSelecionado == TipoPapel.meeiro;
 
@@ -241,7 +210,7 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                         ],
                         onChanged: (papel) {
                           _viewModel.selecionarPapel(papel);
-                          
+
                           if (papel == TipoPapel.funcionario || papel == TipoPapel.meeiro) {
                             setState(() => _isPessoaFisica = true);
                           }
@@ -295,40 +264,15 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                       ),
                       const SizedBox(height: 16),
 
-                      if (_isPessoaFisica) ...[
-                        CustomTextField(
-                          label: 'Nome Completo',
-                          controller: _nomeController,
-                          validator: Validator.validarNome,
-                        ),
-                        CustomTextField(
-                          label: 'CPF',
-                          controller: _cpfController,
-                          hintText: '000.000.000-00',
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [AppMasks.cpf],
-                          validator: Validator.validarCPF,
-                        ),
-                      ] else ...[
-                        CustomTextField(
-                          label: 'Razão Social',
-                          controller: _razaoSocialController,
-                          validator: Validator.validarRazaoSocial,
-                        ),
-                        CustomTextField(
-                          label: 'CNPJ',
-                          controller: _cnpjController,
-                          hintText: '00.000.000/0000-00',
-                          keyboardType: TextInputType.number,
-                          inputFormatters: [AppMasks.cnpj],
-                          validator: Validator.validarCNPJ,
-                        ),
-                        CustomTextField(
-                          label: 'Inscrição Estadual (Opcional)',
-                          controller: _inscricaoEstadualController,
-                          keyboardType: TextInputType.number,
-                        ),
-                      ],
+                      BlocoIdentificacao(
+                        pessoaFisica: _isPessoaFisica,
+                        controllerNome: _nomeController,
+                        controllerRazaoSocial: _razaoSocialController,
+                        controllerCpf: _cpfController,
+                        controllerCnpj: _cnpjController,
+                        controllerInscricaoEstadual:
+                            _inscricaoEstadualController,
+                      ),
 
                       if (_viewModel.papelSelecionado == TipoPapel.funcionario) ...[
                         const SizedBox(height: 8),
@@ -341,7 +285,7 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                           ),
                         ),
                         const Divider(height: 32),
-                        
+
                         CustomTextField(
                           label: 'CTPS (Opcional)',
                           controller: _ctpsController,
@@ -363,7 +307,7 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                         width: double.infinity,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF8FA67E),
+                            backgroundColor: AppCores.verdeSecundario,
                             padding: const EdgeInsets.symmetric(vertical: 14),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),

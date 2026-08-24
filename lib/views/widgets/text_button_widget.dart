@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class CustomTextButton extends StatelessWidget {
   final String text;
@@ -16,8 +17,8 @@ class CustomTextButton extends StatelessWidget {
     this.alignment = Alignment.centerRight,
     this.textColor,
     this.isUnderlined = false,
-    this.isBold = true,        
-    this.fontSize = 14.0,      
+    this.isBold = true,
+    this.fontSize = 14.0,
   });
 
   @override
@@ -34,11 +35,11 @@ class CustomTextButton extends StatelessWidget {
         child: Text(
           text,
           style: TextStyle(
-            color: textColor ?? const Color(0xFF0091FF),
+            color: textColor ?? AppCores.link,
             fontWeight: isBold ? FontWeight.w600 : FontWeight.normal,
             fontSize: fontSize,
             decoration: isUnderlined ? TextDecoration.underline : TextDecoration.none,
-            decorationColor: textColor ?? const Color(0xFF0091FF), 
+            decorationColor: textColor ?? AppCores.link,
           ),
         ),
       ),
