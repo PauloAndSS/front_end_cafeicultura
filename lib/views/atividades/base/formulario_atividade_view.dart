@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/transacao_financeira_dialog.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/detalhes_despesa_dialog.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/base/dados_formulario_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
 import 'package:frond_end_cafeicultura_mobile/model/periodo.dart';
@@ -97,6 +100,8 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
 
   List<Pessoa> _responsaveisSelecionados = [];
 
+  List<Despesa> _despesas = [];
+
   bool _salvou = false;
 
   CadastrarAtividadeViewModel get _viewModel => widget.viewModel;
@@ -144,6 +149,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
       _dataInicio != widget.dataInicial ||
       _descricaoPreenchida ||
       _responsaveisSelecionados.isNotEmpty ||
+      _despesas.isNotEmpty ||
       widget.camposEspecificosPreenchidos;
 
   void _recarregarDados() {
@@ -193,7 +199,9 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
   Safra? _safraDoLancamento() =>
       _resolverSafra(_safrasDisponiveis(context.read<SafraViewModel>()));
 
-  bool get _aceitaDataFim => _dataInicio != null && !ehFutura(_dataInicio!);
+  bool get _ehRetroativa => _dataInicio != null && !ehFutura(_dataInicio!);
+
+  bool get _aceitaDataFim => _ehRetroativa;
 
   DateTime? _fimDoEscopo(Talhao? talhao, Safra? safra) =>
       menorData(talhao?.dataFim, safra?.dataFim);
@@ -223,6 +231,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
       _dataInicioController.text = formatarDataBr(escolhida);
 
       _descartarEscopoForaDaData(escolhida);
+      _descartarDespesasDeAgendada();
       _ajustarDataFimAoEscopo();
     });
   }
@@ -236,6 +245,10 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
         !(_safraSelecionada!.periodo?.contem(dia) ?? false)) {
       _safraSelecionada = null;
     }
+  }
+
+  void _descartarDespesasDeAgendada() {
+    if (!_ehRetroativa) _despesas = [];
   }
 
   void _limparDataFim() {
@@ -298,6 +311,52 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     setState(() => _responsaveisSelecionados = escolhidos);
   }
 
+  Future<void> _abrirCadastroTransacao() async {
+    final idPropriedade =
+        context.read<PropriedadesUsuarioViewModel>().idPropriedadeSelecionada;
+
+    if (idPropriedade == null) {
+      mostrarAviso(
+        context,
+        'Selecione uma propriedade antes de lançar uma despesa.',
+      );
+      return;
+    }
+
+    final pessoas = await _viewModel.carregarPessoas();
+
+    if (!mounted) return;
+
+    final despesa = await mostrarCadastroTransacao(
+      context: context,
+      idPropriedade: idPropriedade,
+      responsaveis: _responsaveisSelecionados,
+      demaisPessoas: pessoas,
+    );
+
+    if (despesa == null || !mounted) return;
+
+    setState(() => _despesas = [..._despesas, despesa]);
+  }
+
+  Future<void> _abrirDetalhesDespesa(Despesa despesa) async {
+    final excluir = await mostrarDetalhesDespesa(
+      context: context,
+      despesa: despesa,
+    );
+
+    if (!excluir || !mounted) return;
+
+    _removerDespesa(despesa);
+  }
+
+  void _removerDespesa(Despesa despesa) {
+    setState(() {
+      _despesas =
+          _despesas.where((atual) => !identical(atual, despesa)).toList();
+    });
+  }
+
   Future<void> _confirmarSaida() async {
     final descartar = await confirmarDescarte(
       context,
@@ -350,6 +409,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
         dataFim: _dataFim,
         descricao: _descricaoController.text,
         responsaveis: _responsaveisSelecionados,
+        despesas: _despesas,
       ),
     );
 
@@ -384,6 +444,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
         _dataInicioController.clear();
         _talhaoSelecionado = null;
         _safraSelecionada = null;
+        _descartarDespesasDeAgendada();
         _limparDataFim();
       });
 
@@ -508,12 +569,12 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        construirRotuloAtividade(rotulo),
+        rotuloDeCampo(rotulo),
         DropdownButtonFormField<T>(
           key: ValueKey('$rotulo-$_dataInicio'),
           initialValue: selecionado,
           isExpanded: true,
-          decoration: decoracaoSeletorAtividade(),
+          decoration: decoracaoDeSeletor(),
           hint: Text(
             semData ? 'Escolha a data de início primeiro' : dicaSelecionar,
             style: const TextStyle(color: Colors.black26, fontSize: 14),
@@ -624,7 +685,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
             const Divider(),
             const SizedBox(height: 16),
 
-            construirRotuloAtividade('Responsáveis'),
+            rotuloDeCampo('Responsáveis'),
             SeletorMultiploAtividade<Pessoa>(
               icone: Icons.group_outlined,
               rotuloVazio: 'Selecionar responsáveis',
@@ -641,6 +702,21 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
             if (widget.construirCamposFinais != null) ...[
               const SizedBox(height: 24),
               widget.construirCamposFinais!(context),
+            ],
+
+            if (_ehRetroativa) ...[
+              const SizedBox(height: 24),
+              rotuloDeCampo('Despesas'),
+              SeletorMultiploAtividade<Despesa>(
+                icone: Icons.payments_outlined,
+                rotuloVazio: 'Adicionar despesa',
+                selecionados: _despesas,
+                rotuloItem: (despesa) => despesa.resumoComBeneficiado,
+                rotuloContagem: _despesas.contagemComTotal,
+                aoAbrir: _abrirCadastroTransacao,
+                aoRemover: _removerDespesa,
+                aoTocarItem: _abrirDetalhesDespesa,
+              ),
             ],
 
             const SizedBox(height: 32),
@@ -820,9 +896,9 @@ class _CampoFixoAtividade extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        construirRotuloAtividade(rotulo),
+        rotuloDeCampo(rotulo),
         InputDecorator(
-          decoration: decoracaoSeletorAtividade().copyWith(
+          decoration: decoracaoDeSeletor().copyWith(
             filled: true,
             fillColor: Colors.grey.shade200,
           ),
@@ -836,32 +912,4 @@ class _CampoFixoAtividade extends StatelessWidget {
       ],
     );
   }
-}
-
-Widget construirRotuloAtividade(String texto) {
-  return Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Text(
-      texto,
-      style: const TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w600,
-        color: Colors.black87,
-      ),
-    ),
-  );
-}
-
-InputDecoration decoracaoSeletorAtividade() {
-  return InputDecoration(
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-    border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: AppCores.borda),
-    ),
-    enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(8),
-      borderSide: const BorderSide(color: AppCores.borda),
-    ),
-  );
 }

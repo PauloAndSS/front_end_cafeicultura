@@ -2,6 +2,7 @@ import 'package:frond_end_cafeicultura_mobile/model/eventos/evento.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 export 'package:frond_end_cafeicultura_mobile/model/eventos/evento.dart';
 export 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
+export 'package:frond_end_cafeicultura_mobile/model/financeiro/despesa.dart';
 
 class EventoAgricola extends Evento {
   final int idTalhao;
@@ -16,6 +17,7 @@ class EventoAgricola extends Evento {
     super.dataCadastro,
     super.idSafra,
     super.responsaveis,
+    super.transacoesFinanceiras,
     required this.idTalhao,
     this.modulo = '',
   });

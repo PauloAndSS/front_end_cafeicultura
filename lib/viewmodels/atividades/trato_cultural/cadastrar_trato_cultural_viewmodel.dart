@@ -35,6 +35,7 @@ class CadastrarTratoCulturalViewModel extends CadastrarAtividadeViewModel
           descricao: dados.descricao?.trim(),
           idSafra: idSafra,
           responsaveis: dados.responsaveis,
+          transacoesFinanceiras: dados.despesas,
           insumosUtilizados: insumosUtilizados,
         );
 

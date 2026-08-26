@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/blocos_detalhe.dart';
 
 class SeletorMultiploAtividade<T> extends StatelessWidget {
   final IconData icone;
@@ -10,6 +11,9 @@ class SeletorMultiploAtividade<T> extends StatelessWidget {
   final String Function(T item) rotuloItem;
   final VoidCallback aoAbrir;
   final ValueChanged<T> aoRemover;
+  final String? rotuloContagem;
+  final bool Function(T item)? podeRemover;
+  final ValueChanged<T>? aoTocarItem;
 
   const SeletorMultiploAtividade({
     super.key,
@@ -19,6 +23,9 @@ class SeletorMultiploAtividade<T> extends StatelessWidget {
     required this.rotuloItem,
     required this.aoAbrir,
     required this.aoRemover,
+    this.rotuloContagem,
+    this.podeRemover,
+    this.aoTocarItem,
   });
 
   @override
@@ -46,7 +53,7 @@ class SeletorMultiploAtividade<T> extends StatelessWidget {
                   child: Text(
                     quantidade == 0
                         ? rotuloVazio
-                        : '$quantidade selecionado(s)',
+                        : rotuloContagem ?? '$quantidade selecionado(s)',
                     style: TextStyle(
                       fontSize: 14,
                       color: quantidade == 0 ? Colors.black26 : Colors.black87,
@@ -60,20 +67,13 @@ class SeletorMultiploAtividade<T> extends StatelessWidget {
         ),
         if (quantidade > 0) ...[
           const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 4,
-            children: selecionados.map((item) {
-              return Chip(
-                label: Text(
-                  rotuloItem(item),
-                  style: const TextStyle(color: Colors.white, fontSize: 13),
-                ),
-                backgroundColor: AppCores.verdeSecundario,
-                deleteIconColor: Colors.white,
-                onDeleted: () => aoRemover(item),
-              );
-            }).toList(),
+          ChipsLista<T>(
+            itens: selecionados,
+            rotuloItem: rotuloItem,
+            textoVazio: '',
+            aoTocar: aoTocarItem,
+            aoRemover: aoRemover,
+            podeRemover: podeRemover,
           ),
         ],
       ],

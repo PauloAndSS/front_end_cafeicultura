@@ -4,29 +4,20 @@ import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 export 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 
 class TipoTrato {
-  final int? id;
   final String descricao;
 
-  TipoTrato({
-    required this.id,
-    required this.descricao,
-  });
-
-  TipoTrato.deDescricao(this.descricao) : id = null;
+  TipoTrato(this.descricao);
 
   factory TipoTrato.fromJson(Map<String, dynamic> json) {
-    return TipoTrato(
-      id: json['id'],
-      descricao: json['descricao'] ?? '',
-    );
+    return TipoTrato(json['descricao'] ?? '');
   }
 
   @override
   bool operator ==(Object other) =>
-      other is TipoTrato && other.id == id && other.descricao == descricao;
+      other is TipoTrato && other.descricao == descricao;
 
   @override
-  int get hashCode => Object.hash(id, descricao);
+  int get hashCode => descricao.hashCode;
 }
 
 class TratoCultural extends EventoAgricola {
@@ -42,14 +33,13 @@ class TratoCultural extends EventoAgricola {
     required super.idTalhao,
     super.idSafra,
     super.responsaveis,
+    super.transacoesFinanceiras,
     required this.tipoTrato,
     this.insumosUtilizados = const [],
   });
 
   TratoCultural.fromJson(super.json)
-      : tipoTrato = TipoTrato.deDescricao(
-          json['tipoTrato'] ?? 'Não informado',
-        ),
+      : tipoTrato = TipoTrato(json['tipoTrato'] ?? 'Não informado'),
         insumosUtilizados = _lerInsumos(json),
         super.fromJson();
 
@@ -60,7 +50,7 @@ class TratoCultural extends EventoAgricola {
   Map<String, dynamic> toJson() {
     return {
       ...super.toJson(),
-      'idTipoTrato': tipoTrato.id,
+      'tipoTrato': tipoTrato.descricao,
       'insumosUtilizados':
           insumosUtilizados.map((insumo) => insumo.toJson()).toList(),
     };
@@ -76,6 +66,7 @@ class TratoCultural extends EventoAgricola {
     int? idTalhao,
     int? idSafra,
     List<Pessoa>? responsaveis,
+    List<TransacaoFinanceira>? transacoesFinanceiras,
     TipoTrato? tipoTrato,
     List<InsumoUtilizado>? insumosUtilizados,
   }) {
@@ -88,6 +79,8 @@ class TratoCultural extends EventoAgricola {
       idTalhao: idTalhao ?? this.idTalhao,
       idSafra: idSafra ?? this.idSafra,
       responsaveis: responsaveis ?? this.responsaveis,
+      transacoesFinanceiras:
+          transacoesFinanceiras ?? this.transacoesFinanceiras,
       tipoTrato: tipoTrato ?? this.tipoTrato,
       insumosUtilizados: insumosUtilizados ?? this.insumosUtilizados,
     );

@@ -7,6 +7,10 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/detalhe
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/base/confirmar_atividade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/blocos_detalhes_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_multiplo_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/detalhes_despesa_dialog.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/transacao_financeira_dialog.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/pessoas/selecionar_responsaveis_modal.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_data.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/botao_excluir.dart';
@@ -179,6 +183,109 @@ class _DetalhesAtividadeViewState<T extends EventoAgricola>
     }
   }
 
+  Future<void> _lancarDespesa() async {
+    final idPropriedade =
+        context.read<PropriedadesUsuarioViewModel>().idPropriedadeSelecionada;
+
+    if (idPropriedade == null) {
+      mostrarAviso(
+        context,
+        'Selecione uma propriedade antes de lançar uma despesa.',
+      );
+      return;
+    }
+
+    final pessoas = await _viewModel.carregarPessoas();
+
+    if (!mounted) return;
+
+    final despesa = await mostrarCadastroTransacao(
+      context: context,
+      idPropriedade: idPropriedade,
+      responsaveis: _viewModel.atividade.responsaveis,
+      demaisPessoas: pessoas,
+    );
+
+    if (despesa == null || !mounted) return;
+
+    final sucesso = await _viewModel.lancarDespesa(despesa);
+
+    if (!mounted) return;
+
+    if (sucesso) {
+      mostrarSucesso(context, 'Despesa lançada com sucesso!');
+    } else {
+      mostrarErro(context, _viewModel.mensagemErro ?? 'Erro ao lançar a despesa.');
+    }
+  }
+
+  String get _motivoDespesaSomenteLeitura {
+    final atividade = _viewModel.atividade;
+
+    if (atividade.finalizado) {
+      return 'A atividade está finalizada: as despesas dela viraram histórico '
+          'e não podem mais ser excluídas.';
+    }
+
+    if (atividade.status == StatusEvento.agendado) {
+      return 'A atividade ainda está agendada: as despesas só podem ser '
+          'alteradas depois que ela começar.';
+    }
+
+    return 'Aguarde a conclusão da operação em andamento para alterar as '
+        'despesas.';
+  }
+
+  Future<void> _consultarDespesa(Despesa despesa) async {
+    await mostrarDetalhesDespesa(
+      context: context,
+      despesa: despesa,
+      podeExcluir: false,
+      motivoBloqueio: _motivoDespesaSomenteLeitura,
+    );
+  }
+
+  Future<void> _abrirDetalhesDespesa(Despesa despesa) async {
+    final semIdentificador = despesa.id == null;
+
+    final excluir = await mostrarDetalhesDespesa(
+      context: context,
+      despesa: despesa,
+      podeExcluir: !semIdentificador,
+      motivoBloqueio: semIdentificador
+          ? 'Esta despesa acabou de ser lançada e o servidor ainda não '
+              'devolveu o identificador dela. Volte e abra a atividade '
+              'novamente para poder excluí-la.'
+          : null,
+    );
+
+    if (!excluir || !mounted) return;
+
+    await _removerDespesa(despesa);
+  }
+
+  Future<void> _removerDespesa(Despesa despesa) async {
+    final confirmou = await confirmarAcao(
+      context,
+      titulo: 'Excluir despesa?',
+      mensagem: 'Deseja realmente excluir "${despesa.resumoComBeneficiado}"? '
+          'Esta ação não poderá ser desfeita.',
+      rotuloConfirmar: 'Excluir',
+    );
+
+    if (!confirmou || !mounted) return;
+
+    final sucesso = await _viewModel.excluirDespesa(despesa);
+
+    if (!mounted) return;
+
+    if (sucesso) {
+      mostrarSucesso(context, 'Despesa excluída com sucesso!');
+    } else {
+      mostrarErro(context, _viewModel.mensagemErro ?? 'Erro ao excluir a despesa.');
+    }
+  }
+
   Future<void> _excluir() async {
     final sucesso = await _viewModel.excluir();
 
@@ -282,21 +389,53 @@ class _DetalhesAtividadeViewState<T extends EventoAgricola>
         SecaoEditavel(
           titulo: 'Responsáveis',
           conteudo: ChipsLista(
-            rotulos: atividade.responsaveis
-                .map((pessoa) => pessoa.nomeParaExibicao)
-                .toList(),
+            itens: atividade.responsaveis,
+            rotuloItem: (pessoa) => pessoa.nomeParaExibicao,
             textoVazio: 'Nenhum responsável',
           ),
           onEditar: editavel && _viewModel.podeAlterarResponsaveis
               ? _editarResponsaveis
               : null,
         ),
+        const Divider(height: 32, color: AppCores.borda),
+        _construirSecaoDespesas(editavel),
         ...?widget.construirSecoesExtras?.call(
           context,
           atividade,
           editavel,
         ),
       ],
+    );
+  }
+
+  Widget _construirSecaoDespesas(bool editavel) {
+    final despesas = _viewModel.despesas;
+
+    if (!editavel || !_viewModel.podeLancarDespesa) {
+      return SecaoEditavel(
+        titulo: 'Despesas',
+        conteudo: ChipsLista(
+          itens: despesas,
+          rotuloItem: (despesa) => despesa.resumoComBeneficiado,
+          textoVazio: 'Nenhuma despesa lançada',
+          aoTocar: _consultarDespesa,
+        ),
+      );
+    }
+
+    return SecaoEditavel(
+      titulo: 'Despesas',
+      conteudo: SeletorMultiploAtividade<Despesa>(
+        icone: Icons.payments_outlined,
+        rotuloVazio: 'Adicionar despesa',
+        selecionados: despesas,
+        rotuloItem: (despesa) => despesa.resumoComBeneficiado,
+        rotuloContagem: despesas.contagemComTotal,
+        aoAbrir: _lancarDespesa,
+        aoRemover: _removerDespesa,
+        podeRemover: (despesa) => despesa.id != null,
+        aoTocarItem: _abrirDetalhesDespesa,
+      ),
     );
   }
 

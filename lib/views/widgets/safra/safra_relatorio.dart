@@ -34,7 +34,6 @@ class SafraRelatorioWidget extends StatelessWidget {
 
   static const List<Color> _paletaTalhoes = AppCores.paletaCiano;
 
-  static const List<Color> _paletaGastos = AppCores.paletaVerde;
 
   @override
   Widget build(BuildContext context) {
@@ -80,13 +79,10 @@ class SafraRelatorioWidget extends StatelessWidget {
       children: [
         _buildResumoRelatorio(eventos),
         const SizedBox(height: 12),
-        _buildResumoFinanceiro(eventos),
-        const SizedBox(height: 12),
         _buildGraficoPorTipoTrato(eventos),
         const SizedBox(height: 12),
         _buildGraficoPorTalhao(eventos),
         const SizedBox(height: 12),
-        _buildGraficoGastosPorCategoria(eventos),
         const SizedBox(height: 20),
         const Text(
           'Eventos detalhados',
@@ -174,108 +170,6 @@ class SafraRelatorioWidget extends StatelessWidget {
                   ),
         ),
       ],
-    );
-  }
-
-  static String _formatarMoeda(num valor) {
-    final negativo = valor < 0;
-    final absoluto = valor.abs();
-    final inteiro = absoluto.truncate();
-    final centavos = ((absoluto - inteiro) * 100).round();
-    final inteiroTexto = inteiro.toString().replaceAllMapped(
-          RegExp(r'(\d)(?=(\d{3})+(?!\d))'),
-          (m) => '${m[1]}.',
-        );
-    final texto = 'R\$ $inteiroTexto,${centavos.toString().padLeft(2, '0')}';
-    return negativo ? '-$texto' : texto;
-  }
-  List<dynamic> _extrairTransacoes(List<EventoAgricola> eventos) {
-    return eventos.expand((e) {
-      try {
-        return (e as dynamic).transacoesFinanceiras as Iterable<dynamic>? ?? [];
-      } catch (_) {
-        return [];
-      }
-    }).toList();
-  }
-
-  Widget _buildResumoFinanceiro(List<EventoAgricola> eventos) {
-    final transacoes = _extrairTransacoes(eventos);
-    if (transacoes.isEmpty) return const SizedBox.shrink();
-
-    final receitaTotal = transacoes.where((t) => t.isReceita).fold<num>(0, (soma, t) => soma + t.valor);
-    final despesaTotal = transacoes.where((t) => t.isDespesa).fold<num>(0, (soma, t) => soma + t.valor);
-    final saldo = receitaTotal - despesaTotal;
-
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: const [
-                Icon(Icons.payments_outlined, size: 18, color: AppCores.verdePrimario),
-                SizedBox(width: 6),
-                Text(
-                  'Resumo financeiro da safra',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppCores.verdePrimario),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                Expanded(
-                  child: CartaoIndicador(
-                    rotulo: 'Receita total',
-                    valor: _formatarMoeda(receitaTotal),
-                    icone: Icons.trending_up,
-                    cor: Colors.green.shade700,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: CartaoIndicador(
-                    rotulo: 'Despesa total',
-                    valor: _formatarMoeda(despesaTotal),
-                    icone: Icons.trending_down,
-                    cor: Colors.red.shade700,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: CartaoIndicador(
-                    rotulo: 'Saldo líquido',
-                    valor: _formatarMoeda(saldo),
-                    icone: Icons.account_balance_wallet_outlined,
-                    cor: saldo >= 0 ? AppCores.verdePrimario : Colors.red.shade700,
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
- Widget _buildGraficoGastosPorCategoria(List<EventoAgricola> eventos) {
-    final despesas = _extrairTransacoes(eventos).where((t) => t.isDespesa && t.valor > 0).toList();
-    if (despesas.isEmpty) return const SizedBox.shrink();
-    final totaisPorCategoria = <String, int>{};
-    for (final despesa in despesas) {
-      final categoria = despesa.categoria.isNotEmpty ? despesa.categoria : 'Outros';
-      final int valorAtual = totaisPorCategoria[categoria] ?? 0;
-      final int centavosAdicionais = ((despesa.valor as num) * 100).round();
-      totaisPorCategoria[categoria] = valorAtual + centavosAdicionais;
-    }
-    return PieChartCard(
-      titulo: 'Gastos por categoria',
-      icone: Icons.pie_chart_outline,
-      valores: totaisPorCategoria,
-      paleta: _paletaGastos,
     );
   }
 

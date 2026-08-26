@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/insumos/carregar_insumos_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/cadastrar_insumo_dialog.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/quantidade_insumo_dialog.dart';
@@ -7,12 +8,15 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/modal_selecao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 
 Future<List<InsumoUtilizado>?> mostrarSelecaoInsumos({
   required BuildContext context,
   required CarregarInsumosMixin viewModel,
   required List<InsumoUtilizado> selecionadosAtuais,
   required int idProprietario,
+  required int idPropriedade,
+  List<Pessoa> fornecedores = const [],
 }) {
   return showModalBottomSheet<List<InsumoUtilizado>>(
     context: context,
@@ -25,6 +29,8 @@ Future<List<InsumoUtilizado>?> mostrarSelecaoInsumos({
       viewModel: viewModel,
       selecionadosAtuais: selecionadosAtuais,
       idProprietario: idProprietario,
+      idPropriedade: idPropriedade,
+      fornecedores: fornecedores,
     ),
   );
 }
@@ -33,11 +39,15 @@ class _SelecionarInsumosSheet extends StatefulWidget {
   final CarregarInsumosMixin viewModel;
   final List<InsumoUtilizado> selecionadosAtuais;
   final int idProprietario;
+  final int idPropriedade;
+  final List<Pessoa> fornecedores;
 
   const _SelecionarInsumosSheet({
     required this.viewModel,
     required this.selecionadosAtuais,
     required this.idProprietario,
+    required this.idPropriedade,
+    required this.fornecedores,
   });
 
   @override
@@ -94,9 +104,13 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
       context: context,
       viewModel: widget.viewModel,
       idProprietario: widget.idProprietario,
+      idPropriedade: widget.idPropriedade,
+      fornecedores: widget.fornecedores,
     );
 
     if (criado == null || !mounted) return;
+
+    mostrarSucesso(context, 'Insumo "${criado.descricao}" cadastrado.');
 
     await _marcar(criado);
   }
@@ -127,24 +141,28 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
 
     return SizedBox(
       height: alturaSheet,
-      child: Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Column(
-          children: [
-            const CabecalhoModal(titulo: 'Insumos utilizados'),
-            Expanded(
-              child: ListenableBuilder(
-                listenable: widget.viewModel,
-                builder: (context, child) => _construirConteudo(),
+      child: Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(context).viewInsets.bottom,
+          ),
+          child: Column(
+            children: [
+              const CabecalhoModal(titulo: 'Insumos utilizados'),
+              Expanded(
+                child: ListenableBuilder(
+                  listenable: widget.viewModel,
+                  builder: (context, child) => _construirConteudo(),
+                ),
               ),
-            ),
-            RodapeConfirmarModal(
-              quantidadeSelecionada: _selecionados.length,
-              aoConfirmar: () => Navigator.of(context).pop(_selecionados.values.toList()),
-            ),
-          ],
+              RodapeConfirmarModal(
+                quantidadeSelecionada: _selecionados.length,
+                aoConfirmar: () =>
+                    Navigator.of(context).pop(_selecionados.values.toList()),
+              ),
+            ],
+          ),
         ),
       ),
     );

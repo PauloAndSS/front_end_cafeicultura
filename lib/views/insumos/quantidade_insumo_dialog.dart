@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
@@ -63,16 +64,6 @@ class _QuantidadeInsumoDialogState extends State<_QuantidadeInsumoDialog> {
     Navigator.of(context).pop(AppMasks.paraDouble(_controller.text));
   }
 
-  String? _validar(String? valor) {
-    if (valor == null || valor.trim().isEmpty) return 'Obrigatório';
-
-    final quantidade = AppMasks.paraDouble(valor);
-
-    if (quantidade == null) return 'Valor inválido';
-    if (quantidade <= 0) return 'Informe um valor maior que zero';
-
-    return null;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +92,7 @@ class _QuantidadeInsumoDialogState extends State<_QuantidadeInsumoDialog> {
               borderSide: const BorderSide(color: AppCores.borda),
             ),
           ),
-          validator: _validar,
+          validator: Validator.valorPositivo,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           onFieldSubmitted: (_) => _confirmar(),
         ),

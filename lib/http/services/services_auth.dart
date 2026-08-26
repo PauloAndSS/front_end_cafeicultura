@@ -8,6 +8,9 @@ class ServicesAuth extends BaseService {
   @override
   String get recurso => 'auth';
 
+  @override
+  bool get corpoSensivel => true;
+
   Future<LoginResponseDTO> autenticar(LoginRequestDTO dto) {
     return executarRequisicao(
       enviar: () => http.post(

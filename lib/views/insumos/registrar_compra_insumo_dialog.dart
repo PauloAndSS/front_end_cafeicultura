@@ -3,59 +3,55 @@ import 'package:frond_end_cafeicultura_mobile/model/financeiro/despesa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/insumos/carregar_insumos_mixin.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/insumos/insumos_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/widgets/campo_quantidade_comprada.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_transacao_financeira.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/blocos_detalhe.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_transacao_financeira.dart';
 
-Future<Insumo?> mostrarCadastroInsumo({
+Future<Insumo?> mostrarRegistroDeCompra({
   required BuildContext context,
-  required CarregarInsumosMixin viewModel,
-  required int idProprietario,
+  required InsumosViewModel viewModel,
+  required Insumo insumo,
   required int idPropriedade,
   List<Pessoa> fornecedores = const [],
 }) {
   return showDialog<Insumo>(
     context: context,
     barrierDismissible: false,
-    builder: (_) => _CadastrarInsumoDialog(
+    builder: (_) => _RegistrarCompraDialog(
       viewModel: viewModel,
-      idProprietario: idProprietario,
+      insumo: insumo,
       idPropriedade: idPropriedade,
       fornecedores: fornecedores,
     ),
   );
 }
 
-class _CadastrarInsumoDialog extends StatefulWidget {
-  final CarregarInsumosMixin viewModel;
-  final int idProprietario;
+class _RegistrarCompraDialog extends StatefulWidget {
+  final InsumosViewModel viewModel;
+  final Insumo insumo;
   final int idPropriedade;
   final List<Pessoa> fornecedores;
 
-  const _CadastrarInsumoDialog({
+  const _RegistrarCompraDialog({
     required this.viewModel,
-    required this.idProprietario,
+    required this.insumo,
     required this.idPropriedade,
     required this.fornecedores,
   });
 
   @override
-  State<_CadastrarInsumoDialog> createState() => _CadastrarInsumoDialogState();
+  State<_RegistrarCompraDialog> createState() => _RegistrarCompraDialogState();
 }
 
-class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
+class _RegistrarCompraDialogState extends State<_RegistrarCompraDialog> {
   final _formKey = GlobalKey<FormState>();
-  final _nomeController = TextEditingController();
   final _qtdCompradaController = TextEditingController();
   final _valorController = TextEditingController();
 
-  MedidaInsumo? _medidaSelecionada;
   TipoOperacao? _tipoOperacao = TransacaoFinanceira.operacaoUnica;
   FormaPagamento? _formaPagamento;
   Pessoa? _beneficiado;
@@ -67,7 +63,6 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
 
   @override
   void dispose() {
-    _nomeController.dispose();
     _qtdCompradaController.dispose();
     _valorController.dispose();
     super.dispose();
@@ -84,26 +79,24 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
       _salvando = true;
     });
 
-    final criado = await widget.viewModel.cadastrarInsumo(
-      idProprietario: widget.idProprietario,
-      descricao: _nomeController.text,
-      medida: _medidaSelecionada!,
+    final atualizado = await widget.viewModel.registrarCompra(
+      insumo: widget.insumo,
       despesa: _montarDespesa(),
       qtdComprada: AppMasks.paraDouble(_qtdCompradaController.text)!,
     );
 
     if (!mounted) return;
 
-    if (criado == null) {
+    if (atualizado == null) {
       setState(() {
         _salvando = false;
-        _erro =
-            widget.viewModel.mensagemErroInsumos ?? 'Erro ao cadastrar insumo.';
+        _erro = widget.viewModel.mensagemErroCompra ??
+            'Erro ao registrar a compra do insumo.';
       });
       return;
     }
 
-    Navigator.of(context).pop(criado);
+    Navigator.of(context).pop(atualizado);
   }
 
   Despesa _montarDespesa() {
@@ -113,7 +106,7 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
       formaPagamento: _formaPagamento!,
       tipoOperacao: _tipoOperacao!,
       beneficiado: _beneficiado,
-      descricao: _nomeController.text.trim(),
+      descricao: widget.insumo.descricao,
     );
   }
 
@@ -121,9 +114,11 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text(
-        'Novo Insumo',
-        style:
-            TextStyle(color: AppCores.verdePrimario, fontWeight: FontWeight.bold),
+        'Registrar Compra',
+        style: TextStyle(
+          color: AppCores.verdePrimario,
+          fontWeight: FontWeight.bold,
+        ),
       ),
       content: SingleChildScrollView(
         child: Form(
@@ -148,36 +143,21 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
                 ),
                 const SizedBox(height: 16),
               ],
-              CustomTextField(
-                label: 'Nome do insumo',
-                controller: _nomeController,
-                hintText: 'Ex: Ureia Agrícola 46% N',
-                validator: Validator.validarNome,
+              LinhaInfo(rotulo: 'Insumo', valor: widget.insumo.descricao),
+              LinhaInfo(
+                rotulo: 'Unidade de medida',
+                valor: widget.insumo.unidadeFormatada,
               ),
-              rotuloDeCampo('Unidade de medida'),
-              DropdownButtonFormField<MedidaInsumo>(
-                initialValue: _medidaSelecionada,
-                isExpanded: true,
-                decoration: decoracaoDeSeletor(),
-                hint: dicaDeSeletor('Selecione a medida'),
-                items: MedidaInsumo.values.map((medida) {
-                  return DropdownMenuItem(
-                    value: medida,
-                    child: Text(medida.rotulo, overflow: TextOverflow.ellipsis),
-                  );
-                }).toList(),
-                onChanged: _salvando
-                    ? null
-                    : (valor) => setState(() => _medidaSelecionada = valor),
-                validator: (valor) => valor == null ? 'Obrigatório' : null,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
+              LinhaInfo(
+                rotulo: 'Saldo atual',
+                valor: widget.insumo.saldoFormatado,
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               const Divider(),
               const SizedBox(height: 16),
               CampoQuantidadeComprada(
                 controller: _qtdCompradaController,
-                medida: _medidaSelecionada,
+                medida: widget.insumo.medida,
                 habilitado: !_salvando,
               ),
               const SizedBox(height: 16),
@@ -202,7 +182,7 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
       ),
       actions: acoesDeDialogo(
         context: context,
-        rotuloConfirmar: _salvando ? 'Salvando...' : 'Cadastrar',
+        rotuloConfirmar: _salvando ? 'Salvando...' : 'Registrar',
         aoConfirmar: _salvando ? null : _salvar,
       ),
     );

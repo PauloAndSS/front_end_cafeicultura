@@ -38,6 +38,11 @@ abstract class BaseService {
 
   static String? sessionCookie;
 
+  static bool logarCorpoDeSucesso = false;
+
+  @protected
+  bool get corpoSensivel => false;
+
   Map<String, String> get defaultHeaders {
     final headers = {
       'Content-Type': 'application/json; charset=UTF-8',
@@ -88,7 +93,12 @@ abstract class BaseService {
     try {
       final response = await enviar();
 
-      if (sucesso(response)) return aoSucesso(response);
+      if (sucesso(response)) {
+        _logarSucesso(response, acao);
+        return aoSucesso(response);
+      }
+
+      _logarResposta(response, acao);
 
       final erroDeStatus = errosPorStatus?[response.statusCode];
       if (erroDeStatus != null) throw ApiException(erroDeStatus);
@@ -105,11 +115,52 @@ abstract class BaseService {
         return aoListaVazia();
       }
       rethrow;
-    } catch (e) {
+    } catch (e, rastro) {
+      _logarExcecao(acao, e, rastro);
       throw ApiException(
         'Falha na comunicação ao $acao. Tente novamente mais tarde.',
       );
     }
+  }
+
+  void _logarResposta(http.Response response, String acao) {
+    if (!kDebugMode) return;
+
+    final requisicao = response.request;
+    final enviado = _corpoEnviado(requisicao);
+    final corpo = utf8.decode(response.bodyBytes, allowMalformed: true);
+
+    debugPrint('[API] ${requisicao?.method} ${requisicao?.url}');
+    if (enviado != null) debugPrint('[API] enviado: $enviado');
+    debugPrint('[API] falha ao $acao | status: ${response.statusCode}');
+    debugPrint('[API] corpo: ${corpo.isEmpty ? '<vazio>' : corpo}');
+  }
+
+  void _logarSucesso(http.Response response, String acao) {
+    if (!kDebugMode || !logarCorpoDeSucesso) return;
+
+    final requisicao = response.request;
+    final enviado = _corpoEnviado(requisicao);
+
+    debugPrint('[API] ${requisicao?.method} ${requisicao?.url} '
+        '| $acao | status: ${response.statusCode}');
+    if (enviado != null) debugPrint('[API] enviado: $enviado');
+  }
+
+  String? _corpoEnviado(http.BaseRequest? requisicao) {
+    if (requisicao is! http.Request) return null;
+    if (corpoSensivel) return '<omitido>';
+
+    final corpo = requisicao.body;
+
+    return corpo.isEmpty ? null : corpo;
+  }
+
+  void _logarExcecao(String acao, Object erro, StackTrace rastro) {
+    if (!kDebugMode) return;
+
+    debugPrint('[API] exceção ao $acao | ${erro.runtimeType}: $erro');
+    debugPrint('$rastro');
   }
 
   Never tratarErroRequisicao(

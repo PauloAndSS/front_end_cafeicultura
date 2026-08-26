@@ -3,6 +3,7 @@ import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tr
 import 'package:frond_end_cafeicultura_mobile/model/talhao.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/detalhes_trato_cultural_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/base/detalhes_atividade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/selecionar_insumos_modal.dart';
 import 'package:provider/provider.dart';
@@ -43,11 +44,28 @@ class _DetalhesTratoCulturalViewState extends State<DetalhesTratoCulturalView> {
       return;
     }
 
+    final idPropriedade =
+        context.read<PropriedadesUsuarioViewModel>().idPropriedadeSelecionada;
+
+    if (idPropriedade == null) {
+      mostrarAviso(
+        context,
+        'Selecione uma propriedade antes de alterar os insumos.',
+      );
+      return;
+    }
+
+    final fornecedores = await _viewModel.carregarFornecedores();
+
+    if (!mounted) return;
+
     final escolhidos = await mostrarSelecaoInsumos(
       context: context,
       viewModel: _viewModel,
       selecionadosAtuais: _viewModel.trato.insumosUtilizados,
       idProprietario: idProprietario,
+      idPropriedade: idPropriedade,
+      fornecedores: fornecedores,
     );
 
     if (escolhidos == null || !mounted) return;
@@ -84,9 +102,8 @@ class _DetalhesTratoCulturalViewState extends State<DetalhesTratoCulturalView> {
         SecaoEditavel(
           titulo: 'Insumos utilizados',
           conteudo: ChipsLista(
-            rotulos: trato.insumosUtilizados
-                .map((insumo) => insumo.descricaoComQuantidade)
-                .toList(),
+            itens: trato.insumosUtilizados,
+            rotuloItem: (insumo) => insumo.descricaoComQuantidade,
             textoVazio: 'Nenhum insumo lançado',
           ),
           onEditar: editavel ? _editarInsumos : null,

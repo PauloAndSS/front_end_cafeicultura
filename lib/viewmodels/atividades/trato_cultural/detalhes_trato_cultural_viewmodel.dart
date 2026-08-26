@@ -36,12 +36,14 @@ class DetalhesTratoCulturalViewModel
     DateTime? dataFim,
     String? descricao,
     List<Pessoa>? responsaveis,
+    List<TransacaoFinanceira>? transacoesFinanceiras,
   }) {
     return atual.copyWith(
       dataInicio: dataInicio,
       dataFim: dataFim,
       descricao: descricao,
       responsaveis: responsaveis,
+      transacoesFinanceiras: transacoesFinanceiras,
     );
   }
 

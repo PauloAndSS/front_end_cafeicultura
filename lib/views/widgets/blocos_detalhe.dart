@@ -107,19 +107,27 @@ class SecaoEditavel extends StatelessWidget {
   }
 }
 
-class ChipsLista extends StatelessWidget {
-  final List<String> rotulos;
+class ChipsLista<T> extends StatelessWidget {
+  final List<T> itens;
+  final String Function(T item) rotuloItem;
   final String textoVazio;
+  final ValueChanged<T>? aoTocar;
+  final ValueChanged<T>? aoRemover;
+  final bool Function(T item)? podeRemover;
 
   const ChipsLista({
     super.key,
-    required this.rotulos,
+    required this.itens,
+    required this.rotuloItem,
     required this.textoVazio,
+    this.aoTocar,
+    this.aoRemover,
+    this.podeRemover,
   });
 
   @override
   Widget build(BuildContext context) {
-    if (rotulos.isEmpty) {
+    if (itens.isEmpty) {
       return Text(
         textoVazio,
         style: const TextStyle(color: Colors.black87, fontSize: 15),
@@ -129,15 +137,35 @@ class ChipsLista extends StatelessWidget {
     return Wrap(
       spacing: 8,
       runSpacing: 4,
-      children: rotulos.map((rotulo) {
-        return Chip(
-          label: Text(
-            rotulo,
-            style: const TextStyle(color: Colors.white, fontSize: 13),
-          ),
-          backgroundColor: AppCores.verdeSecundario,
-        );
-      }).toList(),
+      children: itens.map(_construirChip).toList(),
+    );
+  }
+
+  Widget _construirChip(T item) {
+    final rotulo = Text(
+      rotuloItem(item),
+      style: const TextStyle(color: Colors.white, fontSize: 13),
+    );
+
+    final remover = aoRemover;
+    final removivel = remover != null && (podeRemover?.call(item) ?? true);
+    final aoTocarItem = aoTocar;
+
+    if (aoTocarItem == null) {
+      return Chip(
+        label: rotulo,
+        backgroundColor: AppCores.verdeSecundario,
+        deleteIconColor: Colors.white,
+        onDeleted: removivel ? () => remover(item) : null,
+      );
+    }
+
+    return InputChip(
+      label: rotulo,
+      backgroundColor: AppCores.verdeSecundario,
+      deleteIconColor: Colors.white,
+      onPressed: () => aoTocarItem(item),
+      onDeleted: removivel ? () => remover(item) : null,
     );
   }
 }

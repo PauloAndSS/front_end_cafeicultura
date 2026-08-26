@@ -27,14 +27,44 @@ enum MedidaInsumo {
   }
 }
 
+double? _paraDoubleOuNulo(dynamic valor) {
+  if (valor is num) return valor.toDouble();
+  if (valor is String) return double.tryParse(valor);
+
+  return null;
+}
+
 /// Linha do catálogo de insumos de um proprietário.
 class Insumo {
 
   final int? id;
   final String descricao;
   final MedidaInsumo medida;
+  final double? qtdEstoque;
 
-  Insumo({this.id, required this.descricao, required this.medida});
+  Insumo({
+    this.id,
+    required this.descricao,
+    required this.medida,
+    this.qtdEstoque,
+  });
+
+  String get unidadeFormatada => medida.rotulo;
+
+  String get saldoFormatado {
+    final saldo = qtdEstoque;
+
+    if (saldo == null) return 'Saldo não informado';
+
+    return '${formatarDecimal(saldo)} ${medida.sigla}';
+  }
+
+  Insumo comSaldo(double? novoSaldo) => Insumo(
+        id: id,
+        descricao: descricao,
+        medida: medida,
+        qtdEstoque: novoSaldo,
+      );
 
   Map<String, dynamic> toJson() {
     return {
@@ -48,6 +78,7 @@ class Insumo {
       id: json['id'],
       descricao: json['descricao'] ?? 'Sem descrição',
       medida: MedidaInsumo.deSigla(json['medida']) ?? MedidaInsumo.unidade,
+      qtdEstoque: _paraDoubleOuNulo(json['qtdEstoque']),
     );
   }
 
@@ -79,15 +110,8 @@ class InsumoUtilizado {
       insumo: Insumo.fromJson(
         aninhado is Map<String, dynamic> ? aninhado : json,
       ),
-      qtdUsada: _paraDouble(json['qtdUsada'] ?? json['quantidade']),
+      qtdUsada: _paraDoubleOuNulo(json['qtdUsada'] ?? json['quantidade']) ?? 0.0,
     );
-  }
-
-  static double _paraDouble(dynamic valor) {
-    if (valor is num) return valor.toDouble();
-    if (valor is String) return double.tryParse(valor) ?? 0.0;
-
-    return 0.0;
   }
 
   @override

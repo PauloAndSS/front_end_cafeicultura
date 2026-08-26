@@ -29,3 +29,7 @@ final _decimalBr = NumberFormat('#,##0.##', 'pt_BR');
 
 String formatarInteiro(num valor) => _inteiroBr.format(valor);
 String formatarDecimal(num valor) => _decimalBr.format(valor);
+
+final _moedaBr = NumberFormat.currency(locale: 'pt_BR', symbol: r'R$');
+
+String formatarMoeda(num valor) => _moedaBr.format(valor);

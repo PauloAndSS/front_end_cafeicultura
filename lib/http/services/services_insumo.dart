@@ -33,4 +33,15 @@ class ServicesInsumo extends BaseService {
       acao: 'buscar os insumos',
     );
   }
+
+  Future<Insumo?> buscarPorId(int id) {
+    return executarRequisicao(
+      enviar: () => http.get(rota('$id'), headers: defaultHeaders),
+      aoSucesso: (resposta) =>
+          extrairObjetoOuNulo(resposta.bodyBytes, Insumo.fromJson),
+      errosPorStatus: {404: 'Insumo não encontrado.'},
+      erroMsg: 'Erro ao buscar o insumo.',
+      acao: 'buscar o insumo',
+    );
+  }
 }

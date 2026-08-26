@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/cadastrar_trato_cultural_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/base/formulario_atividade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/selecionar_insumos_modal.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_multiplo_atividade.dart';
 import 'package:provider/provider.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 
 class CadastrarTratoCulturalView extends StatefulWidget {
@@ -65,11 +67,11 @@ class _CadastrarTratoCulturalViewState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        construirRotuloAtividade('Tipo de trato'),
+        rotuloDeCampo('Tipo de trato'),
         DropdownButtonFormField<TipoTrato>(
           initialValue: _tipoTratoSelecionado,
           isExpanded: true,
-          decoration: decoracaoSeletorAtividade(),
+          decoration: decoracaoDeSeletor(),
           hint: const Text(
             'Selecione o tipo',
             style: TextStyle(color: Colors.black26, fontSize: 14),
@@ -92,7 +94,7 @@ class _CadastrarTratoCulturalViewState
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        construirRotuloAtividade('Insumos utilizados'),
+        rotuloDeCampo('Insumos utilizados'),
         SeletorMultiploAtividade<InsumoUtilizado>(
           icone: Icons.inventory_2_outlined,
           rotuloVazio: 'Selecionar insumos',
@@ -117,11 +119,28 @@ class _CadastrarTratoCulturalViewState
       return;
     }
 
+    final idPropriedade =
+        context.read<PropriedadesUsuarioViewModel>().idPropriedadeSelecionada;
+
+    if (idPropriedade == null) {
+      mostrarAviso(
+        context,
+        'Selecione uma propriedade antes de cadastrar insumos.',
+      );
+      return;
+    }
+
+    final fornecedores = await _viewModel.carregarFornecedores();
+
+    if (!mounted) return;
+
     final escolhidos = await mostrarSelecaoInsumos(
       context: context,
       viewModel: _viewModel,
       selecionadosAtuais: _insumosSelecionados,
       idProprietario: idProprietario,
+      idPropriedade: idPropriedade,
+      fornecedores: fornecedores,
     );
 
     if (escolhidos == null || !mounted) return;

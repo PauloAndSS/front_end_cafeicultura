@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:frond_end_cafeicultura_mobile/http/services/services_despesa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_responsaveis_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/estado_de_carga.dart';
@@ -18,6 +19,8 @@ abstract class DetalhesAtividadeViewModel<T extends EventoAgricola>
     extends ChangeNotifier
     with NotificaSeVivoMixin, EstadoDeCarregamentoMixin, CarregarResponsaveisMixin {
   DetalhesAtividadeViewModel(this._atividade);
+
+  final _despesaService = ServicesDespesa();
 
   T _atividade;
 
@@ -52,6 +55,12 @@ abstract class DetalhesAtividadeViewModel<T extends EventoAgricola>
 
   bool get podeExcluir => chamadaExcluir != null && !_atividade.finalizado;
 
+  bool get podeLancarDespesa =>
+      !_atividade.finalizado && _atividade.status != StatusEvento.agendado;
+
+  List<Despesa> get despesas =>
+      _atividade.transacoesFinanceiras.whereType<Despesa>().toList();
+
   @protected
   T copiarComum(
     T atual, {
@@ -59,6 +68,7 @@ abstract class DetalhesAtividadeViewModel<T extends EventoAgricola>
     DateTime? dataFim,
     String? descricao,
     List<Pessoa>? responsaveis,
+    List<TransacaoFinanceira>? transacoesFinanceiras,
   });
 
   Future<bool> confirmar({
@@ -104,6 +114,38 @@ abstract class DetalhesAtividadeViewModel<T extends EventoAgricola>
       chamada: () => chamadaAlterarResponsaveis!(_atividade.id!, ids),
       aplicar: () =>
           _atividade = copiarComum(_atividade, responsaveis: escolhidos),
+    );
+  }
+
+  Future<bool> lancarDespesa(Despesa despesa) {
+    late Despesa lancada;
+
+    return executarEdicao(
+      chamada: () async {
+        final criada = await _despesaService.cadastrar(
+          despesa.comEvento(_atividade.id!),
+        );
+
+        lancada = criada ?? despesa;
+
+        return true;
+      },
+      aplicar: () => _atividade = copiarComum(
+        _atividade,
+        transacoesFinanceiras: [..._atividade.transacoesFinanceiras, lancada],
+      ),
+    );
+  }
+
+  Future<bool> excluirDespesa(Despesa despesa) {
+    return executarEdicao(
+      chamada: () => _despesaService.excluir(despesa.id!),
+      aplicar: () => _atividade = copiarComum(
+        _atividade,
+        transacoesFinanceiras: _atividade.transacoesFinanceiras
+            .where((atual) => !identical(atual, despesa))
+            .toList(),
+      ),
     );
   }
 

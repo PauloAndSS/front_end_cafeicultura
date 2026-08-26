@@ -1,6 +1,8 @@
 import 'package:frond_end_cafeicultura_mobile/model/auth/usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/model/financeiro/transacao_financeira.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 
 class Validator {
   static String? obrigatorio(String? value, [String? mensagem]) {
@@ -110,6 +112,55 @@ class Validator {
     }
     if (value.trim().length < 3) {
       return 'Razão Social muito curta';
+    }
+    return null;
+  }
+
+  static String? valorPositivo(String? value, [String? mensagem]) {
+    if (value == null || value.trim().isEmpty) {
+      return mensagem ?? 'Obrigatório';
+    }
+
+    final numero = AppMasks.paraDouble(value);
+
+    if (numero == null) {
+      return 'Valor inválido';
+    }
+    if (numero <= 0) {
+      return 'Informe um valor maior que zero';
+    }
+    return null;
+  }
+
+  static const int minimoCaracteresDescricao = 3;
+
+  static String? descricaoDeTransacao(String? value) {
+    final texto = value?.trim() ?? '';
+
+    if (texto.isEmpty) {
+      return 'Obrigatório';
+    }
+    if (texto.length < minimoCaracteresDescricao) {
+      return 'Descreva com pelo menos $minimoCaracteresDescricao caracteres';
+    }
+    return null;
+  }
+
+  static String? beneficiadoObrigatorio(Object? beneficiado) =>
+      beneficiado == null ? 'Obrigatório' : null;
+
+  static String? validarFormaPagamento(
+    FormaPagamento? forma,
+    TipoOperacao? tipoOperacao,
+  ) {
+    if (forma == null) {
+      return 'Obrigatório';
+    }
+    if (tipoOperacao == null) {
+      return 'Selecione o tipo de operação antes';
+    }
+    if (!TransacaoFinanceira.combinacaoValida(forma, tipoOperacao)) {
+      return TransacaoFinanceira.mensagemCombinacaoInvalida;
     }
     return null;
   }
