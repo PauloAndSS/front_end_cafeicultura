@@ -17,18 +17,22 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
   void _navegarSubstituindo(BuildContext context, Widget novaTela) {
     final rotaAtual = ModalRoute.of(context);
-    if (rotaAtual != null &&
-        rotaAtual.settings.name == novaTela.runtimeType.toString()) {
+    final nome = novaTela.runtimeType.toString();
+
+    if (rotaAtual?.settings.name == nome) {
       return;
     }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => novaTela,
-        settings: RouteSettings(name: novaTela.runtimeType.toString()),
-      ),
+    final rota = MaterialPageRoute(
+      builder: (_) => novaTela,
+      settings: RouteSettings(name: nome),
     );
+
+    if (rotaAtual?.isFirst ?? true) {
+      Navigator.push(context, rota);
+    } else {
+      Navigator.pushReplacement(context, rota);
+    }
   }
 
   void _navegarFormulario(BuildContext context, Widget novaTela) {
@@ -200,14 +204,8 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             } else if (escolha == 'safras') {
               _navegarSubstituindo(context, const SafraViewPage());
             } else if (escolha == 'sair') {
+              Navigator.of(context).popUntil((route) => route.isFirst);
               await session.logout();
-              if (context.mounted) {
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  '/login',
-                  (route) => false,
-                );
-              }
             }
           },
           itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[

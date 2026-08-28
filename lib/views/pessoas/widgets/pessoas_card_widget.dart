@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 
 class PessoaCardWidget extends StatelessWidget {
   final String nome;
-  final String funcao;
+  final String subtitulo;
   final VoidCallback onTap;
 
   const PessoaCardWidget({
     super.key,
     required this.nome,
-    required this.funcao,
+    required this.subtitulo,
     required this.onTap,
   });
 
@@ -47,7 +47,7 @@ class PessoaCardWidget extends StatelessWidget {
               ),
               const SizedBox(height: 4),
               Text(
-                funcao,
+                subtitulo,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
                   fontSize: 10,

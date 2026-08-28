@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_despesa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_responsaveis_mixin.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_pessoas_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/estado_de_carga.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/notifica_se_vivo_mixin.dart';
 
@@ -17,7 +17,7 @@ typedef ChamadaExcluir = Future<bool> Function(int id);
 
 abstract class DetalhesAtividadeViewModel<T extends EventoAgricola>
     extends ChangeNotifier
-    with NotificaSeVivoMixin, EstadoDeCarregamentoMixin, CarregarResponsaveisMixin {
+    with NotificaSeVivoMixin, EstadoDeCarregamentoMixin, CarregarPessoasMixin {
   DetalhesAtividadeViewModel(this._atividade);
 
   final _despesaService = ServicesDespesa();

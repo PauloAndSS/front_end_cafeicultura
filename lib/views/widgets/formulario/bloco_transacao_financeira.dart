@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/financeiro/despesa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_pessoas_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/views/pessoas/selecionar_beneficiado_modal.dart';
@@ -17,7 +19,12 @@ class BlocoTransacaoFinanceira extends StatelessWidget {
   final TextEditingController? controllerDescricao;
 
   final List<Pessoa> responsaveisSugeridos;
-  final List<Pessoa> demaisPessoas;
+
+  /// O catálogo de pessoas que a seleção do beneficiado navega, e as
+  /// categorias que ela oferece. Quem lança despesa de atividade abre as cinco;
+  /// o cadastro de insumo abre só fornecedores, e aí o painel nem desenha aba.
+  final CarregarPessoasMixin catalogoDePessoas;
+  final List<TipoPapel> categoriasBeneficiado;
 
   final ValueChanged<TipoOperacao?> aoSelecionarTipoOperacao;
   final ValueChanged<FormaPagamento?> aoSelecionarFormaPagamento;
@@ -37,8 +44,9 @@ class BlocoTransacaoFinanceira extends StatelessWidget {
     required this.aoSelecionarTipoOperacao,
     required this.aoSelecionarFormaPagamento,
     required this.aoSelecionarBeneficiado,
+    required this.catalogoDePessoas,
+    required this.categoriasBeneficiado,
     this.responsaveisSugeridos = const [],
-    this.demaisPessoas = const [],
     this.habilitado = true,
     this.dicaDescricao = 'Ex: Pagamento de diária do tratorista',
     this.rotuloBeneficiado = 'Beneficiado',
@@ -56,16 +64,6 @@ class BlocoTransacaoFinanceira extends StatelessWidget {
 
   List<FormaPagamento> get _formasDisponiveis =>
       TransacaoFinanceira.formasPara(tipoOperacao!);
-
-  List<Pessoa> get _beneficiadosDisponiveis {
-    final idsSugeridos =
-        responsaveisSugeridos.map((pessoa) => pessoa.id).toSet();
-
-    return [
-      ...responsaveisSugeridos,
-      ...demaisPessoas.where((pessoa) => !idsSugeridos.contains(pessoa.id)),
-    ];
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -176,13 +174,11 @@ class BlocoTransacaoFinanceira extends StatelessWidget {
   Future<Pessoa?> _abrirSelecaoDeBeneficiado(BuildContext context) {
     return mostrarSelecaoBeneficiado(
       context: context,
-      pessoas: _beneficiadosDisponiveis,
-      idsSugeridos:
-          responsaveisSugeridos.map((pessoa) => pessoa.id).whereType<int>().toSet(),
+      catalogo: catalogoDePessoas,
+      categorias: categoriasBeneficiado,
+      sugeridos: responsaveisSugeridos,
       selecionadoAtual: beneficiado,
       titulo: 'Selecionar ${rotuloBeneficiado.toLowerCase()}',
-      mensagemSemPessoas:
-          'Nenhum ${rotuloBeneficiado.toLowerCase()} disponível.',
     );
   }
 }

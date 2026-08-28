@@ -11,4 +11,5 @@ abstract class Pessoa {
 
   Map<String, dynamic> toJson();
   String get nomeParaExibicao;
+  String get documentoFormatado;
 }

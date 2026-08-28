@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/financeiro/despesa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_pessoas_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/insumos/carregar_insumos_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
@@ -16,6 +18,7 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
 Future<Insumo?> mostrarCadastroInsumo({
   required BuildContext context,
   required CarregarInsumosMixin viewModel,
+  required CarregarPessoasMixin catalogoDePessoas,
   required int idProprietario,
   required int idPropriedade,
   List<Pessoa> fornecedores = const [],
@@ -25,6 +28,7 @@ Future<Insumo?> mostrarCadastroInsumo({
     barrierDismissible: false,
     builder: (_) => _CadastrarInsumoDialog(
       viewModel: viewModel,
+      catalogoDePessoas: catalogoDePessoas,
       idProprietario: idProprietario,
       idPropriedade: idPropriedade,
       fornecedores: fornecedores,
@@ -34,12 +38,14 @@ Future<Insumo?> mostrarCadastroInsumo({
 
 class _CadastrarInsumoDialog extends StatefulWidget {
   final CarregarInsumosMixin viewModel;
+  final CarregarPessoasMixin catalogoDePessoas;
   final int idProprietario;
   final int idPropriedade;
   final List<Pessoa> fornecedores;
 
   const _CadastrarInsumoDialog({
     required this.viewModel,
+    required this.catalogoDePessoas,
     required this.idProprietario,
     required this.idPropriedade,
     required this.fornecedores,
@@ -186,7 +192,8 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
                 formaPagamento: _formaPagamento,
                 beneficiado: _beneficiado,
                 controllerValor: _valorController,
-                demaisPessoas: widget.fornecedores,
+                catalogoDePessoas: widget.catalogoDePessoas,
+                categoriasBeneficiado: const [TipoPapel.fornecedor],
                 habilitado: !_salvando,
                 rotuloBeneficiado: 'Fornecedor',
                 aoSelecionarTipoOperacao: (valor) =>

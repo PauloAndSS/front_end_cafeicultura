@@ -17,6 +17,8 @@ abstract final class AppCores {
 
   static const aviso = Color(0xFFFF9800);
 
+  static const avisoTexto = Color(0xFFB26500);
+
   static const link = Color(0xFF0091FF);
 
   static const paletaTerrosa = <Color>[

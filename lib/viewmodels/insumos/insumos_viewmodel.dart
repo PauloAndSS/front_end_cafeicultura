@@ -6,10 +6,10 @@ import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/estado_de_carga.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/insumos/carregar_insumos_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/notifica_se_vivo_mixin.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_responsaveis_mixin.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_pessoas_mixin.dart';
 
 class InsumosViewModel extends ChangeNotifier
-    with NotificaSeVivoMixin, CarregarInsumosMixin, CarregarResponsaveisMixin {
+    with NotificaSeVivoMixin, CarregarInsumosMixin, CarregarPessoasMixin {
   final _serviceInsumo = ServicesInsumo();
 
   final _serviceCompra = ServicesCompraInsumo();

@@ -17,7 +17,7 @@ import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/filtro_st
 import 'package:frond_end_cafeicultura_mobile/views/talhao/widgets/relatorio_talhao_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/talhao/widgets/seletor_tipo_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/botao_excluir.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/botao_encerrar.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_selector.dart';
 import 'package:provider/provider.dart';
@@ -203,15 +203,17 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
 
     final confirmar = await confirmarAcao(
       context,
-      titulo: 'Encerrar Talhão',
+      titulo: 'Encerrar talhão?',
       mensagem:
-          'Deseja realmente encerrar o talhão "${widget.talhao.nomeExibicao}" '
+          'Deseja encerrar o talhão "${widget.talhao.nomeExibicao}" '
           'na data ${formatarDataBr(dataFimEscolhida)}?',
-      rotuloConfirmar: 'Encerrar',
+      rotuloConfirmar: 'Encerrar talhão',
+      corConfirmar: AppCores.avisoTexto,
       complemento: const CaixaAvisoAtencao(
-        mensagem: 'Depois de encerrado, você não poderá mais registrar '
-            'atividades nem fazer alterações neste talhão — apenas '
-            'visualizá-lo.',
+        mensagem: 'O talhão sai da lista de Ativos e passa a aparecer na aba '
+            'Encerrados, com todo o histórico preservado. Você não poderá '
+            'mais registrar nem alterar atividades nele, e o aplicativo não '
+            'oferece como reativá-lo.',
       ),
     );
 
@@ -224,7 +226,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
       if (!mounted) return;
 
       if (sucesso == true) {
-        _onSucesso('Talhão encerrado com sucesso!');
+        _onSucesso('Talhão encerrado. Ele agora está na aba "Encerrados".');
       } else {
         mostrarErro(context, _viewModel.mensagemErro ?? 'Erro ao encerrar talhão.');
       }
@@ -349,9 +351,9 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
             ],
           ],
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 24),
 
-        if (estaEncerrado)
+        if (estaEncerrado) ...[
           const CaixaAviso(
             icone: Icons.info_outline,
             cor: Colors.orange,
@@ -359,28 +361,32 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
             mensagem: 'Este talhão está encerrado. Não é possível '
                 'registrar atividades nem alterá-lo — apenas '
                 'visualizar.',
-          )
-        else
-          SizedBox(
-            width: double.infinity,
-            child: CustomButton(
-              text: _viewModel.isLoading
-                  ? 'Encerrando...'
-                  : 'Encerrar Talhão',
-              onPressed: _viewModel.isLoading
-                  ? null
-                  : _confirmarEncerramento,
-            ),
           ),
+          const SizedBox(height: 8),
+        ],
 
-        BotaoExcluir(
-          titulo: 'Excluir Talhão?',
-          mensagem:
-              'Tem certeza que deseja excluir permanentemente o '
-              'talhão "${widget.talhao.nomeExibicao}"? '
-              'Esta ação não poderá ser desfeita.',
-          bloqueado: _viewModel.isLoading,
-          aoConfirmar: _excluir,
+        const Divider(color: AppCores.borda),
+
+        Row(
+          children: [
+            if (!estaEncerrado)
+              BotaoEncerrar(
+                rotulo: 'Encerrar talhão',
+                carregando: _viewModel.isLoading,
+                aoTocar: _confirmarEncerramento,
+              ),
+            Expanded(
+              child: BotaoExcluir(
+                titulo: 'Excluir Talhão?',
+                mensagem:
+                    'Tem certeza que deseja excluir permanentemente o '
+                    'talhão "${widget.talhao.nomeExibicao}"? '
+                    'Esta ação não poderá ser desfeita.',
+                bloqueado: _viewModel.isLoading,
+                aoConfirmar: _excluir,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -509,7 +515,6 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
           width: double.infinity,
           child: FiltroStatusAtividade(
             selecionado: _atividadesViewModel.statusAtual,
-            filtros: _atividadesViewModel.filtros,
             onSelecionar: _atividadesViewModel.selecionarStatus,
           ),
         ),
@@ -583,7 +588,6 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
       StatusEvento.agendado => ' agendada',
       StatusEvento.emAndamento => ' em andamento',
       StatusEvento.finalizado => ' finalizada',
-      null => '',
     };
 
     return _construirCaixaAviso(

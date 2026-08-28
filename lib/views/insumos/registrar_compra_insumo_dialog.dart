@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/financeiro/despesa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/insumos/insumos_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/widgets/campo_quantidade_comprada.dart';
@@ -166,7 +167,8 @@ class _RegistrarCompraDialogState extends State<_RegistrarCompraDialog> {
                 formaPagamento: _formaPagamento,
                 beneficiado: _beneficiado,
                 controllerValor: _valorController,
-                demaisPessoas: widget.fornecedores,
+                catalogoDePessoas: widget.viewModel,
+                categoriasBeneficiado: const [TipoPapel.fornecedor],
                 habilitado: !_salvando,
                 rotuloBeneficiado: 'Fornecedor',
                 aoSelecionarTipoOperacao: (valor) =>

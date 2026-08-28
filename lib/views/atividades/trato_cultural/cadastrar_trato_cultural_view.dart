@@ -137,6 +137,7 @@ class _CadastrarTratoCulturalViewState
     final escolhidos = await mostrarSelecaoInsumos(
       context: context,
       viewModel: _viewModel,
+      catalogoDePessoas: _viewModel,
       selecionadosAtuais: _insumosSelecionados,
       idProprietario: idProprietario,
       idPropriedade: idPropriedade,

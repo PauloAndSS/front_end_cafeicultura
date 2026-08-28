@@ -195,15 +195,11 @@ class _DetalhesAtividadeViewState<T extends EventoAgricola>
       return;
     }
 
-    final pessoas = await _viewModel.carregarPessoas();
-
-    if (!mounted) return;
-
     final despesa = await mostrarCadastroTransacao(
       context: context,
       idPropriedade: idPropriedade,
+      catalogoDePessoas: _viewModel,
       responsaveis: _viewModel.atividade.responsaveis,
-      demaisPessoas: pessoas,
     );
 
     if (despesa == null || !mounted) return;

@@ -1,5 +1,5 @@
 import 'package:flutter/foundation.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_responsaveis_mixin.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_pessoas_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/carregar_talhoes_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/estado_de_carga.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/notifica_se_vivo_mixin.dart';
@@ -9,7 +9,7 @@ abstract class CadastrarAtividadeViewModel extends ChangeNotifier
     with
         NotificaSeVivoMixin,
         EstadoDeCarregamentoMixin,
-        CarregarResponsaveisMixin,
+        CarregarPessoasMixin,
         CarregarTalhoesMixin {
   late final EstadoDeCarga _cargaDados = EstadoDeCarga(
     aoMudar: notificarSeVivo,

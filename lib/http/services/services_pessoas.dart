@@ -2,13 +2,13 @@ import 'dart:convert';
 
 import 'package:frond_end_cafeicultura_mobile/http/dtos/paginacao_dto.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/cliente.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/fornecedor.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/funcionario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/meeiro.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pessoa_factory.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/prestador.dart';
 import 'package:http/http.dart' as http;
 
@@ -31,8 +31,7 @@ class ServicesPessoa extends BaseService {
         PapelPessoaFactory.fromJson,
       ),
       // Proprietário sem nenhuma pessoa cadastrada: 404 com corpo JSON.
-      // `totalPaginas` igual à página pedida encerra a rolagem infinita de
-      // quem consome (`temMaisResponsaveis`).
+      // `totalPaginas` igual à página pedida encerra a rolagem de quem consome.
       aoListaVazia: () => ResultadoPaginadoDTO<PapelPessoa>(
         data: const [],
         total: 0,
@@ -49,13 +48,43 @@ abstract class ServicePapelPessoa<T extends PapelPessoa> extends BaseService {
   
   T Function(Map<String, dynamic>) get montar;
 
-  String get rotulo;
+  TipoPapel get tipoPapel;
+
+  String get rotulo => tipoPapel.rotulo;
 
   String? get conflitoDeCadastro => null;
 
   String get impedimentoDeExclusao =>
-      '$_rotuloCapitalizado possui atividades e/ou despesas cadastradas '
+      '${tipoPapel.titulo} possui atividades e/ou despesas cadastradas '
       'e não pode ser excluído.';
+
+  /// Listagem paginada da própria rota do papel (`/meeiros`, `/clientes`, ...).
+  ///
+  /// Desserializa com `montar`, e não com `PapelPessoaFactory`: a rota já diz
+  /// qual é o papel, e o payload dela **não traz o campo `papel`** — a factory
+  /// lançaria em todo item.
+  Future<ResultadoPaginadoDTO<T>> listar({int pagina = 1, int limite = 20}) {
+    return executarRequisicao(
+      enviar: () => http.get(
+        rota('', {'pagina': '$pagina', 'limite': '$limite'}),
+        headers: defaultHeaders,
+      ),
+      aoSucesso: (resposta) => ResultadoPaginadoDTO<T>.deEnvelopeDeDados(
+        extrairDadosPaginados(resposta.bodyBytes),
+        montar,
+        paginaSolicitada: pagina,
+        limiteSolicitado: limite,
+      ),
+      aoListaVazia: () => ResultadoPaginadoDTO<T>(
+        data: const [],
+        total: 0,
+        pagina: pagina,
+        totalPaginas: pagina,
+      ),
+      erroMsg: 'Erro ao buscar a lista de ${tipoPapel.rotuloPlural}.',
+      acao: 'buscar os ${tipoPapel.rotuloPlural}',
+    );
+  }
 
   Future<bool> cadastrar(T papel) {
     return executarRequisicao(
@@ -75,7 +104,7 @@ abstract class ServicePapelPessoa<T extends PapelPessoa> extends BaseService {
     return executarRequisicao(
       enviar: () => http.get(rota('$id'), headers: defaultHeaders),
       aoSucesso: (resposta) => extrairObjeto(resposta.bodyBytes, montar),
-      errosPorStatus: {404: '$_rotuloCapitalizado não encontrado.'},
+      errosPorStatus: {404: '${tipoPapel.titulo} não encontrado.'},
       erroMsg: 'Erro ao buscar dados do $rotulo.',
       acao: 'buscar $rotulo',
     );
@@ -90,16 +119,23 @@ abstract class ServicePapelPessoa<T extends PapelPessoa> extends BaseService {
       acao: 'excluir $rotulo',
     );
   }
-
-  String get _rotuloCapitalizado => capitalizar(rotulo);
 }
+
+ServicePapelPessoa<PapelPessoa> servicoDoPapel(TipoPapel papel) =>
+    switch (papel) {
+      TipoPapel.funcionario => ServicesFuncionario(),
+      TipoPapel.meeiro => ServicesMeeiro(),
+      TipoPapel.fornecedor => ServicesFornecedor(),
+      TipoPapel.prestador => ServicesPrestadorDeServico(),
+      TipoPapel.cliente => ServicesCliente(),
+    };
 
 class ServicesFornecedor extends ServicePapelPessoa<Fornecedor> {
   @override
   String get recurso => 'fornecedores';
 
   @override
-  String get rotulo => 'fornecedor';
+  TipoPapel get tipoPapel => TipoPapel.fornecedor;
 
   @override
   Fornecedor Function(Map<String, dynamic>) get montar => Fornecedor.fromJson;
@@ -110,7 +146,7 @@ class ServicesFuncionario extends ServicePapelPessoa<Funcionario> {
   String get recurso => 'funcionarios';
 
   @override
-  String get rotulo => 'funcionário';
+  TipoPapel get tipoPapel => TipoPapel.funcionario;
 
   @override
   Funcionario Function(Map<String, dynamic>) get montar => Funcionario.fromJson;
@@ -137,7 +173,7 @@ class ServicesCliente extends ServicePapelPessoa<Cliente> {
   String get recurso => 'clientes';
 
   @override
-  String get rotulo => 'cliente';
+  TipoPapel get tipoPapel => TipoPapel.cliente;
 
   @override
   Cliente Function(Map<String, dynamic>) get montar => Cliente.fromJson;
@@ -149,7 +185,7 @@ class ServicesMeeiro extends ServicePapelPessoa<Meeiro> {
   String get recurso => 'meeiros';
 
   @override
-  String get rotulo => 'meeiro';
+  TipoPapel get tipoPapel => TipoPapel.meeiro;
 
   @override
   Meeiro Function(Map<String, dynamic>) get montar => Meeiro.fromJson;
@@ -164,7 +200,7 @@ class ServicesPrestadorDeServico extends ServicePapelPessoa<PrestadorDeServico> 
   String get recurso => 'prestadores';
 
   @override
-  String get rotulo => 'prestador de serviço';
+  TipoPapel get tipoPapel => TipoPapel.prestador;
 
   @override
   PrestadorDeServico Function(Map<String, dynamic>) get montar =>

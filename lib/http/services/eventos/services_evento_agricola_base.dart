@@ -11,13 +11,13 @@ abstract class ServicesEventoAgricolaBase<T extends EventoAgricola>
     int idPropriedade,
     int idTalhao, {
     required int pagina,
-    StatusEvento? status,
+    required StatusEvento status,
   }) {
     return executarRequisicao(
       enviar: () => http.get(
         rota('propriedade/$idPropriedade/talhao/$idTalhao', {
           'pagina': '$pagina',
-          if (status != null) 'status': status.codigoApi,
+          'status': status.codigoApi,
         }),
         headers: defaultHeaders,
       ),

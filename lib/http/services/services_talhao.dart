@@ -63,7 +63,7 @@ class ServicesTalhao extends BaseService {
       enviar: () => http.patch(
         rota('$idTalhao/encerrar'),
         headers: defaultHeaders,
-        body: jsonEncode({'dataFim': dataParaJson(dataFim)}),
+        body: jsonEncode({'dataFim': diaNaoFuturoParaJson(dataFim)}),
       ),
       aoSucesso: (_) => true,
       erroMsg: 'Erro ao encerrar talhão.',

@@ -62,6 +62,7 @@ class _DetalhesTratoCulturalViewState extends State<DetalhesTratoCulturalView> {
     final escolhidos = await mostrarSelecaoInsumos(
       context: context,
       viewModel: _viewModel,
+      catalogoDePessoas: _viewModel,
       selecionadosAtuais: _viewModel.trato.insumosUtilizados,
       idProprietario: idProprietario,
       idPropriedade: idPropriedade,

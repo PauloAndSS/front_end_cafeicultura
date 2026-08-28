@@ -10,24 +10,14 @@ class DetalhesPessoaViewModel extends ChangeNotifier
   PapelPessoa? _pessoaDetalhe;
   PapelPessoa? get pessoaDetalhe => _pessoaDetalhe;
 
-  late final Map<TipoPapel, dynamic> _services;
-
-  DetalhesPessoaViewModel() {
-    _services = {
-      TipoPapel.funcionario: ServicesFuncionario(),
-      TipoPapel.meeiro: ServicesMeeiro(),
-      TipoPapel.fornecedor: ServicesFornecedor(),
-      TipoPapel.prestador: ServicesPrestadorDeServico(),
-      TipoPapel.cliente: ServicesCliente(),
-    };
-  }
+  final ServicesFuncionario _servicoFuncionario = ServicesFuncionario();
 
   Future<void> buscarPorId(int id, TipoPapel tipoPapel) {
     _pessoaDetalhe = null;
 
     return cargaPrincipal.executar(
       chamada: () async {
-        _pessoaDetalhe = await _services[tipoPapel]!.buscarPorId(id);
+        _pessoaDetalhe = await servicoDoPapel(tipoPapel).buscarPorId(id);
       },
       aoFalhar: () {},
     );
@@ -35,15 +25,16 @@ class DetalhesPessoaViewModel extends ChangeNotifier
 
   Future<bool> excluir(int id, TipoPapel tipoPapel) => cargaPrincipal.executar(
         chamada: () async {
-          await _services[tipoPapel].excluir(id);
+          await servicoDoPapel(tipoPapel).excluir(id);
           return true;
         },
         aoFalhar: () => false,
       );
 
-  Future<bool> atualizarSalario(int id, double salario) => cargaPrincipal.executar(
+  Future<bool> atualizarSalario(int id, double salario) =>
+      cargaPrincipal.executar(
         chamada: () async {
-          await _services[TipoPapel.funcionario].atualizarSalario(id, salario);
+          await _servicoFuncionario.atualizarSalario(id, salario);
           return true;
         },
         aoFalhar: () => false,

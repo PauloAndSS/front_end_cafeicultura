@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/financeiro/despesa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_pessoas_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
@@ -9,29 +11,29 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_tra
 Future<Despesa?> mostrarCadastroTransacao({
   required BuildContext context,
   required int idPropriedade,
+  required CarregarPessoasMixin catalogoDePessoas,
   List<Pessoa> responsaveis = const [],
-  List<Pessoa> demaisPessoas = const [],
 }) {
   return showDialog<Despesa>(
     context: context,
     barrierDismissible: false,
     builder: (_) => _TransacaoFinanceiraDialog(
       idPropriedade: idPropriedade,
+      catalogoDePessoas: catalogoDePessoas,
       responsaveis: responsaveis,
-      demaisPessoas: demaisPessoas,
     ),
   );
 }
 
 class _TransacaoFinanceiraDialog extends StatefulWidget {
   final int idPropriedade;
+  final CarregarPessoasMixin catalogoDePessoas;
   final List<Pessoa> responsaveis;
-  final List<Pessoa> demaisPessoas;
 
   const _TransacaoFinanceiraDialog({
     required this.idPropriedade,
+    required this.catalogoDePessoas,
     required this.responsaveis,
-    required this.demaisPessoas,
   });
 
   @override
@@ -76,7 +78,8 @@ class _TransacaoFinanceiraDialogState
             controllerValor: _valorController,
             controllerDescricao: _descricaoController,
             responsaveisSugeridos: widget.responsaveis,
-            demaisPessoas: widget.demaisPessoas,
+            catalogoDePessoas: widget.catalogoDePessoas,
+            categoriasBeneficiado: TipoPapel.values,
             aoSelecionarTipoOperacao: (valor) =>
                 setState(() => _tipoOperacao = valor),
             aoSelecionarFormaPagamento: (valor) =>

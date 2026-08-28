@@ -89,12 +89,14 @@ abstract class ServicesEventoBase<T extends Evento> extends BaseService {
     required DateTime dataInicio,
     required DateTime dataFim,
   }) {
+    final agora = DateTime.now();
+
     return alterar(
       id: id,
       subRota: 'finalizar',
       corpo: {
-        'dataInicio': dataParaJson(dataInicio),
-        'dataFim': dataParaJson(dataFim),
+        'dataInicio': diaNaoFuturoParaJson(dataInicio, agora: agora),
+        'dataFim': diaNaoFuturoParaJson(dataFim, agora: agora),
       },
       erroMsg: 'Erro ao confirmar $rotulo.',
       acao: 'confirmar $rotulo',

@@ -1,41 +1,24 @@
 import 'package:flutter/widgets.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_pessoas.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/estado_de_carga.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/notifica_se_vivo_mixin.dart';
 
 class CadastrarPessoaViewModel extends ChangeNotifier
     with NotificaSeVivoMixin, EstadoDeCarregamentoMixin {
-  TipoPapel? _papelSelecionado;
-  TipoPapel? get papelSelecionado => _papelSelecionado;
+  final TipoPapel papel;
 
-  late final Map<TipoPapel, dynamic> _services;
+  final ServicePapelPessoa<PapelPessoa> _service;
 
-  CadastrarPessoaViewModel() {
-    _services = {
-      TipoPapel.funcionario: ServicesFuncionario(),
-      TipoPapel.meeiro: ServicesMeeiro(),
-      TipoPapel.fornecedor: ServicesFornecedor(),
-      TipoPapel.prestador: ServicesPrestadorDeServico(),
-      TipoPapel.cliente: ServicesCliente(),
-    };
-  }
+  CadastrarPessoaViewModel(this.papel,
+      {ServicePapelPessoa<PapelPessoa>? service})
+      : _service = service ?? servicoDoPapel(papel);
 
-  void selecionarPapel(TipoPapel? papel) {
-    _papelSelecionado = papel;
-    notificarSeVivo();
-  }
-
-  Future<bool> cadastrarPessoa({required dynamic objetoPapel}) {
-    if (_papelSelecionado == null) {
-      mensagemErro = 'Selecione o papel da pessoa.';
-      notificarSeVivo();
-      return Future.value(false);
-    }
-
+  Future<bool> cadastrarPessoa(PapelPessoa objetoPapel) {
     return cargaPrincipal.executar(
       chamada: () async {
-        await _services[_papelSelecionado!].cadastrar(objetoPapel);
+        await _service.cadastrar(objetoPapel);
         return true;
       },
       aoFalhar: () => false,

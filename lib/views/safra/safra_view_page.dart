@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/main_screen_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_bottom_navbar.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_selector.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_summary.dart';
@@ -46,15 +45,7 @@ class _SafraViewPageState extends State<SafraViewPage> {
   }
 
 void _voltar() {
-    if (Navigator.of(context).canPop()) {
-      Navigator.pop(context, true);
-    } else {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const MainScreenView()),
-        (route) => false,
-      );
-    }
+    Navigator.pop(context, true);
   }
 
   static DateTime get _pisoDeSafra => DateTime(DateTime.now().year - 1);
@@ -180,9 +171,10 @@ void _voltar() {
                   const SizedBox(height: 12),
                   const CaixaAvisoAtencao(
                     mensagem:
-                        'Após o encerramento, nenhum dado dessa safra poderá '
-                        'ser alterado. Ela ficará "congelada" até que seja '
-                        'reativada.',
+                        'A safra deixa de aparecer no cadastro de novas '
+                        'atividades e nenhum dado dela poderá ser alterado. '
+                        'Ela continua na lista com o selo "Encerrada" e pode '
+                        'ser reativada quando você quiser.',
                   ),
                   const SizedBox(height: 12),
                   const Text('Data de fim da safra'),
@@ -212,8 +204,11 @@ void _voltar() {
                 ),
                 FilledButton(
                   onPressed: () => Navigator.of(dialogContext).pop(true),
-                  style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                  child: const Text('Encerrar'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppCores.avisoTexto,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: const Text('Encerrar safra'),
                 ),
               ],
             );
@@ -245,7 +240,7 @@ void _voltar() {
     }
 
     mostrarResultado(context, sucesso
-              ? 'Safra encerrada com sucesso.'
+              ? 'Safra encerrada. Ela continua na lista com o selo "Encerrada".'
               : viewModel.mensagemErro ?? 'Não foi possível encerrar a safra.', sucesso: sucesso);
   }
 

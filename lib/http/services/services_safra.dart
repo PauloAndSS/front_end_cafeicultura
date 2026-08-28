@@ -21,7 +21,7 @@ class ServicesSafra extends BaseService {
         headers: defaultHeaders,
         body: jsonEncode({
           'idPropriedade': idPropriedade,
-          'dataInicio': dataParaJson(dataInicio ?? DateTime.now()),
+          'dataInicio': diaNaoFuturoParaJson(dataInicio ?? DateTime.now()),
         }),
       ),
       aoSucesso: (_) => true,
@@ -83,7 +83,9 @@ class ServicesSafra extends BaseService {
       enviar: () => http.patch(
         rota('$idSafra/finalizar'),
         headers: defaultHeaders,
-        body: jsonEncode({'dataFim': dataParaJson(dataFim ?? DateTime.now())}),
+        body: jsonEncode(
+          {'dataFim': diaNaoFuturoParaJson(dataFim ?? DateTime.now())},
+        ),
       ),
       aoSucesso: (_) => true,
       erroMsg: 'Erro ao encerrar safra.',

@@ -9,7 +9,7 @@ class TratosCulturaisViewModel
   final _tratoService = ServicesTratoCultural();
 
   @override
-  Future<ResultadoPaginadoDTO<TratoCultural>> buscarPorStatus(
+  Future<ResultadoPaginadoDTO<TratoCultural>> buscarPagina(
     int idPropriedade,
     StatusEvento status,
     int pagina,

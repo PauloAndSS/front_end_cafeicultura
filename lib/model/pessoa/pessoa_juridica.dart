@@ -101,4 +101,7 @@ class PessoaJuridica extends Pessoa {
 
   @override
   String get nomeParaExibicao => razaoSocial;
+
+  @override
+  String get documentoFormatado => cnpj.formatado;
 }

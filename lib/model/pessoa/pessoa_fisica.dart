@@ -99,4 +99,7 @@ class PessoaFisica extends Pessoa {
 
   @override
   String get nomeParaExibicao => nome;
+
+  @override
+  String get documentoFormatado => cpf.formatado;
 }

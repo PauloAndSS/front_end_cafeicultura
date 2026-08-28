@@ -211,11 +211,24 @@ abstract class BaseService {
     return jsonResponse;
   }
 
+  /// Devolve o envelope de paginação cru, para o DTO montar.
+  ///
+  /// Algumas rotas de papel de pessoa (`/meeiros`, `/fornecedores`,
+  /// `/prestadores`) embrulham o envelope num array de um elemento, enquanto
+  /// `/funcionarios` e `/clientes` devolvem o objeto direto. É defeito do
+  /// backend; até ele ser corrigido, desembrulhar aqui evita repetir a
+  /// tolerância em cada service.
   Map<String, dynamic> extrairDadosPaginados(List<int> bodyBytes) {
     final jsonResponse = jsonDecode(utf8.decode(bodyBytes));
 
     if (jsonResponse is Map<String, dynamic>) {
       return jsonResponse;
+    }
+
+    if (jsonResponse is List && jsonResponse.length == 1) {
+      final unico = jsonResponse.first;
+
+      if (unico is Map<String, dynamic>) return unico;
     }
 
     throw ApiException('Formato de resposta inválido para paginação.');

@@ -21,16 +21,15 @@ class MainScreenView extends StatefulWidget {
 
 class _MainScreenViewState extends State<MainScreenView> {
   late PageController _pageController;
-  late NavegacaoViewModel _navViewModel;
+  NavegacaoViewModel? _navViewModel;
 
   @override
   void initState() {
     super.initState();
 
-    _navViewModel = context.read<NavegacaoViewModel>();
-    _pageController = PageController(initialPage: _navViewModel.indiceAtual);
-
-    _navViewModel.addListener(_sincronizarPageController);
+    _pageController = PageController(
+      initialPage: context.read<NavegacaoViewModel>().indiceAtual,
+    );
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PropriedadesUsuarioViewModel>().carregarPropriedades();
@@ -38,8 +37,22 @@ class _MainScreenViewState extends State<MainScreenView> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    final viewModel = context.read<NavegacaoViewModel>();
+    if (identical(viewModel, _navViewModel)) {
+      return;
+    }
+
+    _navViewModel?.removeListener(_sincronizarPageController);
+    _navViewModel = viewModel;
+    viewModel.addListener(_sincronizarPageController);
+  }
+
+  @override
   void dispose() {
-    _navViewModel.removeListener(_sincronizarPageController);
+    _navViewModel?.removeListener(_sincronizarPageController);
     _pageController.dispose();
     super.dispose();
   }
@@ -47,9 +60,9 @@ class _MainScreenViewState extends State<MainScreenView> {
   void _sincronizarPageController() {
     if (_pageController.hasClients) {
       final paginaAtual = _pageController.page?.round() ?? 0;
-      if (paginaAtual != _navViewModel.indiceAtual) {
+      if (paginaAtual != _navViewModel!.indiceAtual) {
         _pageController.animateToPage(
-          _navViewModel.indiceAtual,
+          _navViewModel!.indiceAtual,
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
         );
@@ -58,8 +71,8 @@ class _MainScreenViewState extends State<MainScreenView> {
   }
 
   void _onPageChanged(int index) {
-    if (_navViewModel.indiceAtual != index) {
-      _navViewModel.alterarAba(index);
+    if (_navViewModel!.indiceAtual != index) {
+      _navViewModel!.alterarAba(index);
     }
   }
 

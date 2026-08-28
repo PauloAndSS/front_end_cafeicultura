@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:frond_end_cafeicultura_mobile/http/dtos/auth_dto.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
+import 'package:frond_end_cafeicultura_mobile/http/services/eventos/services_trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_auth.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_pessoas.dart';
@@ -16,6 +17,8 @@ import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/cliente.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/funcionario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -429,6 +432,197 @@ void main() {
       expect(enviada.method, 'PATCH');
       expect(enviada.url.path, endsWith('/propriedades/5/nome'));
       expect(jsonDecode(enviada.body), {'nome': 'Sítio Novo'});
+    });
+  });
+
+  group('listagem por papel de pessoa', () {
+    Map<String, dynamic> envelope(List<Map<String, dynamic>> dados,
+            {int pagina = 1, int limite = 20}) =>
+        {'pagina': pagina, 'limite': limite, 'dados': dados};
+
+    Map<String, dynamic> meeiro(int id) =>
+        {'id': id, 'nome': 'Meeiro $id', 'cpf': '529.982.247-25'};
+
+    test('usa GET na rota do papel com pagina e limite', () async {
+      late http.Request enviada;
+
+      await comRespostaFixa(
+        () => ServicesMeeiro().listar(pagina: 2, limite: 20),
+        respostaJson(envelope(const [], pagina: 2), 200),
+        capturar: (requisicao) => enviada = requisicao,
+      );
+
+      expect(enviada.method, 'GET');
+      expect(enviada.url.path, endsWith('/meeiros'));
+      expect(enviada.url.queryParameters, {'pagina': '2', 'limite': '20'});
+    });
+
+    test('desserializa o envelope de dados com o model do proprio papel',
+        () async {
+      final resultado = await comRespostaFixa(
+        () => ServicesFornecedor().listar(),
+        respostaJson(
+          envelope([
+            {
+              'id': 99,
+              'razaoSocial': 'AgroInsumos QA LTDA',
+              'cnpj': '41802736000160',
+            }
+          ]),
+          200,
+        ),
+      );
+
+      expect(resultado.data.single.id, 99);
+      expect(resultado.data.single.pessoa, isA<PessoaJuridica>());
+      expect(resultado.data.single.pessoa.nomeParaExibicao,
+          'AgroInsumos QA LTDA');
+    });
+
+    test('envelope embrulhado em array e desembrulhado', () async {
+      final resultado = await comRespostaFixa(
+        () => ServicesMeeiro().listar(),
+        respostaJson([envelope([meeiro(12)])], 200),
+      );
+
+      expect(resultado.data.single.id, 12);
+    });
+
+    test('pagina cheia deixa a rolagem pedir a proxima', () async {
+      final resultado = await comRespostaFixa(
+        () => ServicesMeeiro().listar(limite: 2),
+        respostaJson(envelope([meeiro(1), meeiro(2)], limite: 2), 200),
+      );
+
+      expect(resultado.pagina, 1);
+      expect(resultado.totalPaginas, 2);
+    });
+
+    test('pagina incompleta encerra a rolagem', () async {
+      final resultado = await comRespostaFixa(
+        () => ServicesMeeiro().listar(pagina: 3, limite: 2),
+        respostaJson(envelope([meeiro(9)], pagina: 3, limite: 2), 200),
+      );
+
+      expect(resultado.pagina, 3);
+      expect(resultado.totalPaginas, 3);
+    });
+
+    test('lista vazia nao pede mais nenhuma pagina', () async {
+      final resultado = await comRespostaFixa(
+        () => ServicesCliente().listar(),
+        respostaJson(envelope(const []), 200),
+      );
+
+      expect(resultado.data, isEmpty);
+      expect(resultado.totalPaginas, resultado.pagina);
+    });
+
+    test('totalPaginas do backend vence a inferencia', () async {
+      final resultado = await comRespostaFixa(
+        () => ServicesMeeiro().listar(limite: 2),
+        respostaJson(
+          {...envelope([meeiro(1), meeiro(2)], limite: 2), 'totalPaginas': 7},
+          200,
+        ),
+      );
+
+      expect(resultado.totalPaginas, 7);
+    });
+
+    test('total e limite derivam o total de paginas', () async {
+      final resultado = await comRespostaFixa(
+        () => ServicesMeeiro().listar(limite: 2),
+        respostaJson(
+          {...envelope([meeiro(1), meeiro(2)], limite: 2), 'total': 5},
+          200,
+        ),
+      );
+
+      expect(resultado.totalPaginas, 3);
+    });
+
+    test('404 com corpo JSON encerra a rolagem na pagina pedida', () async {
+      final resultado = await comRespostaFixa(
+        () => ServicesMeeiro().listar(pagina: 4),
+        respostaJson({'mensagem': 'Nenhum meeiro encontrado'}, 404),
+      );
+
+      expect(resultado.data, isEmpty);
+      expect(resultado.pagina, 4);
+      expect(resultado.totalPaginas, 4);
+    });
+
+    test('mensagem de erro nomeia o papel no plural', () async {
+      final erro = await erroDe(
+        () => comFalhaDeRede(() => ServicesPrestadorDeServico().listar()),
+      );
+
+      expect(erro.mensagem, contains('prestadores de serviço'));
+    });
+  });
+
+  group('confirmar atividade nunca manda data no futuro', () {
+    Future<Map<String, dynamic>> corpoDeConfirmar({
+      required DateTime dataInicio,
+      required DateTime dataFim,
+    }) async {
+      late http.Request enviada;
+
+      await comRespostaFixa(
+        () => ServicesTratoCultural()
+            .confirmar(7, dataInicio: dataInicio, dataFim: dataFim),
+        respostaJson({'mensagem': 'ok'}, 200),
+        capturar: (requisicao) => enviada = requisicao,
+      );
+
+      return jsonDecode(enviada.body) as Map<String, dynamic>;
+    }
+
+    test('atividade que termina hoje nao ultrapassa o instante da chamada',
+        () async {
+      final antes = DateTime.now().toUtc();
+
+      final corpo = await corpoDeConfirmar(
+        dataInicio: hoje().subtract(const Duration(days: 3)),
+        dataFim: hoje(),
+      );
+
+      final depois = DateTime.now().toUtc();
+      final dataFim = DateTime.parse(corpo['dataFim'] as String);
+
+      expect(dataFim.isAfter(depois), isFalse);
+      expect(
+        dataFim.isBefore(
+          antes.subtract(margemDeRelogio + const Duration(seconds: 5)),
+        ),
+        isFalse,
+      );
+    });
+
+    test('atividade de um dia so mantem dataInicio menor ou igual a dataFim',
+        () async {
+      final corpo = await corpoDeConfirmar(
+        dataInicio: hoje(),
+        dataFim: hoje(),
+      );
+
+      final dataInicio = DateTime.parse(corpo['dataInicio'] as String);
+      final dataFim = DateTime.parse(corpo['dataFim'] as String);
+
+      expect(dataInicio.isAfter(dataFim), isFalse);
+    });
+
+    test('dia ja encerrado continua viajando em meio-dia UTC', () async {
+      final ontem = hoje().subtract(const Duration(days: 1));
+
+      final corpo = await corpoDeConfirmar(dataInicio: ontem, dataFim: ontem);
+
+      final esperado =
+          DateTime.utc(ontem.year, ontem.month, ontem.day, 12).toIso8601String();
+
+      expect(corpo['dataInicio'], esperado);
+      expect(corpo['dataFim'], esperado);
     });
   });
 }

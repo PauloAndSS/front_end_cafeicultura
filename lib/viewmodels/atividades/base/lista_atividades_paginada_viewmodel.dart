@@ -43,16 +43,8 @@ class _PaginasDoStatus<T> {
 
 abstract class ListaAtividadesPaginadaViewModel<T extends EventoAgricola,
     E extends Object> extends ChangeNotifier with NotificaSeVivoMixin {
-  @protected
-  List<StatusEvento?> get filtrosDisponiveis => StatusEvento.values;
-
-  List<StatusEvento?> get filtros => filtrosDisponiveis;
-
-  @protected
-  StatusEvento? get filtroInicial => StatusEvento.emAndamento;
-
-  late final Map<StatusEvento?, _PaginasDoStatus<T>> _porStatus = {
-    for (final filtro in filtrosDisponiveis)
+  late final Map<StatusEvento, _PaginasDoStatus<T>> _porStatus = {
+    for (final filtro in StatusEvento.values)
       filtro: _PaginasDoStatus<T>(notificarSeVivo),
   };
 
@@ -60,8 +52,8 @@ abstract class ListaAtividadesPaginadaViewModel<T extends EventoAgricola,
 
   int _geracao = 0;
 
-  late StatusEvento? _statusAtual = filtroInicial;
-  StatusEvento? get statusAtual => _statusAtual;
+  StatusEvento _statusAtual = StatusEvento.emAndamento;
+  StatusEvento get statusAtual => _statusAtual;
 
   bool get isLoading => _paginasAtuais.cargaPrimeira.isLoading;
 
@@ -73,19 +65,12 @@ abstract class ListaAtividadesPaginadaViewModel<T extends EventoAgricola,
 
   bool get temMais => _paginasAtuais.temMais;
 
-  _PaginasDoStatus<T> get _paginasAtuais {
-    assert(
-      _porStatus.containsKey(_statusAtual),
-      'O filtro atual precisa estar em filtrosDisponiveis.',
-    );
-
-    return _porStatus[_statusAtual]!;
-  }
+  _PaginasDoStatus<T> get _paginasAtuais => _porStatus[_statusAtual]!;
 
   @protected
   Future<ResultadoPaginadoDTO<T>> buscarPagina(
     E escopo,
-    StatusEvento? status,
+    StatusEvento status,
     int pagina,
   );
 
@@ -109,10 +94,8 @@ abstract class ListaAtividadesPaginadaViewModel<T extends EventoAgricola,
     await _carregarProximaPagina(primeira: true);
   }
 
-  Future<void> selecionarStatus(StatusEvento? status) async {
+  Future<void> selecionarStatus(StatusEvento status) async {
     if (status == _statusAtual) return;
-
-    if (!_porStatus.containsKey(status)) return;
 
     _statusAtual = status;
     notificarSeVivo();
@@ -194,42 +177,16 @@ abstract class ListaAtividadesPaginadaViewModel<T extends EventoAgricola,
 abstract class ListaAtividadesDaPropriedadePaginadaViewModel<
         T extends EventoAgricola>
     extends ListaAtividadesPaginadaViewModel<T, int> with CarregarTalhoesMixin {
-  @override
-  StatusEvento get statusAtual => super.statusAtual!;
-
   Future<void> carregar(int idPropriedade, {bool forcar = false}) =>
       carregarEscopo(idPropriedade, forcar: forcar);
 
   @override
   Future<void>? prepararPrimeiraPagina(int escopo) => carregarTalhoes(escopo);
-
-  @override
-  Future<ResultadoPaginadoDTO<T>> buscarPagina(
-    int idPropriedade,
-    StatusEvento? status,
-    int pagina,
-  ) {
-    return buscarPorStatus(idPropriedade, status!, pagina);
-  }
-
-  @protected
-  Future<ResultadoPaginadoDTO<T>> buscarPorStatus(
-    int idPropriedade,
-    StatusEvento status,
-    int pagina,
-  );
 }
 
 abstract class ListaAtividadesDoTalhaoPaginadaViewModel<
         T extends EventoAgricola>
     extends ListaAtividadesPaginadaViewModel<T, (int idPropriedade, int idTalhao)> {
-  @override
-  List<StatusEvento?> get filtrosDisponiveis =>
-      const [null, ...StatusEvento.values];
-
-  @override
-  StatusEvento? get filtroInicial => null;
-
   Future<void> carregar(
     int idPropriedade,
     int idTalhao, {
@@ -241,7 +198,7 @@ abstract class ListaAtividadesDoTalhaoPaginadaViewModel<
   @override
   Future<ResultadoPaginadoDTO<T>> buscarPagina(
     (int idPropriedade, int idTalhao) escopo,
-    StatusEvento? status,
+    StatusEvento status,
     int pagina,
   ) {
     return buscarNoTalhao(escopo.$1, escopo.$2, status, pagina);
@@ -251,7 +208,7 @@ abstract class ListaAtividadesDoTalhaoPaginadaViewModel<
   Future<ResultadoPaginadoDTO<T>> buscarNoTalhao(
     int idPropriedade,
     int idTalhao,
-    StatusEvento? status,
+    StatusEvento status,
     int pagina,
   );
 }

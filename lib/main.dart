@@ -5,7 +5,6 @@ import 'package:intl/date_symbol_data_local.dart';
 
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/pessoas_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhoes_viewmodel.dart'; 
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
@@ -49,21 +48,18 @@ class MeuApp extends StatelessWidget {
       
       builder: (context, child) {
         final session = context.watch<SessionViewModel>();
-        
-        if (session.isLoggedIn) {
-          return MultiProvider(
-            providers: [
-              ChangeNotifierProvider(create: (_) => NavegacaoViewModel()),
-              ChangeNotifierProvider(create: (_) => PropriedadesUsuarioViewModel()),
-              ChangeNotifierProvider(create: (_) => PessoasViewModel()),
-              ChangeNotifierProvider(create: (_) => TalhoesViewModel()),
-              ChangeNotifierProvider(create: (_) => SafraViewModel()),
-              ChangeNotifierProvider(create: (_) => AtividadesMudaram()),
-            ],
-            child: child!,
-          );
-        }
-        return child!;
+
+        return MultiProvider(
+          key: ValueKey(session.idUsuario),
+          providers: [
+            ChangeNotifierProvider(create: (_) => NavegacaoViewModel()),
+            ChangeNotifierProvider(create: (_) => PropriedadesUsuarioViewModel()),
+            ChangeNotifierProvider(create: (_) => TalhoesViewModel()),
+            ChangeNotifierProvider(create: (_) => SafraViewModel()),
+            ChangeNotifierProvider(create: (_) => AtividadesMudaram()),
+          ],
+          child: child!,
+        );
       },
       home: const AuthWrapper(), 
     );

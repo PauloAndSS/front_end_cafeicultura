@@ -5,6 +5,6 @@ A FAZER
 
 -> atualizar documentação -> focar em programadores novos que querem entender o código. Por onde começar? O Readme.md faz sentido para isso? Deve ser implementado algum plugin para isso? 
 
--> Cadastro de Safra tá dando merda 
+-> Cadastro de Safra tá dando merda
 
 -> Testar cadastro de compra de insumo, dentro e fora de evento

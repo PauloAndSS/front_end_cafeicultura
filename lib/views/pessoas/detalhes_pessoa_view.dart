@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/cliente.dart';
-import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/fornecedor.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/funcionario.dart';
-import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/meeiro.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pessoa.dart';
-import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/prestador.dart';
-import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
@@ -127,15 +122,6 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
     }
   }
 
-  String _obterNomeFuncao(PapelPessoa item) {
-    if (item is Funcionario) return 'Funcionário';
-    if (item is Fornecedor) return 'Fornecedor';
-    if (item is Cliente) return 'Cliente';
-    if (item is Meeiro) return 'Meeiro';
-    if (item is PrestadorDeServico) return 'Prestador de Serviço';
-    return 'Não definido';
-  }
-
   Widget _buildInfoRow(String label, String value, {double bottom = 14.0}) {
     return Padding(
       padding: EdgeInsets.only(bottom: bottom),
@@ -249,19 +235,22 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
                         ),
                         const SizedBox(height: 16),
 
-                        _buildInfoRow('Função :', _obterNomeFuncao(papelAtual)),
+                        _buildInfoRow(
+                          'Função :',
+                          PessoaFactory.obterTipoPapel(papelAtual).titulo,
+                        ),
 
-                        if (pessoaBase is PessoaFisica) ...[
-                          _buildInfoRow('CPF :', pessoaBase.cpf.formatado),
-                        ] else if (pessoaBase is PessoaJuridica) ...[
-                          _buildInfoRow('CNPJ :', pessoaBase.cnpj.formatado),
-                          if (pessoaBase.inscricaoEstadual != null &&
-                              pessoaBase.inscricaoEstadual!.isNotEmpty)
-                            _buildInfoRow(
-                              'Insc. Estadual :',
-                              pessoaBase.inscricaoEstadual!,
-                            ),
-                        ],
+                        _buildInfoRow(
+                          pessoaBase is PessoaJuridica ? 'CNPJ :' : 'CPF :',
+                          pessoaBase.documentoFormatado,
+                        ),
+
+                        if (pessoaBase is PessoaJuridica &&
+                            (pessoaBase.inscricaoEstadual?.isNotEmpty ?? false))
+                          _buildInfoRow(
+                            'Insc. Estadual :',
+                            pessoaBase.inscricaoEstadual!,
+                          ),
 
                         if (papelAtual is Funcionario) ...[
                           _buildInfoRow(

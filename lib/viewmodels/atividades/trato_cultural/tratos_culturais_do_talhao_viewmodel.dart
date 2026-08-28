@@ -12,7 +12,7 @@ class TratosCulturaisDoTalhaoViewModel
   Future<ResultadoPaginadoDTO<TratoCultural>> buscarNoTalhao(
     int idPropriedade,
     int idTalhao,
-    StatusEvento? status,
+    StatusEvento status,
     int pagina,
   ) {
     return _tratoService.buscarPorTalhao(

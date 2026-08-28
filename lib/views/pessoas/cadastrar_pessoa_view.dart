@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/cadastrar_pessoa_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/cliente.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/fornecedor.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/funcionario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/meeiro.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/prestador.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
@@ -17,14 +20,16 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart'
 import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_identificacao.dart';
 
 class CadastrarPessoaView extends StatefulWidget {
-  const CadastrarPessoaView({super.key});
+  final TipoPapel papel;
+
+  const CadastrarPessoaView({super.key, required this.papel});
 
   @override
   State<CadastrarPessoaView> createState() => _CadastrarPessoaViewState();
 }
 
 class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
-  final _viewModel = CadastrarPessoaViewModel();
+  late final _viewModel = CadastrarPessoaViewModel(widget.papel);
   final _formKey = GlobalKey<FormState>();
 
   bool _isPessoaFisica = true;
@@ -36,6 +41,8 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
   final _inscricaoEstadualController = TextEditingController();
   final _salarioController = TextEditingController();
   final _ctpsController = TextEditingController();
+
+  TipoPapel get _papel => widget.papel;
 
   @override
   void dispose() {
@@ -57,8 +64,7 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
         _cnpjController.text.isNotEmpty ||
         _inscricaoEstadualController.text.isNotEmpty ||
         _salarioController.text.isNotEmpty ||
-        _ctpsController.text.isNotEmpty ||
-        _viewModel.papelSelecionado != null;
+        _ctpsController.text.isNotEmpty;
   }
 
   Future<bool> _mostrarDialogoConfirmacao() {
@@ -68,54 +74,58 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
           'Você preencheu alguns dados. Se sair agora, tudo será perdido. Deseja realmente sair?',
     );
   }
-  void _salvar() async {
-    if (_formKey.currentState!.validate()) {
-      FocusScope.of(context).unfocus();
 
-      if (_viewModel.papelSelecionado == null) return;
-
-      final bool isPessoaFisica = _razaoSocialController.text.trim().isEmpty;
-
-      final pessoaBase = isPessoaFisica
-          ? PessoaFisica(
-              nome: _nomeController.text.trim(),
-              cpf: CPF.criar(_cpfController.text),
-            )
-          : PessoaJuridica(
-              razaoSocial: _razaoSocialController.text.trim(),
-              cnpj: CNPJ.criar(_cnpjController.text),
-              inscricaoEstadual: _inscricaoEstadualController.text.isNotEmpty
-                  ? _inscricaoEstadualController.text.trim()
-                  : null,
-            );
-
-      final mapConstrutores = {
-        TipoPapel.funcionario: (p) {
-          final salarioTratado = _salarioController.text.replaceAll('.', '').replaceAll(',', '.');
-          return Funcionario(
-            pessoa: p,
-            salario: double.tryParse(salarioTratado),
-            ctps: _ctpsController.text.isNotEmpty ? _ctpsController.text.trim() : null,
-          );
-        },
-        TipoPapel.meeiro: (p) => Meeiro(pessoa: p),
-        TipoPapel.fornecedor: (p) => Fornecedor(pessoa: p),
-        TipoPapel.prestador: (p) => PrestadorDeServico(pessoa: p),
-        TipoPapel.cliente: (p) => Cliente(pessoa: p),
-      };
-
-      final objetoPapel = mapConstrutores[_viewModel.papelSelecionado!]!(pessoaBase);
-
-      final sucesso = await _viewModel.cadastrarPessoa(
-        objetoPapel: objetoPapel,
+  Pessoa _montarPessoa() {
+    if (_isPessoaFisica) {
+      return PessoaFisica(
+        nome: _nomeController.text.trim(),
+        cpf: CPF.criar(_cpfController.text),
       );
+    }
 
-      if (sucesso && mounted) {
-        mostrarSucesso(context, 'Pessoa cadastrada com sucesso!');
-        Navigator.pop(context, true);
-      } else if (mounted && _viewModel.mensagemErro != null) {
-        mostrarErro(context, _viewModel.mensagemErro!);
-      }
+    return PessoaJuridica(
+      razaoSocial: _razaoSocialController.text.trim(),
+      cnpj: CNPJ.criar(_cnpjController.text),
+      inscricaoEstadual: _inscricaoEstadualController.text.isNotEmpty
+          ? _inscricaoEstadualController.text.trim()
+          : null,
+    );
+  }
+
+  PapelPessoa _montarPapel(Pessoa pessoa) {
+    return switch (_papel) {
+      TipoPapel.funcionario => Funcionario(
+          pessoa: pessoa,
+          salario: double.tryParse(
+            _salarioController.text.replaceAll('.', '').replaceAll(',', '.'),
+          ),
+          ctps: _ctpsController.text.isNotEmpty
+              ? _ctpsController.text.trim()
+              : null,
+        ),
+      TipoPapel.meeiro => Meeiro(pessoa: pessoa),
+      TipoPapel.fornecedor => Fornecedor(pessoa: pessoa),
+      TipoPapel.prestador => PrestadorDeServico(pessoa: pessoa),
+      TipoPapel.cliente => Cliente(pessoa: pessoa),
+    };
+  }
+
+  void _salvar() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    FocusScope.of(context).unfocus();
+
+    final sucesso = await _viewModel.cadastrarPessoa(
+      _montarPapel(_montarPessoa()),
+    );
+
+    if (!mounted) return;
+
+    if (sucesso) {
+      mostrarSucesso(context, '${_papel.titulo} cadastrado com sucesso!');
+      Navigator.pop(context, true);
+    } else if (_viewModel.mensagemErro != null) {
+      mostrarErro(context, _viewModel.mensagemErro!);
     }
   }
 
@@ -139,8 +149,8 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
       },
       child: Scaffold(
         backgroundColor: AppCores.fundo,
-        appBar: const AppBarPadrao(
-          titulo: 'Cadastrar Pessoa',
+        appBar: AppBarPadrao(
+          titulo: 'Cadastrar ${_papel.titulo}',
           cor: AppCores.verdeAuth,
           corConteudo: null,
         ),
@@ -156,94 +166,14 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
               key: _formKey,
               child: ListenableBuilder(
                 listenable: _viewModel,
-                builder: (context, _) {
-
-                  final bool forcarPessoaFisica =
-                      _viewModel.papelSelecionado == TipoPapel.funcionario ||
-                      _viewModel.papelSelecionado == TipoPapel.meeiro;
-
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'Papel da Pessoa',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      DropdownButtonFormField<TipoPapel>(
-                        value: _viewModel.papelSelecionado,
-                        hint: const Text('Selecione o papel'),
-                        decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                        ),
-                        items: const [
-                          DropdownMenuItem(
-                            value: TipoPapel.funcionario,
-                            child: Text('Funcionário'),
-                          ),
-                          DropdownMenuItem(
-                            value: TipoPapel.meeiro,
-                            child: Text('Meeiro'),
-                          ),
-                          DropdownMenuItem(
-                            value: TipoPapel.fornecedor,
-                            child: Text('Fornecedor'),
-                          ),
-                          DropdownMenuItem(
-                            value: TipoPapel.prestador,
-                            child: Text('Prestador de Serviço'),
-                          ),
-                          DropdownMenuItem(
-                            value: TipoPapel.cliente,
-                            child: Text('Cliente'),
-                          ),
-                        ],
-                        onChanged: (papel) {
-                          _viewModel.selecionarPapel(papel);
-
-                          if (papel == TipoPapel.funcionario || papel == TipoPapel.meeiro) {
-                            setState(() => _isPessoaFisica = true);
-                          }
-                        },
-                      ),
-                      const SizedBox(height: 16),
-
-                      const Text(
-                        'Tipo de Cadastro',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
+                builder: (context, _) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (_papel.aceitaPessoaJuridica) ...[
+                      rotuloDeCampo('Tipo de Cadastro'),
                       DropdownButtonFormField<bool>(
                         value: _isPessoaFisica,
-                        decoration: InputDecoration(
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 12,
-                          ),
-                          filled: forcarPessoaFisica,
-                          fillColor: forcarPessoaFisica ? Colors.grey.shade200 : Colors.transparent,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          disabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(8),
-                            borderSide: BorderSide(color: Colors.grey.shade300),
-                          ),
-                        ),
+                        decoration: decoracaoDeSeletor(),
                         items: const [
                           DropdownMenuItem(
                             value: true,
@@ -254,88 +184,86 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                             child: Text('Pessoa Jurídica (CNPJ)'),
                           ),
                         ],
-                        onChanged: forcarPessoaFisica
-                            ? null
-                            : (valor) {
-                                if (valor != null) {
-                                  setState(() => _isPessoaFisica = valor);
-                                }
-                              },
+                        onChanged: (valor) {
+                          if (valor != null) {
+                            setState(() => _isPessoaFisica = valor);
+                          }
+                        },
                       ),
                       const SizedBox(height: 16),
+                    ],
 
-                      BlocoIdentificacao(
-                        pessoaFisica: _isPessoaFisica,
-                        controllerNome: _nomeController,
-                        controllerRazaoSocial: _razaoSocialController,
-                        controllerCpf: _cpfController,
-                        controllerCnpj: _cnpjController,
-                        controllerInscricaoEstadual:
-                            _inscricaoEstadualController,
-                      ),
+                    BlocoIdentificacao(
+                      pessoaFisica: _isPessoaFisica,
+                      controllerNome: _nomeController,
+                      controllerRazaoSocial: _razaoSocialController,
+                      controllerCpf: _cpfController,
+                      controllerCnpj: _cnpjController,
+                      controllerInscricaoEstadual: _inscricaoEstadualController,
+                    ),
 
-                      if (_viewModel.papelSelecionado == TipoPapel.funcionario) ...[
-                        const SizedBox(height: 8),
-                        const Text(
-                          'Dados do Funcionário',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const Divider(height: 32),
-
-                        CustomTextField(
-                          label: 'CTPS (Opcional)',
-                          controller: _ctpsController,
-                          hintText: 'Número da carteira de trabalho',
-                          keyboardType: TextInputType.number,
-                        ),
-                        CustomTextField(
-                          label: 'Salário Base (R\$) (Opcional)',
-                          controller: _salarioController,
-                          hintText: '0.00',
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                          inputFormatters: [AppMasks.decimal],
-                        ),
-                      ],
-
+                    if (_papel == TipoPapel.funcionario) ...[
                       const SizedBox(height: 8),
-
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppCores.verdeSecundario,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          onPressed: _viewModel.isLoading ? null : _salvar,
-                          child: _viewModel.isLoading
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    color: Colors.white,
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text(
-                                  'Salvar Pessoa',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                      const Text(
+                        'Dados do Funcionário',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87,
                         ),
+                      ),
+                      const Divider(height: 32),
+
+                      CustomTextField(
+                        label: 'CTPS (Opcional)',
+                        controller: _ctpsController,
+                        hintText: 'Número da carteira de trabalho',
+                        keyboardType: TextInputType.number,
+                      ),
+                      CustomTextField(
+                        label: 'Salário Base (R\$) (Opcional)',
+                        controller: _salarioController,
+                        hintText: '0.00',
+                        keyboardType:
+                            const TextInputType.numberWithOptions(decimal: true),
+                        inputFormatters: [AppMasks.decimal],
                       ),
                     ],
-                  );
-                },
+
+                    const SizedBox(height: 8),
+
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppCores.verdeSecundario,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                        ),
+                        onPressed: _viewModel.isLoading ? null : _salvar,
+                        child: _viewModel.isLoading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                'Salvar ${_papel.titulo}',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

@@ -32,6 +32,7 @@ Future<Insumo?> abrirCadastroDeInsumo(
   return mostrarCadastroInsumo(
     context: context,
     viewModel: viewModel,
+    catalogoDePessoas: viewModel,
     idProprietario: dados.idProprietario,
     idPropriedade: dados.idPropriedade,
     fornecedores: dados.fornecedores,

@@ -8,26 +8,22 @@ enum StatusEvento {
   agendado(
     rotulo: 'Agendado',
     filtro: 'Agendadas',
-    filtroCurto: 'Agendadas',
     codigoApi: 'agendados',
   ),
   emAndamento(
     rotulo: 'Em andamento',
     filtro: 'Em andamento',
-    filtroCurto: 'Andamento',
     codigoApi: 'em_andamento',
   ),
   finalizado(
     rotulo: 'Finalizado',
     filtro: 'Finalizadas',
-    filtroCurto: 'Finalizadas',
     codigoApi: 'finalizados',
   );
 
   const StatusEvento({
     required this.rotulo,
     required this.filtro,
-    required this.filtroCurto,
     required this.codigoApi,
   });
 
@@ -35,15 +31,7 @@ enum StatusEvento {
 
   final String filtro;
 
-  final String filtroCurto;
-
   final String codigoApi;
-}
-
-String rotuloDeFiltro(StatusEvento? status, {bool curto = false}) {
-  if (status == null) return 'Todas';
-
-  return curto ? status.filtroCurto : status.filtro;
 }
 
 abstract class Evento {

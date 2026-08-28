@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/botao_encerrar.dart';
 
 class SafraSelectorWidget extends StatelessWidget {
   final List<Safra> safras;
@@ -166,35 +167,28 @@ class SafraSelectorWidget extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Expanded(
-                    child: (safraSelecionada?.encerrada ?? false)
-                        ? OutlinedButton.icon(
-                            onPressed: isLoading ? null : onReativarSafra,
-                            icon: const Icon(Icons.restart_alt),
-                            label: const Text('Reativar safra'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: AppCores.verdePrimario,
-                              side: const BorderSide(color: AppCores.verdeSecundario),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          )
-                        : OutlinedButton.icon(
-                            onPressed: isLoading || safraSelecionada == null ? null : onEncerrarSafra,
-                            icon: const Icon(Icons.stop_circle_outlined),
-                            label: const Text('Encerrar safra'),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.red.shade700,
-                              side: BorderSide(color: Colors.red.shade300),
-                              padding: const EdgeInsets.symmetric(vertical: 12),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
+                  if (safraSelecionada?.encerrada ?? false)
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: isLoading ? null : onReativarSafra,
+                        icon: const Icon(Icons.restart_alt),
+                        label: const Text('Reativar safra'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppCores.verdePrimario,
+                          side: const BorderSide(color: AppCores.verdeSecundario),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
-                  ),
+                        ),
+                      ),
+                    )
+                  else
+                    BotaoEncerrar(
+                      rotulo: 'Encerrar safra',
+                      carregando: isLoading,
+                      aoTocar: safraSelecionada == null ? null : onEncerrarSafra,
+                    ),
                 ],
               ),
             ],

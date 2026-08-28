@@ -323,15 +323,11 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
       return;
     }
 
-    final pessoas = await _viewModel.carregarPessoas();
-
-    if (!mounted) return;
-
     final despesa = await mostrarCadastroTransacao(
       context: context,
       idPropriedade: idPropriedade,
+      catalogoDePessoas: _viewModel,
       responsaveis: _responsaveisSelecionados,
-      demaisPessoas: pessoas,
     );
 
     if (despesa == null || !mounted) return;

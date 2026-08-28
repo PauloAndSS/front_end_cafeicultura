@@ -1,42 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_pessoas_mixin.dart';
+import 'package:frond_end_cafeicultura_mobile/views/pessoas/widgets/lista_papel_paginada.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/abas_padrao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/modal_selecao.dart';
 
+/// Escolhe **um** beneficiado, navegando o catálogo de pessoas por categoria.
+///
+/// [sugeridos] são os responsáveis já ligados à atividade: eles ganham a
+/// primeira aba porque quase sempre são a resposta. Com uma categoria só e
+/// nenhum sugerido — o caso do fornecedor no cadastro de insumo — o painel não
+/// desenha aba nenhuma.
 Future<Pessoa?> mostrarSelecaoBeneficiado({
   required BuildContext context,
-  required List<Pessoa> pessoas,
-  Set<int> idsSugeridos = const {},
+  required CarregarPessoasMixin catalogo,
+  required List<TipoPapel> categorias,
+  List<Pessoa> sugeridos = const [],
   Pessoa? selecionadoAtual,
   String titulo = 'Selecionar beneficiado',
-  String mensagemSemPessoas = 'Nenhuma pessoa cadastrada.',
 }) {
   return mostrarPainelModal<Pessoa>(
     context: context,
     construir: (_) => _SelecionarBeneficiadoSheet(
-      pessoas: pessoas,
-      idsSugeridos: idsSugeridos,
+      catalogo: catalogo,
+      categorias: categorias,
+      sugeridos: sugeridos,
       selecionadoAtual: selecionadoAtual,
       titulo: titulo,
-      mensagemSemPessoas: mensagemSemPessoas,
     ),
   );
 }
 
 class _SelecionarBeneficiadoSheet extends StatefulWidget {
-  final List<Pessoa> pessoas;
-  final Set<int> idsSugeridos;
+  final CarregarPessoasMixin catalogo;
+  final List<TipoPapel> categorias;
+  final List<Pessoa> sugeridos;
   final Pessoa? selecionadoAtual;
   final String titulo;
-  final String mensagemSemPessoas;
 
   const _SelecionarBeneficiadoSheet({
-    required this.pessoas,
-    required this.idsSugeridos,
+    required this.catalogo,
+    required this.categorias,
+    required this.sugeridos,
     required this.selecionadoAtual,
     required this.titulo,
-    required this.mensagemSemPessoas,
   });
 
   @override
@@ -68,17 +78,12 @@ class _SelecionarBeneficiadoSheetState
     setState(() => _termoBusca = termo);
   }
 
-  List<Pessoa> get _visiveis {
-    if (_termoBusca.isEmpty) return widget.pessoas;
+  bool get _temAbaDeSugeridos => widget.sugeridos.isNotEmpty;
 
-    return widget.pessoas
-        .where((pessoa) =>
-            pessoa.nomeParaExibicao.toLowerCase().contains(_termoBusca))
-        .toList();
-  }
+  int get _quantidadeDeAbas =>
+      widget.categorias.length + (_temAbaDeSugeridos ? 1 : 0);
 
-  bool _ehSugerido(Pessoa pessoa) =>
-      pessoa.id != null && widget.idsSugeridos.contains(pessoa.id);
+  bool get _semAbas => _quantidadeDeAbas <= 1;
 
   @override
   Widget build(BuildContext context) {
@@ -90,54 +95,99 @@ class _SelecionarBeneficiadoSheetState
         padding: EdgeInsets.only(
           bottom: MediaQuery.of(context).viewInsets.bottom,
         ),
-        child: Column(
-          children: [
-            CabecalhoModal(titulo: widget.titulo),
-            CampoBuscaModal(
-              controller: _buscaController,
-              dica: 'Buscar por nome',
-            ),
-            Expanded(child: _construirCorpo()),
-          ],
-        ),
+        child: _semAbas ? _construirSemAbas() : _construirComAbas(),
       ),
     );
   }
 
-  Widget _construirCorpo() {
-    final visiveis = _visiveis;
+  Widget _construirSemAbas() {
+    return Column(
+      children: [
+        CabecalhoModal(titulo: widget.titulo),
+        CampoBuscaModal(controller: _buscaController, dica: 'Buscar por nome'),
+        Expanded(child: _construirCategoria(widget.categorias.single)),
+      ],
+    );
+  }
+
+  Widget _construirComAbas() {
+    return DefaultTabController(
+      length: _quantidadeDeAbas,
+      child: Column(
+        children: [
+          CabecalhoModal(titulo: widget.titulo),
+          CampoBuscaModal(controller: _buscaController, dica: 'Buscar por nome'),
+          BarraDeAbas(
+            rolavel: true,
+            abas: [
+              if (_temAbaDeSugeridos) const Tab(text: 'Responsáveis'),
+              for (final papel in widget.categorias)
+                Tab(text: papel.tituloPlural),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
+              children: [
+                if (_temAbaDeSugeridos) _construirSugeridos(),
+                for (final papel in widget.categorias)
+                  _construirCategoria(papel),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _construirCategoria(TipoPapel papel) {
+    return ListaPapelPaginada(
+      catalogo: widget.catalogo,
+      papel: papel,
+      termoBusca: _termoBusca,
+      construirItem: (context, papelPessoa) => _construirItem(
+        papelPessoa.pessoa,
+        legenda: papelPessoa.pessoa.documentoFormatado,
+      ),
+    );
+  }
+
+  Widget _construirSugeridos() {
+    final visiveis = _termoBusca.isEmpty
+        ? widget.sugeridos
+        : widget.sugeridos
+            .where((pessoa) =>
+                pessoa.nomeParaExibicao.toLowerCase().contains(_termoBusca))
+            .toList();
 
     if (visiveis.isEmpty) {
       return EstadoVazio(
-        icone: _termoBusca.isEmpty ? Icons.group_off_outlined : Icons.search,
-        mensagem: _termoBusca.isEmpty
-            ? widget.mensagemSemPessoas
-            : 'Ninguém encontrado com "$_termoBusca".',
+        icone: Icons.search,
+        mensagem: 'Nenhum responsável encontrado com "$_termoBusca".',
       );
     }
 
     return ListView.builder(
       padding: const EdgeInsets.only(top: 8, bottom: 16),
       itemCount: visiveis.length,
-      itemBuilder: (context, index) {
-        final pessoa = visiveis[index];
-        final marcado = pessoa.id == widget.selecionadoAtual?.id;
+      itemBuilder: (context, index) =>
+          _construirItem(visiveis[index], legenda: 'Responsável'),
+    );
+  }
 
-        return ListTile(
-          leading: Icon(
-            marcado ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-            color: marcado ? AppCores.verdePrimario : Colors.black38,
-          ),
-          title: Text(pessoa.nomeParaExibicao),
-          subtitle: _ehSugerido(pessoa)
-              ? const Text(
-                  'Responsável',
-                  style: TextStyle(fontSize: 12, color: Colors.black54),
-                )
-              : null,
-          onTap: () => Navigator.of(context).pop(pessoa),
-        );
-      },
+  Widget _construirItem(Pessoa pessoa, {required String legenda}) {
+    final marcado = pessoa.id != null && pessoa.id == widget.selecionadoAtual?.id;
+
+    return ListTile(
+      leading: Icon(
+        marcado ? Icons.radio_button_checked : Icons.radio_button_unchecked,
+        color: marcado ? AppCores.verdePrimario : Colors.black38,
+      ),
+      title: Text(pessoa.nomeParaExibicao),
+      subtitle: Text(
+        legenda,
+        style: const TextStyle(fontSize: 12, color: Colors.black54),
+      ),
+      onTap: () => Navigator.of(context).pop(pessoa),
     );
   }
 }

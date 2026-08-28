@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/views/home/main_screen_view.dart';
 import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
@@ -17,11 +16,7 @@ class CustomBottomNavBar extends StatelessWidget {
     }
 
     if (ocultarSelecao) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const MainScreenView()),
-        (route) => false,
-      );
+      Navigator.popUntil(context, (route) => route.isFirst);
     }
   }
 

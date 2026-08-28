@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_pessoas_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/insumos/carregar_insumos_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/cadastrar_insumo_dialog.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/quantidade_insumo_dialog.dart';
@@ -13,6 +14,7 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dar
 Future<List<InsumoUtilizado>?> mostrarSelecaoInsumos({
   required BuildContext context,
   required CarregarInsumosMixin viewModel,
+  required CarregarPessoasMixin catalogoDePessoas,
   required List<InsumoUtilizado> selecionadosAtuais,
   required int idProprietario,
   required int idPropriedade,
@@ -27,6 +29,7 @@ Future<List<InsumoUtilizado>?> mostrarSelecaoInsumos({
     ),
     builder: (_) => _SelecionarInsumosSheet(
       viewModel: viewModel,
+      catalogoDePessoas: catalogoDePessoas,
       selecionadosAtuais: selecionadosAtuais,
       idProprietario: idProprietario,
       idPropriedade: idPropriedade,
@@ -37,6 +40,7 @@ Future<List<InsumoUtilizado>?> mostrarSelecaoInsumos({
 
 class _SelecionarInsumosSheet extends StatefulWidget {
   final CarregarInsumosMixin viewModel;
+  final CarregarPessoasMixin catalogoDePessoas;
   final List<InsumoUtilizado> selecionadosAtuais;
   final int idProprietario;
   final int idPropriedade;
@@ -44,6 +48,7 @@ class _SelecionarInsumosSheet extends StatefulWidget {
 
   const _SelecionarInsumosSheet({
     required this.viewModel,
+    required this.catalogoDePessoas,
     required this.selecionadosAtuais,
     required this.idProprietario,
     required this.idPropriedade,
@@ -103,6 +108,7 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
     final criado = await mostrarCadastroInsumo(
       context: context,
       viewModel: widget.viewModel,
+      catalogoDePessoas: widget.catalogoDePessoas,
       idProprietario: widget.idProprietario,
       idPropriedade: widget.idPropriedade,
       fornecedores: widget.fornecedores,
