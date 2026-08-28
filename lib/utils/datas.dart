@@ -4,6 +4,15 @@ DateTime hoje() => apenasData(DateTime.now());
 
 bool ehFutura(DateTime data) => apenasData(data).isAfter(hoje());
 
+int diasEntre(DateTime de, DateTime ate) {
+  final inicio = DateTime.utc(de.year, de.month, de.day);
+  final fim = DateTime.utc(ate.year, ate.month, ate.day);
+
+  return fim.difference(inicio).inDays;
+}
+
+int diasAPartirDeHoje(DateTime dia) => diasEntre(hoje(), dia);
+
 DateTime diaSeguinte(DateTime data) =>
     DateTime(data.year, data.month, data.day + 1);
 

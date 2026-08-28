@@ -30,6 +30,8 @@ class FormularioAtividadeView extends StatefulWidget {
 
   final DateTime? dataInicial;
 
+  final DadosFormularioAtividade? valoresIniciais;
+
   final String titulo;
   final String rotuloBotaoSalvar;
   final String mensagemSucesso;
@@ -69,6 +71,7 @@ class FormularioAtividadeView extends StatefulWidget {
     required this.mensagemSemJanela,
     required this.aoSalvar,
     this.dataInicial,
+    this.valoresIniciais,
     this.construirCamposEspecificos,
     this.construirCamposFinais,
     this.validarCamposEspecificos,
@@ -98,6 +101,8 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
 
   bool _conferiuDataInicial = false;
 
+  bool _semeouEscopo = false;
+
   List<Pessoa> _responsaveisSelecionados = [];
 
   List<Despesa> _despesas = [];
@@ -112,18 +117,60 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
   void initState() {
     super.initState();
 
-    _descricaoController.addListener(_aoDigitarDescricao);
+    _semearValoresIniciais();
 
-    if (widget.dataInicial != null) {
-      _dataInicio = widget.dataInicial;
-      _dataInicioController.text = formatarDataBr(widget.dataInicial!);
-    }
+    _descricaoPreenchida = _descricaoController.text.trim().isNotEmpty;
+    _descricaoController.addListener(_aoDigitarDescricao);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _viewModel.init(context.read<PropriedadesUsuarioViewModel>());
       }
     });
+  }
+
+  void _semearValoresIniciais() {
+    final iniciais = widget.valoresIniciais;
+
+    if (iniciais == null) {
+      if (widget.dataInicial != null) {
+        _dataInicio = widget.dataInicial;
+        _dataInicioController.text = formatarDataBr(widget.dataInicial!);
+      }
+
+      return;
+    }
+
+    _dataInicio = iniciais.dataInicio;
+    _dataInicioController.text = formatarDataBr(iniciais.dataInicio);
+
+    final dataFim = iniciais.dataFim;
+
+    if (dataFim != null) {
+      _dataFim = dataFim;
+      _dataFimController.text = formatarDataBr(dataFim);
+    }
+
+    _descricaoController.text = iniciais.descricao?.trim() ?? '';
+    _responsaveisSelecionados = [...iniciais.responsaveis];
+    _despesas = [...iniciais.despesas];
+  }
+
+  void _semearEscopo(List<Talhao> talhoes, List<Safra> safras) {
+    final iniciais = widget.valoresIniciais;
+
+    if (iniciais == null || _semeouEscopo) return;
+    if (talhoes.isEmpty || safras.isEmpty) return;
+
+    for (final talhao in talhoes) {
+      if (talhao.id == iniciais.idTalhao) _talhaoSelecionado = talhao;
+    }
+
+    for (final safra in safras) {
+      if (safra.id == iniciais.idSafra) _safraSelecionada = safra;
+    }
+
+    _semeouEscopo = true;
   }
 
   void _aoDigitarDescricao() {
@@ -143,14 +190,27 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     super.dispose();
   }
 
-  bool get _temAlteracoes =>
-      _talhaoSelecionado != null ||
-      _safraSelecionada != null ||
-      _dataInicio != widget.dataInicial ||
-      _descricaoPreenchida ||
-      _responsaveisSelecionados.isNotEmpty ||
-      _despesas.isNotEmpty ||
-      widget.camposEspecificosPreenchidos;
+  bool get _temAlteracoes {
+    final iniciais = widget.valoresIniciais;
+
+    if (iniciais == null) {
+      return _talhaoSelecionado != null ||
+          _safraSelecionada != null ||
+          _dataInicio != widget.dataInicial ||
+          _descricaoPreenchida ||
+          _responsaveisSelecionados.isNotEmpty ||
+          _despesas.isNotEmpty ||
+          widget.camposEspecificosPreenchidos;
+    }
+
+    return _dataInicio != iniciais.dataInicio ||
+        _dataFim != iniciais.dataFim ||
+        _talhaoSelecionado?.id != iniciais.idTalhao ||
+        _safraSelecionada?.id != iniciais.idSafra ||
+        _descricaoController.text.trim() != (iniciais.descricao?.trim() ?? '') ||
+        _responsaveisSelecionados.length != iniciais.responsaveis.length ||
+        _despesas.length != iniciais.despesas.length;
+  }
 
   void _recarregarDados() {
     final propriedadesViewModel = context.read<PropriedadesUsuarioViewModel>();
@@ -358,10 +418,14 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
   }
 
   Future<void> _confirmarSaida() async {
+    final editando = widget.valoresIniciais != null;
+
     final descartar = await confirmarDescarte(
       context,
-      titulo: 'Descartar cadastro?',
-      mensagem: 'Os dados preenchidos serão perdidos.',
+      titulo: editando ? 'Descartar alterações?' : 'Descartar cadastro?',
+      mensagem: editando
+          ? 'As alterações feitas serão perdidas.'
+          : 'Os dados preenchidos serão perdidos.',
     );
 
     if (descartar && mounted) Navigator.of(context).pop();
@@ -485,6 +549,8 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
               _viewModel.talhoes,
               safraViewModel.safras,
             );
+
+            _semearEscopo(_viewModel.talhoes, safraViewModel.safras);
 
             final carregando =
                 _viewModel.isCarregandoDados || safraViewModel.isLoading;

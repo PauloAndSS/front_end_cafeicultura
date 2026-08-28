@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/notificacoes/widgets/sino_notificacoes.dart';
 import 'package:frond_end_cafeicultura_mobile/views/pessoas/pessoas_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/propriedade/atualizar_propriedade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/propriedade/cadastrar_propriedade_view.dart';
@@ -149,15 +150,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
       actions: [
-        IconButton(
-          icon: const Icon(
-            Icons.notifications_none,
-            color: Colors.white,
-            size: 26,
-          ),
-          tooltip: 'Notificações',
-          onPressed: () {},
-        ),
+        const SinoNotificacoes(),
 
         PopupMenuButton<String>(
           icon: const Icon(Icons.person_outline, color: Colors.white, size: 26),

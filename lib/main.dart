@@ -10,6 +10,7 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedad
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhoes_viewmodel.dart'; 
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/atividades_mudaram.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/notificacoes/notificacoes_viewmodel.dart';
 
 import 'package:frond_end_cafeicultura_mobile/views/auth/first_acess.dart';
 import 'package:frond_end_cafeicultura_mobile/views/home/main_screen_view.dart';
@@ -59,6 +60,7 @@ class MeuApp extends StatelessWidget {
               ChangeNotifierProvider(create: (_) => TalhoesViewModel()),
               ChangeNotifierProvider(create: (_) => SafraViewModel()),
               ChangeNotifierProvider(create: (_) => AtividadesMudaram()),
+              ChangeNotifierProvider(create: (_) => NotificacoesViewModel()),
             ],
             child: child!,
           );

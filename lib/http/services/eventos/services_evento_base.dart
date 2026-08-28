@@ -39,6 +39,28 @@ abstract class ServicesEventoBase<T extends Evento> extends BaseService {
     );
   }
 
+  Future<T> buscarPorId(int id) {
+    return executarRequisicao(
+      enviar: () => http.get(rota('$id'), headers: defaultHeaders),
+      aoSucesso: (resposta) => extrairObjeto(resposta.bodyBytes, fromJson),
+      erroMsg: 'Erro ao buscar o $rotulo.',
+      acao: 'buscar o $rotulo',
+    );
+  }
+
+  Future<T> editar(int id, T evento) {
+    return executarRequisicao(
+      enviar: () => http.put(
+        rota('$id'),
+        headers: defaultHeaders,
+        body: jsonEncode(evento.toJson()),
+      ),
+      aoSucesso: (resposta) => extrairObjeto(resposta.bodyBytes, fromJson),
+      erroMsg: 'Erro ao alterar o $rotulo.',
+      acao: 'alterar o $rotulo',
+    );
+  }
+
   Future<List<T>> buscarPorPeriodo(
     int idPropriedade, {
     required DateTime inicio,
