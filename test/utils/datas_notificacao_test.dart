@@ -26,16 +26,28 @@ void main() {
   final cron = DateTime(2026, 8, 28, 7);
 
   group('dataParaJson ignora a hora do cadastro', () {
-    test('as 24 horas do dia geram o mesmo meio-dia UTC', () {
+    test('as 24 horas do dia geram a mesma meia-noite UTC', () {
       for (var hora = 0; hora < 24; hora++) {
         for (final minuto in [0, 30, 59]) {
           expect(
             dataParaJson(DateTime(2026, 9, 4, hora, minuto)),
-            '2026-09-04T12:00:00.000Z',
+            '2026-09-04T00:00:00.000Z',
             reason: 'cadastro as $hora:$minuto mudou o valor gravado',
           );
         }
       }
+    });
+
+    test('o dia de hoje nunca e gravado no futuro', () {
+      final agora = DateTime.now();
+
+      final gravado = DateTime.parse(dataParaJson(agora));
+
+      expect(
+        gravado.isAfter(agora.toUtc()),
+        isFalse,
+        reason: 'o backend recusa data futura comparando com o instante',
+      );
     });
 
     test('o dia gravado nunca escorrega para o vizinho', () {
@@ -93,7 +105,7 @@ void main() {
     });
   });
 
-  group('regressao: instante em vez de meio-dia construido', () {
+  group('regressao: instante em vez de meia-noite construida', () {
     test('o instante de um cadastro noturno adianta o evento um dia', () {
       final gravadoCorreto = dataParaJson(DateTime(2026, 9, 4, 22));
       final gravadoComoInstante =
@@ -110,7 +122,7 @@ void main() {
       final comoDia = DateTime.parse(dataParaJson(escolhido));
 
       expect(comoDia.day, 4);
-      expect(comoInstante.hour, isNot(12));
+      expect(comoInstante.hour, isNot(0));
     });
   });
 

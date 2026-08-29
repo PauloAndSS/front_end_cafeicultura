@@ -69,9 +69,9 @@ void main() {
       );
 
       expect(enviada.method, 'PATCH');
-      expect(enviada.url.path, endsWith('/notificacoes/lidas'));
+      expect(enviada.url.path, endsWith('/notificacoes/lida'));
       expect(jsonDecode(enviada.body), {
-        'ids': [241, 242, 243],
+        'idsNotificacoes': [241, 242, 243],
       });
     });
   });

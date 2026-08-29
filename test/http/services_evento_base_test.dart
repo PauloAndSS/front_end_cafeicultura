@@ -99,7 +99,7 @@ void main() {
       expect(corpo['idTalhao'], 54);
       expect(corpo['idSafra'], 5);
       expect(corpo['tipoTrato'], 'Adubação');
-      expect(corpo['dataInicio'], '2026-08-26T12:00:00.000Z');
+      expect(corpo['dataInicio'], '2026-08-26T00:00:00.000Z');
       expect(corpo['responsaveisIds'], isEmpty);
     });
 

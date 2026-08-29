@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/atividades_mudaram.dart';
@@ -26,26 +28,34 @@ class NotificacoesView extends StatefulWidget {
 }
 
 class _NotificacoesViewState extends State<NotificacoesView> {
+  late final NotificacoesViewModel _viewModel;
+
   @override
   void initState() {
     super.initState();
 
+    _viewModel = context.read<NotificacoesViewModel>();
+
     WidgetsBinding.instance.addPostFrameCallback((_) => _prepararTela());
+  }
+
+  @override
+  void dispose() {
+    scheduleMicrotask(_viewModel.encerrarVisita);
+
+    super.dispose();
   }
 
   Future<void> _prepararTela() async {
     if (!mounted) return;
 
-    final viewModel = context.read<NotificacoesViewModel>();
     final idPropriedade = context
         .read<PropriedadesUsuarioViewModel>()
         .idPropriedadeSelecionada;
 
-    if (idPropriedade != null) await viewModel.garantirCarregado(idPropriedade);
+    if (idPropriedade == null) return;
 
-    if (!mounted) return;
-
-    await viewModel.marcarLidasSemAcaoPendente();
+    await _viewModel.garantirCarregado(idPropriedade);
   }
 
   Future<bool> _marcarComoLida(NotificacaoAgrupada grupo) async {
@@ -228,8 +238,8 @@ class _NotificacoesViewState extends State<NotificacoesView> {
                       secoes: viewModel.secoesLidas,
                       podeDispensar: false,
                       mensagemVazia:
-                          'Nenhuma notificação lida ainda. Deslize um card da '
-                          'aba anterior para marcá-lo como lido.',
+                          'Nenhuma notificação lida ainda. Deslize um cartão da '
+                          'aba ao lado para marcá-lo como lido.',
                       iconeVazio: Icons.done_all,
                     ),
                   ],
@@ -266,7 +276,7 @@ class _NotificacoesViewState extends State<NotificacoesView> {
                     icone: Icons.swipe,
                     cor: AppCores.verdePrimario,
                     corDoTexto: AppCores.verdePrimario,
-                    mensagem: 'Deslize um card para o lado para marcá-lo como '
+                    mensagem: 'Deslize um cartão para o lado para marcá-lo como '
                         'lido.',
                   ),
                   const SizedBox(height: 20),

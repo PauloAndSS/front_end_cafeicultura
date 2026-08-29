@@ -41,7 +41,7 @@ DateTime? lerDataDoJson(dynamic valor) {
 }
 
 String dataParaJson(DateTime data) =>
-    DateTime.utc(data.year, data.month, data.day, 12).toIso8601String();
+    DateTime.utc(data.year, data.month, data.day).toIso8601String();
 
 String instanteParaJson(DateTime instante) =>
     instante.toUtc().toIso8601String();

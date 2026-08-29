@@ -9,6 +9,7 @@ import 'package:frond_end_cafeicultura_mobile/model/notificacoes/notificacao_agr
 import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/estado_de_carga.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/notifica_se_vivo_mixin.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/notificacoes/registro_de_leituras.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/carregar_talhoes_mixin.dart';
 
 export 'package:frond_end_cafeicultura_mobile/model/notificacoes/notificacao_agrupada.dart';
@@ -33,6 +34,7 @@ class NotificacoesViewModel extends ChangeNotifier
   final _service = ServicesNotificacao();
   final _tratoService = ServicesTratoCultural();
   final _canal = CanalNotificacoes();
+  final _leituras = RegistroDeLeituras();
 
   final Map<int, TratoCultural> _atividadesPorEvento = {};
 
@@ -47,17 +49,20 @@ class NotificacoesViewModel extends ChangeNotifier
 
   List<NotificacaoAgrupada> get grupos => List.unmodifiable(_grupos);
 
+  List<NotificacaoAgrupada> get _visiveis =>
+      _grupos.where((grupo) => !estaConfirmada(grupo)).toList();
+
   List<NotificacaoAgrupada> get naoLidas =>
-      _grupos.where((grupo) => !grupo.lida).toList();
+      _visiveis.where((grupo) => !grupo.lida).toList();
 
   List<NotificacaoAgrupada> get lidas =>
-      _grupos.where((grupo) => grupo.lida).toList();
+      _visiveis.where((grupo) => grupo.lida).toList();
 
   int get quantidadeNaoLidas => naoLidas.length;
 
   bool get temNaoLidas => quantidadeNaoLidas > 0;
 
-  bool get vazio => _grupos.isEmpty;
+  bool get vazio => _visiveis.isEmpty;
 
   bool get marcandoLeitura => _cargaLeitura.isLoading;
 
@@ -103,6 +108,10 @@ class NotificacoesViewModel extends ChangeNotifier
         }
 
         _notificacoes = await _service.buscarDaPropriedade(idPropriedade);
+
+        await _leituras.sincronizarCom(idPropriedade, _notificacoes);
+        _notificacoes = _leituras.aplicar(_notificacoes);
+
         _reagrupar();
 
         _conectar();
@@ -137,13 +146,28 @@ class NotificacoesViewModel extends ChangeNotifier
   Future<bool> marcarTodasComoLidas() => _marcar(naoLidas);
 
   Future<void> marcarLidasSemAcaoPendente() async {
-    final semAcao = naoLidas
+    final semAcao = _grupos
+        .where((grupo) => !grupo.lida)
         .where((grupo) => !grupo.ehConfirmacao || estaConfirmada(grupo))
         .toList();
 
     if (semAcao.isEmpty) return;
 
     await _marcar(semAcao);
+  }
+
+  Future<void> encerrarVisita() async {
+    await marcarLidasSemAcaoPendente();
+    await sincronizarLeituras();
+  }
+
+  Future<void> sincronizarLeituras() {
+    if (!_leituras.temPendentes) return Future.value();
+
+    return _cargaLeitura.executar(
+      chamada: () => _service.marcarComoLidas(_leituras.pendentes.toList()),
+      aoFalhar: () => false,
+    );
   }
 
   Future<bool> excluirAtividade(NotificacaoAgrupada grupo) {
@@ -196,7 +220,7 @@ class NotificacoesViewModel extends ChangeNotifier
 
     return _cargaLeitura.executar(
       chamada: () async {
-        await _service.marcarComoLidas(ids);
+        await _leituras.marcar(ids);
         _aplicarLeitura(ids);
 
         return true;
@@ -253,13 +277,8 @@ class NotificacoesViewModel extends ChangeNotifier
   }
 
   List<SecaoDeNotificacoes> _secoes(List<NotificacaoAgrupada> grupos) {
-    final precisamDeResposta = grupos
-        .where((grupo) => grupo.ehConfirmacao && !estaConfirmada(grupo))
-        .toList();
-
-    final jaConfirmadas = grupos
-        .where((grupo) => grupo.ehConfirmacao && estaConfirmada(grupo))
-        .toList();
+    final precisamDeResposta =
+        grupos.where((grupo) => grupo.ehConfirmacao).toList();
 
     final futuras = grupos.where((grupo) => !grupo.ehConfirmacao).toList();
 
@@ -286,11 +305,6 @@ class NotificacoesViewModel extends ChangeNotifier
         SecaoDeNotificacoes(
           'Próximos dias',
           _ordenar(proximas, crescente: true),
-        ),
-      if (jaConfirmadas.isNotEmpty)
-        SecaoDeNotificacoes(
-          'Já confirmadas',
-          _ordenar(jaConfirmadas, crescente: false),
         ),
     ];
   }

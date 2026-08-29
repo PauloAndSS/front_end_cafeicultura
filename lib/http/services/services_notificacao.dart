@@ -39,9 +39,9 @@ class ServicesNotificacao extends BaseService {
   Future<bool> marcarComoLidas(List<int> ids) {
     return executarRequisicao(
       enviar: () => http.patch(
-        rota('lidas'),
+        rota('lida'),
         headers: defaultHeaders,
-        body: jsonEncode({'ids': ids}),
+        body: jsonEncode({'idsNotificacoes': ids}),
       ),
       aoSucesso: (_) => true,
       erroMsg: 'Erro ao marcar as notificações como lidas.',
