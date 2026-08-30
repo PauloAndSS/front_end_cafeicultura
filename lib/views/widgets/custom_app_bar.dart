@@ -213,7 +213,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 visualDensity: VisualDensity.compact,
               ),
             ),
-            const PopupMenuItem<String>(
+            /*const PopupMenuItem<String>(
               value: 'safras',
               child: ListTile(
                 leading: Icon(Icons.eco_outlined, color: Colors.black87),
@@ -221,7 +221,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                 contentPadding: EdgeInsets.zero,
                 visualDensity: VisualDensity.compact,
               ),
-            ),
+            ),*/
             const PopupMenuDivider(),
             const PopupMenuItem<String>(
               value: 'sair',

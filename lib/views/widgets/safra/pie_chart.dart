@@ -10,6 +10,12 @@ class PieChartCard extends StatelessWidget {
   final Map<String, int> valores;
   final List<Color> paleta;
   final Color corTitulo;
+  final String Function(int)? valorFormatador;
+
+  /// Quando `false`, oculta o cabeçalho (ícone + título) interno do cartão.
+  /// Use isso quando o título já é exibido em outro lugar, como no
+  /// cabeçalho de uma sanfona, para evitar duplicidade.
+  final bool mostrarTitulo;
 
   const PieChartCard({
     super.key,
@@ -18,6 +24,8 @@ class PieChartCard extends StatelessWidget {
     required this.valores,
     required this.paleta,
     this.corTitulo = AppCores.verdePrimario,
+    this.valorFormatador,
+    this.mostrarTitulo = true,
   });
 
   @override
@@ -32,6 +40,7 @@ class PieChartCard extends StatelessWidget {
       icone: icone,
       corTitulo: corTitulo,
       valores: valores,
+      mostrarTitulo: mostrarTitulo,
       construirGrafico: (context) => Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
@@ -57,6 +66,9 @@ class PieChartCard extends StatelessWidget {
                       cor: paleta[i % paleta.length],
                       rotulo: entradas[i].key,
                       valor: entradas[i].value,
+                      valorFormatado: valorFormatador != null
+                          ? valorFormatador!(entradas[i].value)
+                          : '${entradas[i].value}',
                       porcentagem:
                           total == 0 ? 0 : (entradas[i].value / total * 100),
                     ),
@@ -74,12 +86,14 @@ class _LegendaFatia extends StatelessWidget {
   final Color cor;
   final String rotulo;
   final int valor;
+  final String valorFormatado;
   final double porcentagem;
 
   const _LegendaFatia({
     required this.cor,
     required this.rotulo,
     required this.valor,
+    required this.valorFormatado,
     required this.porcentagem,
   });
 
@@ -105,7 +119,7 @@ class _LegendaFatia extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               Text(
-                '$valor · ${porcentagem.toStringAsFixed(0)}%',
+                '$valorFormatado · ${porcentagem.toStringAsFixed(0)}%',
                 style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
               ),
             ],

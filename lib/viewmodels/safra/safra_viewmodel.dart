@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_safra.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
+import 'package:frond_end_cafeicultura_mobile/model/safra/relatorio_financeiro_safra.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/estado_de_carga.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/notifica_se_vivo_mixin.dart';
@@ -22,8 +23,13 @@ class SafraViewModel extends ChangeNotifier
   List<Safra> _safras = [];
   Safra? _safraSelecionada;
   List<EventoAgricola> _relatorio = [];
+  RelatorioFinanceiroSafra? _relatorioFinanceiro;
   int? _propriedadeIdAtual;
   bool _dadosCarregados = false;
+
+  /// Última "geração" do FinanceiroMudou já processada, para evitar
+  /// recarregar o relatório financeiro mais de uma vez para a mesma mudança.
+  int _geracaoFinanceiroSincronizada = -1;
 
   final Map<int, List<Safra>> _cacheSafrasPorPropriedade = {};
 
@@ -33,6 +39,7 @@ class SafraViewModel extends ChangeNotifier
   List<Safra> get safras => _safras;
   Safra? get safraSelecionada => _safraSelecionada;
   List<EventoAgricola> get relatorio => _relatorio;
+  RelatorioFinanceiroSafra? get relatorioFinanceiro => _relatorioFinanceiro;
   int? get propriedadeIdAtual => _propriedadeIdAtual;
   bool get dadosCarregados => _dadosCarregados;
 
@@ -86,6 +93,7 @@ class SafraViewModel extends ChangeNotifier
           _safras = [];
           _safraSelecionada = null;
           _relatorio = [];
+          _relatorioFinanceiro = null;
           _salvarSafrasNoCache(idPropriedade, _safras);
           return;
         }
@@ -151,6 +159,7 @@ class SafraViewModel extends ChangeNotifier
 
     _safraSelecionada = safra;
     _relatorio = [];
+    _relatorioFinanceiro = null;
     notificarSeVivo();
 
     if (_propriedadeIdAtual == null || safra.id == null) {
@@ -175,9 +184,48 @@ class SafraViewModel extends ChangeNotifier
           idPropriedade: idPropriedade,
           idSafra: idSafra,
         );
+        await _buscarRelatorioFinanceiro(
+          idPropriedade: idPropriedade,
+          idSafra: idSafra,
+        );
       },
       aoFalhar: () {},
     );
+  }
+
+  Future<void> _buscarRelatorioFinanceiro({
+    required int idPropriedade,
+    required int idSafra,
+  }) async {
+    try {
+      _relatorioFinanceiro = await _service.buscarRelatorioFinanceiro(
+        idPropriedade: idPropriedade,
+        idSafra: idSafra,
+      );
+    } catch (_) {
+      // Falha silenciosa: o carregamento do relatório de eventos já tem
+      // tratamento de erro próprio, e o financeiro pode ser tentado de
+      // novo na próxima sincronização.
+    }
+  }
+
+  /// Chamado quando uma despesa é cadastrada/excluída em outra tela (ex:
+  /// FinanceiroView), via o notifier `FinanceiroMudou`, para manter o
+  /// relatório financeiro exibido na aba Safra sincronizado sem precisar
+  /// trocar de safra ou reabrir a tela.
+  Future<void> sincronizarComFinanceiro(int geracao) async {
+    if (geracao == _geracaoFinanceiroSincronizada) return;
+    _geracaoFinanceiroSincronizada = geracao;
+
+    final idPropriedade = _propriedadeIdAtual;
+    final idSafra = _safraSelecionada?.id;
+    if (idPropriedade == null || idSafra == null) return;
+
+    await _buscarRelatorioFinanceiro(
+      idPropriedade: idPropriedade,
+      idSafra: idSafra,
+    );
+    notificarSeVivo();
   }
 
   Future<bool> criarSafra({
@@ -254,6 +302,7 @@ class SafraViewModel extends ChangeNotifier
         if (novasSafras.isEmpty) {
           _safraSelecionada = null;
           _relatorio = [];
+          _relatorioFinanceiro = null;
           _cacheSafraSelecionadaPorPropriedade.remove(idPropriedade);
           return;
         }

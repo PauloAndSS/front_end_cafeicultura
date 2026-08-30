@@ -9,6 +9,8 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/pessoas_viewmod
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhoes_viewmodel.dart'; 
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/financeiro/financeiro_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/financeiro/financeiro_mudou.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/atividades_mudaram.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/notificacoes/notificacoes_viewmodel.dart';
 
@@ -59,6 +61,15 @@ class MeuApp extends StatelessWidget {
               ChangeNotifierProvider(create: (_) => PessoasViewModel()),
               ChangeNotifierProvider(create: (_) => TalhoesViewModel()),
               ChangeNotifierProvider(create: (_) => SafraViewModel()),
+              // Precisa vir ANTES do FinanceiroViewModel, que depende dele
+              // para avisar a aba Safra quando uma despesa muda.
+              ChangeNotifierProvider(create: (_) => FinanceiroMudou()),
+              ChangeNotifierProxyProvider<FinanceiroMudou, FinanceiroViewModel>(
+                create: (context) => FinanceiroViewModel(
+                  financeiroMudou: context.read<FinanceiroMudou>(),
+                ),
+                update: (context, financeiroMudou, viewModel) => viewModel!,
+              ),
               ChangeNotifierProvider(create: (_) => AtividadesMudaram()),
               ChangeNotifierProvider(create: (_) => NotificacoesViewModel()),
             ],
