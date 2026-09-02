@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
+import 'package:frond_end_cafeicultura_mobile/model/safra/relatorio_financeiro_safra.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:http/http.dart' as http;
@@ -21,7 +22,7 @@ class ServicesSafra extends BaseService {
         headers: defaultHeaders,
         body: jsonEncode({
           'idPropriedade': idPropriedade,
-          'dataInicio': diaNaoFuturoParaJson(dataInicio ?? DateTime.now()),
+          'dataInicio': dataParaJson(dataInicio ?? DateTime.now()),
         }),
       ),
       aoSucesso: (_) => true,
@@ -60,6 +61,23 @@ class ServicesSafra extends BaseService {
     );
   }
 
+  Future<RelatorioFinanceiroSafra> buscarRelatorioFinanceiro({
+    required int idPropriedade,
+    required int idSafra,
+  }) {
+    return executarRequisicao(
+      enviar: () => http.get(
+        rota('propriedade/$idPropriedade/safra/$idSafra/relatorio-financeiro'),
+        headers: defaultHeaders,
+      ),
+      aoSucesso: (resposta) =>
+          extrairObjeto(resposta.bodyBytes, RelatorioFinanceiroSafra.fromJson),
+      aoListaVazia: () => RelatorioFinanceiroSafra.vazio,
+      erroMsg: 'Erro ao buscar relatório financeiro da safra.',
+      acao: 'buscar relatório financeiro da safra',
+    );
+  }
+
   Future<List<EventoAgricola>> buscarRelatorioDoTalhao({
     required int idPropriedade,
     required int idSafra,
@@ -84,7 +102,7 @@ class ServicesSafra extends BaseService {
         rota('$idSafra/finalizar'),
         headers: defaultHeaders,
         body: jsonEncode(
-          {'dataFim': diaNaoFuturoParaJson(dataFim ?? DateTime.now())},
+          {'dataFim': dataParaJson(dataFim ?? DateTime.now())},
         ),
       ),
       aoSucesso: (_) => true,

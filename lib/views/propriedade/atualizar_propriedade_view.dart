@@ -249,7 +249,7 @@ class _AtualizarPropriedadeViewState extends State<AtualizarPropriedadeView> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<Medida>(
-                        value: _tamanhoMedida,
+                        initialValue: _tamanhoMedida,
                         decoration: InputDecoration(
                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
                           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 15),

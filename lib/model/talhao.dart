@@ -46,14 +46,13 @@ class Variedade {
 
 /// Data de calendário vinda do JSON, já sem hora.
 ///
-/// A data de talhão chega como `DateTime` UTC com hora — medida em 27/08/2026,
-/// a rota devolve meia-noite UTC; registros antigos chegam em meio-dia (veja
-/// [dataParaJson]). Guardar o valor cru levava essa hora para dentro da tela: o
-/// `showDatePicker` de encerramento usa [Talhao.dataInicio] como `firstDate` e o
-/// agora local como `lastDate`, e num talhão iniciado hoje o `firstDate` caía às
-/// 09:00 — antes desse horário o picker estourava a própria assertion e
-/// derrubava a tela. `apenasData` lê os campos UTC crus, então meia-noite UTC
-/// não vira o dia anterior.
+/// Data de talhão chega como `DateTime` UTC, e guardar o valor cru arrastava a
+/// hora para dentro da tela: o `showDatePicker` de encerramento usa
+/// [Talhao.dataInicio] como `firstDate` e o agora local como `lastDate`. Com a
+/// âncora de meio-dia usada até 29/08/2026, num talhão iniciado hoje o
+/// `firstDate` caía às 09:00 — antes desse horário o picker estourava a própria
+/// assertion e derrubava a tela. A âncora é meia-noite agora (veja
+/// [dataParaJson]), mas o registro antigo continua no banco.
 DateTime? _dataDeCalendario(dynamic valor) {
   final data = lerDataDoJson(valor);
 
@@ -153,16 +152,14 @@ String get nomeExibicao {
   }
 
   Map<String, dynamic> toJson() {
-    final agora = DateTime.now();
-
     return {
       if (id != null) 'id': id,
       'nome': nome,
       'idPropriedade': idPropriedade,
       'qtdPeCafe': qtdPeCafe,
-      'dataInicio': diaNaoFuturoParaJson(dataInicio, agora: agora),
+      'dataInicio': dataParaJson(dataInicio),
       if (dataFim != null)
-        'dataFim': diaNaoFuturoParaJson(dataFim!, agora: agora),
+        'dataFim': dataParaJson(dataFim!),
       'tamanho': tamanho.toJson(),
       'especie': especie,
       if (variedadesIds != null) 'variedadesIds': variedadesIds,

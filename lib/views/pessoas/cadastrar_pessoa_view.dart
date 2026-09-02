@@ -172,7 +172,7 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                     if (_papel.aceitaPessoaJuridica) ...[
                       rotuloDeCampo('Tipo de Cadastro'),
                       DropdownButtonFormField<bool>(
-                        value: _isPessoaFisica,
+                        initialValue: _isPessoaFisica,
                         decoration: decoracaoDeSeletor(),
                         items: const [
                           DropdownMenuItem(

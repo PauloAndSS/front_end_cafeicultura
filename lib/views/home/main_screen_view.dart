@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/notificacoes/notificacoes_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/armazem/armazem_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/atividades_view.dart';
@@ -19,7 +20,8 @@ class MainScreenView extends StatefulWidget {
   State<MainScreenView> createState() => _MainScreenViewState();
 }
 
-class _MainScreenViewState extends State<MainScreenView> {
+class _MainScreenViewState extends State<MainScreenView>
+    with WidgetsBindingObserver {
   late PageController _pageController;
   NavegacaoViewModel? _navViewModel;
 
@@ -30,6 +32,8 @@ class _MainScreenViewState extends State<MainScreenView> {
     _pageController = PageController(
       initialPage: context.read<NavegacaoViewModel>().indiceAtual,
     );
+
+    WidgetsBinding.instance.addObserver(this);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PropriedadesUsuarioViewModel>().carregarPropriedades();
@@ -51,7 +55,18 @@ class _MainScreenViewState extends State<MainScreenView> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState estado) {
+    if (estado != AppLifecycleState.resumed || !mounted) return;
+
+    final notificacoesViewModel = context.read<NotificacoesViewModel>();
+
+    notificacoesViewModel.reconectarSeCaiu();
+    notificacoesViewModel.recarregar();
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _navViewModel?.removeListener(_sincronizarPageController);
     _pageController.dispose();
     super.dispose();

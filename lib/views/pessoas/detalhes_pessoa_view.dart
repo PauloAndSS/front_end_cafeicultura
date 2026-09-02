@@ -78,8 +78,9 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
             ),
             autovalidateMode: AutovalidateMode.onUserInteraction,
             validator: (value) {
-              if (value == null || value.trim().isEmpty)
+              if (value == null || value.trim().isEmpty) {
                 return 'Informe o valor';
+              }
               final valorT = value.replaceAll('.', '').replaceAll(',', '.');
               if (double.tryParse(valorT) == null) return 'Valor inválido';
               return null;

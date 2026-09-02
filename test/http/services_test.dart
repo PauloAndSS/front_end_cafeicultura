@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frond_end_cafeicultura_mobile/http/dtos/auth_dto.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
@@ -18,53 +16,9 @@ import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
-http.Response respostaJson(
-  Object corpo,
-  int status, {
-  Map<String, String>? headers,
-}) {
-  return http.Response.bytes(
-    utf8.encode(jsonEncode(corpo)),
-    status,
-    headers: {
-      'content-type': 'application/json; charset=utf-8',
-      ...?headers,
-    },
-  );
-}
-
-Future<T> comRespostaFixa<T>(
-  Future<T> Function() acao,
-  http.Response resposta, {
-  void Function(http.Request requisicao)? capturar,
-}) {
-  return http.runWithClient(
-    acao,
-    () => MockClient((requisicao) async {
-      capturar?.call(requisicao);
-      return resposta;
-    }),
-  );
-}
-
-Future<T> comFalhaDeRede<T>(Future<T> Function() acao) {
-  return http.runWithClient(
-    acao,
-    () => MockClient((_) async => throw const SocketException('sem rota')),
-  );
-}
-
-Future<ApiException> erroDe(Future<void> Function() acao) async {
-  try {
-    await acao();
-  } on ApiException catch (e) {
-    return e;
-  }
-  fail('Esperava ApiException, mas a chamada concluiu sem erro.');
-}
+import 'mock_http.dart';
 
 Funcionario funcionarioValido() => Funcionario(
       pessoa: PessoaFisica(nome: 'Fulano', cpf: CPF.criar('529.982.247-25')),
@@ -565,23 +519,17 @@ void main() {
 
     test('atividade que termina hoje nao ultrapassa o instante da chamada',
         () async {
-      final antes = DateTime.now().toUtc();
+      final dia = hoje();
 
       final corpo = await corpoDeConfirmar(
-        dataInicio: hoje().subtract(const Duration(days: 3)),
-        dataFim: hoje(),
+        dataInicio: dia.subtract(const Duration(days: 3)),
+        dataFim: dia,
       );
 
-      final depois = DateTime.now().toUtc();
       final dataFim = DateTime.parse(corpo['dataFim'] as String);
 
-      expect(dataFim.isAfter(depois), isFalse);
-      expect(
-        dataFim.isBefore(
-          antes.subtract(margemDeRelogio + const Duration(seconds: 5)),
-        ),
-        isFalse,
-      );
+      expect(dataFim, DateTime.utc(dia.year, dia.month, dia.day));
+      expect(dataFim.isAfter(DateTime.now().toUtc()), isFalse);
     });
 
     test('atividade de um dia so mantem dataInicio menor ou igual a dataFim',
@@ -597,13 +545,13 @@ void main() {
       expect(dataInicio.isAfter(dataFim), isFalse);
     });
 
-    test('dia ja encerrado continua viajando em meio-dia UTC', () async {
+    test('dia ja encerrado viaja em meia-noite UTC, como toda data', () async {
       final ontem = hoje().subtract(const Duration(days: 1));
 
       final corpo = await corpoDeConfirmar(dataInicio: ontem, dataFim: ontem);
 
       final esperado =
-          DateTime.utc(ontem.year, ontem.month, ontem.day, 12).toIso8601String();
+          DateTime.utc(ontem.year, ontem.month, ontem.day).toIso8601String();
 
       expect(corpo['dataInicio'], esperado);
       expect(corpo['dataFim'], esperado);

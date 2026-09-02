@@ -5,6 +5,7 @@ class CartaoGrafico extends StatelessWidget {
   final String titulo;
   final IconData icone;
   final Color corTitulo;
+  final bool mostrarTitulo;
 
   final WidgetBuilder construirGrafico;
 
@@ -17,6 +18,7 @@ class CartaoGrafico extends StatelessWidget {
     required this.valores,
     required this.construirGrafico,
     this.corTitulo = AppCores.verdePrimario,
+    this.mostrarTitulo = true,
   });
 
   static bool semDados(Map<String, int> valores) =>
@@ -33,21 +35,23 @@ class CartaoGrafico extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              children: [
-                Icon(icone, size: 18, color: corTitulo),
-                const SizedBox(width: 6),
-                Text(
-                  titulo,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: corTitulo,
+            if (mostrarTitulo) ...[
+              Row(
+                children: [
+                  Icon(icone, size: 18, color: corTitulo),
+                  const SizedBox(width: 6),
+                  Text(
+                    titulo,
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: corTitulo,
+                    ),
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+                ],
+              ),
+              const SizedBox(height: 16),
+            ],
             construirGrafico(context),
           ],
         ),

@@ -8,7 +8,10 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dar
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhoes_viewmodel.dart'; 
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/financeiro/financeiro_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/financeiro/financeiro_mudou.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/atividades_mudaram.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/notificacoes/notificacoes_viewmodel.dart';
 
 import 'package:frond_end_cafeicultura_mobile/views/auth/first_acess.dart';
 import 'package:frond_end_cafeicultura_mobile/views/home/main_screen_view.dart';
@@ -49,17 +52,30 @@ class MeuApp extends StatelessWidget {
       builder: (context, child) {
         final session = context.watch<SessionViewModel>();
 
-        return MultiProvider(
-          key: ValueKey(session.idUsuario),
-          providers: [
-            ChangeNotifierProvider(create: (_) => NavegacaoViewModel()),
-            ChangeNotifierProvider(create: (_) => PropriedadesUsuarioViewModel()),
-            ChangeNotifierProvider(create: (_) => TalhoesViewModel()),
-            ChangeNotifierProvider(create: (_) => SafraViewModel()),
-            ChangeNotifierProvider(create: (_) => AtividadesMudaram()),
-          ],
-          child: child!,
-        );
+        if (session.isLoggedIn) {
+          return MultiProvider(
+            key: ValueKey(session.idUsuario),
+            providers: [
+              ChangeNotifierProvider(create: (_) => NavegacaoViewModel()),
+              ChangeNotifierProvider(create: (_) => PropriedadesUsuarioViewModel()),
+              ChangeNotifierProvider(create: (_) => TalhoesViewModel()),
+              ChangeNotifierProvider(create: (_) => SafraViewModel()),
+              // Precisa vir ANTES do FinanceiroViewModel, que depende dele
+              // para avisar a aba Safra quando uma despesa muda.
+              ChangeNotifierProvider(create: (_) => FinanceiroMudou()),
+              ChangeNotifierProxyProvider<FinanceiroMudou, FinanceiroViewModel>(
+                create: (context) => FinanceiroViewModel(
+                  financeiroMudou: context.read<FinanceiroMudou>(),
+                ),
+                update: (context, financeiroMudou, viewModel) => viewModel!,
+              ),
+              ChangeNotifierProvider(create: (_) => AtividadesMudaram()),
+              ChangeNotifierProvider(create: (_) => NotificacoesViewModel()),
+            ],
+            child: child!,
+          );
+        }
+        return child!;
       },
       home: const AuthWrapper(), 
     );
