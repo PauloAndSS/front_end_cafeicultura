@@ -3,11 +3,13 @@ import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/ev
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/agenda_propriedade_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/cotacao_cafe_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhoes_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/trato_cultural/detalhes_trato_cultural_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/atividades_do_dia_sheet.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/blocos_detalhes_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/home/widgets/cotacao_cafe_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/corpo_com_estado.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_tipo_atividade_sheet.dart';
 import 'package:frond_end_cafeicultura_mobile/views/home/widgets/resumo_propriedade.dart';
@@ -39,6 +41,7 @@ class HomeView extends StatefulWidget {
 
 class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin {
   final _agendaViewModel = AgendaPropriedadeViewModel();
+  final _cotacaoCafeViewModel = CotacaoCafeViewModel();
 
   int? _idPropriedadeDaAgenda;
 
@@ -48,8 +51,15 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
   bool get wantKeepAlive => true;
 
   @override
+  void initState() {
+    super.initState();
+    _cotacaoCafeViewModel.carregar();
+  }
+
+  @override
   void dispose() {
     _agendaViewModel.dispose();
+    _cotacaoCafeViewModel.dispose();
     super.dispose();
   }
 
@@ -184,6 +194,23 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
             const SizedBox(height: 12),
 
             _construirSecaoAtividades(propriedadeSelecionada.id),
+
+            const SizedBox(height: 24),
+
+            const Text(
+              'Cotação do Café',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: AppCores.verdePrimario,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            ListenableBuilder(
+              listenable: _cotacaoCafeViewModel,
+              builder: (context, _) => CotacaoCafeWidget(viewModel: _cotacaoCafeViewModel),
+            ),
           ],
         ),
       ),
