@@ -72,7 +72,9 @@ Future<void> _buscarSemBloqueio() async {
             final nova = await _serviceDespesa.cadastrar(despesa);
             return nova != null;
           },
-          aoFalhar: () {},
+          aoFalhar: () {
+            return null;
+          },
         ) ??
         false;
 
@@ -91,7 +93,9 @@ Future<void> _buscarSemBloqueio() async {
   Future<bool> excluirDespesa(int idDespesa) async {
     final bool sucesso = await cargaPrincipal.executar(
           chamada: () => _serviceDespesa.excluir(idDespesa),
-          aoFalhar: () {},
+          aoFalhar: () {
+            return null;
+          },
         ) ??
         false;
 

@@ -84,7 +84,7 @@ class _CotacaoCafeWidgetState extends State<CotacaoCafeWidget> {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppCores.verdePrimario.withOpacity(0.12),
+            color: AppCores.verdePrimario.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Icon(Icons.coffee_rounded, size: 20, color: AppCores.verdePrimario),
@@ -179,7 +179,7 @@ class _CotacaoCafeWidgetState extends State<CotacaoCafeWidget> {
             child: ListView.separated(
               padding: EdgeInsets.zero,
               itemCount: itens.length,
-              separatorBuilder: (_, __) => const Divider(height: 1, color: Colors.black12),
+              separatorBuilder: (_, _) => const Divider(height: 1, color: Colors.black12),
               itemBuilder: (context, i) {
                 final item = itens[i];
                 return Padding(
@@ -217,7 +217,7 @@ class _CotacaoCafeWidgetState extends State<CotacaoCafeWidget> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
       decoration: BoxDecoration(
-        color: AppCores.verdePrimario.withOpacity(0.08),
+        color: AppCores.verdePrimario.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
@@ -337,7 +337,7 @@ class _CotacaoCafeWidgetState extends State<CotacaoCafeWidget> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.redAccent.withOpacity(0.1),
+                color: Colors.redAccent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(Icons.coffee_rounded, size: 20, color: Colors.redAccent),

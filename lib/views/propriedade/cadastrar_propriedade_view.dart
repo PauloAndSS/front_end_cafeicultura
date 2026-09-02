@@ -210,7 +210,7 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<Medida>(
-                        value: _tamanhoMedida,
+                        initialValue: _tamanhoMedida,
                         isExpanded: true,
                         icon: const Icon(
                           Icons.keyboard_arrow_down,

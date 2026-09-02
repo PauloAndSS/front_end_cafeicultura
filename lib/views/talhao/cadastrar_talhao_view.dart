@@ -164,7 +164,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -212,7 +212,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                               ),
                               const SizedBox(height: 8),
                               DropdownButtonFormField<Medida>(
-                                value: _tamanhoMedida,
+                                initialValue: _tamanhoMedida,
                                 isExpanded: true,
                                 decoration: _dropdownDecoration(),
                                 items: Medida.values.map((medida) {
@@ -264,7 +264,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      value: _especieSelecionada,
+                      initialValue: _especieSelecionada,
                       decoration: _dropdownDecoration(),
                       hint: const Text(
                         'Selecione',

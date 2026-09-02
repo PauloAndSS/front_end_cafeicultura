@@ -175,7 +175,7 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<TipoPapel>(
-                        value: _viewModel.papelSelecionado,
+                        initialValue: _viewModel.papelSelecionado,
                         hint: const Text('Selecione o papel'),
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.symmetric(
@@ -228,7 +228,7 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<bool>(
-                        value: _isPessoaFisica,
+                        initialValue: _isPessoaFisica,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,

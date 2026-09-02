@@ -75,7 +75,7 @@ class SafraSelectorWidget extends StatelessWidget {
               const SizedBox(height: 12),
             ],
             DropdownButtonFormField<Safra>(
-              value: temSafraSelecionadaValida ? safraSelecionada : null,
+              initialValue: temSafraSelecionadaValida ? safraSelecionada : null,
               decoration: InputDecoration(
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -128,7 +128,7 @@ class SafraSelectorWidget extends StatelessWidget {
                               margin: const EdgeInsets.only(left: 8),
                               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                               decoration: BoxDecoration(
-                                color: AppCores.verdeSecundario.withOpacity(0.15),
+                                color: AppCores.verdeSecundario.withValues(alpha: 0.15),
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: const Text('Ativa', style: TextStyle(fontSize: 11, color: AppCores.verdePrimario)),

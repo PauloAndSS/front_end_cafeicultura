@@ -29,7 +29,7 @@ class UfDropdown extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         DropdownButtonFormField<UF>(
-          value: value,
+          initialValue: value,
           validator: validator,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           icon: const Icon(Icons.keyboard_arrow_down, color: AppCores.verdePrimario),

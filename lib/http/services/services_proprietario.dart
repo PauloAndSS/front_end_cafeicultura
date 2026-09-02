@@ -111,8 +111,8 @@ class ServicesProprietario extends BaseService {
         rota('$id/identificacao'),
         headers: defaultHeaders,
         body: jsonEncode({
-          if (nome != null) 'nome': nome,
-          if (razaoSocial != null) 'razaoSocial': razaoSocial,
+          'nome': ?nome,
+          'razaoSocial': ?razaoSocial,
         }),
       ),
       aoSucesso: (_) => true,
