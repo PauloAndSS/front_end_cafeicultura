@@ -1,8 +1,34 @@
--> verificar BaseService se é uma classe Deus, e quais as desvantagens, como afetaria o desenvolvimento futuro
+-> BaseService é classe deus que beira confusão. Tem diversas responsabilidades: Fazer requisição, lidar com cookies, tratar status code, paginação e é altamente abstraído a nível de ficar difícil de dar um print para ver a resposta de uma requisição. Deve ser refatorada com atenção para entender como reaplicar essas responsabilidades
 
 -> atualizar documentação -> focar em programadores novos que querem entender o código. Por onde começar? O Readme.md faz sentido para isso? Deve ser implementado algum plugin para isso? 
 
--> O dispose das telas ocorre quando alguem notifica se houve mudança, né? Como funciona na prática? Exemplo, se evento foi adicionado, dá dispose no calendário da home.
+############################################################
+ANOTAÇÕES SOBRE UX DESIGN
+############################################################
+-> Criar conta
+    -> "Cadastrar" substitui "Continuar Cadastro"
+    -> Deve avisar que conta foi criada com sucesso
+    -> "Preencha seu Endereço Pessoal" substitui "Adicione seu Endereço"
 
--> Onde em insumosService/ buscarPorPropriedade você usa os query params? Rota de busca dos insumos padrão é http://localhost:3333/api/v1/insumos?idPropriedade=5
+-> Cadastro de propriedade e da conta: Dividir seção em "Dados Básicos" e "Endereço" 
+-> Botões de cadastro deveria ficar com "+" apenas para não atrapalhar a leitura, mas em algum momento (talvez ao rolar para baixo) colocar o resto da informação. Exemplo: "+ Novo Trato";
 
+-> Cadastro de propriedade não encaminha pra página inicial; está encaminhando para criação de Endereço
+
+-> Páginas Principais
+    -> Reduzir padding inicial de corpos vazios (404). O botão de "+ ... " Está atrapalhando a leitura nesse caso.
+
+-> Página de notificações com cores diferentes do padrão do sistema (home page)
+
+-> Testar novos modelos de mensagens de erro e sucesso (Mudar fonte, tamanho, cores, Trocar snackbar atual por algo visualmente mais bonito). Pegar sugestões e testar também com snack flutuante;
+-> Padronizar mensagens de aviso: Erros de front/validação devem ser avisos, e não cores de erro (CPF inválido etc).
+
+-> Página de editar propriedade e criar tem informações diferentes. Os cards dela deveria ser unificado.
+
+-> Página de cadastro de novo trato quando não há safra -> Redirecionar p/ criação de safra.
+
+-> Mensagem de erro de conexão quebra a tela em alguns momentos. Exemplo é Safra.
+
+-> Dropdown da safra está atrapalhando a tela; Dropodowns devem ser padronizados e com design de acordo com o sistema (inclusive o de propriedade no header)
+
+-> Padronizar cores novamente (página notificações, financeiro, safra fugindo do padrão), e a partir da logo, utilizar corretamente a paleta de cores dela. Gosto do tom amarronzado e de um branco como se tivesse sujado de café.

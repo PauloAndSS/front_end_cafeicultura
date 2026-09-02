@@ -91,16 +91,23 @@ class _MainScreenViewState extends State<MainScreenView>
     }
   }
 
+  Widget _construirSecao(SecaoPrincipal secao) {
+    switch (secao) {
+      case SecaoPrincipal.home:
+        return const HomeView();
+      case SecaoPrincipal.atividades:
+        return const AtividadesView();
+      case SecaoPrincipal.talhoes:
+        return const TalhaoView();
+      case SecaoPrincipal.financeiro:
+        return const FinanceiroView();
+      case SecaoPrincipal.armazem:
+        return const ArmazemView();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final telas = [
-      const HomeView(),
-      const AtividadesView(),
-      const TalhaoView(),
-      const FinanceiroView(),
-      const ArmazemView(),
-    ];
-
     return Scaffold(
       backgroundColor: AppCores.fundo,
       resizeToAvoidBottomInset: false,
@@ -111,7 +118,7 @@ class _MainScreenViewState extends State<MainScreenView>
         controller: _pageController,
         onPageChanged: _onPageChanged,
         physics: const BouncingScrollPhysics(),
-        children: telas,
+        children: SecaoPrincipal.values.map(_construirSecao).toList(),
       ),
 
       bottomNavigationBar: const CustomBottomNavBar(),

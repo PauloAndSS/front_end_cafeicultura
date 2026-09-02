@@ -113,7 +113,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                 ),
               ),
               Text(
-                'Próximos 5 dias',
+                'Próximos dias',
                 style: TextStyle(fontSize: 12, color: Colors.black54),
               ),
             ],

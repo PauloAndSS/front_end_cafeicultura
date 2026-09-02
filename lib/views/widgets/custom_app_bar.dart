@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/notificacoes/widgets/sino_notificacoes.dart';
 import 'package:frond_end_cafeicultura_mobile/views/pessoas/pessoas_view.dart';
@@ -40,6 +41,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     Navigator.push(context, MaterialPageRoute(builder: (context) => novaTela));
   }
 
+  void _irParaInicio(BuildContext context) {
+    context.read<NavegacaoViewModel>().irParaInicio();
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
   @override
   Widget build(BuildContext context) {
     final session = context.watch<SessionViewModel>();
@@ -56,10 +62,17 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: AppCores.verdeSecundario,
       elevation: 0,
       centerTitle: true,
-      title: Image.asset(
-        'assets/images/logo_cafe.png',
-        height: 80,
-        fit: BoxFit.contain,
+      title: Tooltip(
+        message: 'Início',
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: () => _irParaInicio(context),
+          child: Image.asset(
+            'assets/images/logo_cafe.png',
+            height: 80,
+            fit: BoxFit.contain,
+          ),
+        ),
       ),
       leadingWidth: 190,
       leading: Padding(

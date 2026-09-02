@@ -118,6 +118,7 @@ class _SelecionarBeneficiadoSheetState
           CabecalhoModal(titulo: widget.titulo),
           CampoBuscaModal(controller: _buscaController, dica: 'Buscar por nome'),
           BarraDeAbas(
+            corDeFundo: Colors.white,
             rolavel: true,
             abas: [
               if (_temAbaDeSugeridos) const Tab(text: 'Responsáveis'),

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/financeiro/despesa.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/atividades_mudaram.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/financeiro/financeiro_mudou.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/financeiro/financeiro_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/detalhes_despesa_dialog.dart';
@@ -9,6 +12,7 @@ import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_entidade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/corpo_com_estado.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/reinicio_de_secao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/relatorio_financeiro_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_selector.dart';
 import 'package:provider/provider.dart';
@@ -20,15 +24,35 @@ class FinanceiroView extends StatefulWidget {
   State<FinanceiroView> createState() => _FinanceiroViewState();
 }
 
-class _FinanceiroViewState extends State<FinanceiroView> {
+class _FinanceiroViewState extends State<FinanceiroView>
+    with AutomaticKeepAliveClientMixin, ReinicioDeSecaoMixin {
   static const int _incrementoExibicao = 3;
 
   int _quantidadeDespesasExibidas = _incrementoExibicao;
+
+  final _controladorDeRolagem = ScrollController();
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  SecaoPrincipal get secaoDoReinicio => SecaoPrincipal.financeiro;
+
+  @override
+  void aoReiniciarSecao() {
+    voltarAoTopo(_controladorDeRolagem);
+  }
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _sincronizarDados());
+  }
+
+  @override
+  void dispose() {
+    _controladorDeRolagem.dispose();
+    super.dispose();
   }
 
   void _sincronizarDados() {
@@ -200,9 +224,22 @@ class _FinanceiroViewState extends State<FinanceiroView> {
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
+
+    observarReinicioDeSecao(context);
+
     final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
     final safraVM = context.watch<SafraViewModel>();
     final financeiroVM = context.watch<FinanceiroViewModel>();
+
+    final geracaoFinanceiro = context.watch<FinanceiroMudou>().geracao;
+    final geracaoAtividades = context.watch<AtividadesMudaram>().geracao;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      financeiroVM.sincronizarCom(
+        geracaoFinanceiro: geracaoFinanceiro,
+        geracaoAtividades: geracaoAtividades,
+      );
+    });
 
     final idPropriedade = propriedadesVM.idPropriedadeSelecionada;
     final safraSelecionada = safraVM.safraSelecionada;
@@ -218,6 +255,7 @@ class _FinanceiroViewState extends State<FinanceiroView> {
           return RefreshIndicator(
             onRefresh: () async => _sincronizarDados(),
             child: CustomScrollView(
+              controller: _controladorDeRolagem,
               slivers: [
                 if (idPropriedade != null)
                   SliverToBoxAdapter(

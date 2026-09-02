@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/insumos/insumos_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/armazem/acoes_insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/views/armazem/detalhes_insumo_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/armazem/widgets/insumo_card.dart';
@@ -10,6 +11,7 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/corpo_com_estado.dar
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/modal_selecao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/reinicio_de_secao.dart';
 
 class InsumosTabView extends StatefulWidget {
   final InsumosViewModel viewModel;
@@ -26,13 +28,22 @@ class InsumosTabView extends StatefulWidget {
 }
 
 class _InsumosTabViewState extends State<InsumosTabView>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, ReinicioDeSecaoMixin {
   final _buscaController = TextEditingController();
+  final _controladorDeRolagem = ScrollController();
 
   String _termoBusca = '';
 
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  SecaoPrincipal get secaoDoReinicio => SecaoPrincipal.armazem;
+
+  @override
+  void aoReiniciarSecao() {
+    voltarAoTopo(_controladorDeRolagem);
+  }
 
   @override
   void initState() {
@@ -43,6 +54,7 @@ class _InsumosTabViewState extends State<InsumosTabView>
   @override
   void dispose() {
     _buscaController.dispose();
+    _controladorDeRolagem.dispose();
     super.dispose();
   }
 
@@ -106,6 +118,8 @@ class _InsumosTabViewState extends State<InsumosTabView>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    observarReinicioDeSecao(context);
 
     return Scaffold(
       backgroundColor: AppCores.fundo,
@@ -172,6 +186,7 @@ class _InsumosTabViewState extends State<InsumosTabView>
                   mensagem: 'Nenhum insumo encontrado com "$_termoBusca".',
                 )
               : ListView.builder(
+                  controller: _controladorDeRolagem,
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 96),
                   itemCount: filtrados.length,
                   itemBuilder: (context, indice) {

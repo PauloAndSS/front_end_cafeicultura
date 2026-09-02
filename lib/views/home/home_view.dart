@@ -25,6 +25,8 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_summary.
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_relatorio.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/atividades_mudaram.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/financeiro/financeiro_mudou.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/reinicio_de_secao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/abas_padrao.dart';
@@ -42,11 +44,18 @@ class HomeView extends StatefulWidget {
 }
 
 class _HomeViewState extends State<HomeView>
-    with AutomaticKeepAliveClientMixin {
+    with
+        AutomaticKeepAliveClientMixin,
+        SingleTickerProviderStateMixin,
+        ReinicioDeSecaoMixin {
   final _agendaViewModel = AgendaPropriedadeViewModel();
   final _cotacaoCafeViewModel = CotacaoCafeViewModel();
   final _weatherViewModel = WeatherViewModel();
   int? _idPropriedadeDaAgenda;
+
+  late final TabController _abas;
+  final _rolagemVisaoGeral = ScrollController();
+  final _rolagemSafra = ScrollController();
 
   DateTime? _diaSelecionadoNaAgenda;
 
@@ -54,22 +63,38 @@ class _HomeViewState extends State<HomeView>
   bool get wantKeepAlive => true;
 
   @override
+  SecaoPrincipal get secaoDoReinicio => SecaoPrincipal.home;
+
+  @override
+  void aoReiniciarSecao() {
+    _abas.index = 0;
+    voltarAoTopo(_rolagemVisaoGeral);
+    voltarAoTopo(_rolagemSafra);
+  }
+
+  @override
   void initState() {
     super.initState();
+    _abas = TabController(length: 2, vsync: this);
     _cotacaoCafeViewModel.carregar();
   }
 
   @override
   void dispose() {
+    _abas.dispose();
+    _rolagemVisaoGeral.dispose();
+    _rolagemSafra.dispose();
     _agendaViewModel.dispose();
     _cotacaoCafeViewModel.dispose();
-    _weatherViewModel.dispose(); // Limpando o ViewModel da memória
+    _weatherViewModel.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    observarReinicioDeSecao(context);
 
     final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
     final talhoesVM = context.read<TalhoesViewModel>();
@@ -116,36 +141,34 @@ class _HomeViewState extends State<HomeView>
       }
     }
 
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        backgroundColor: AppCores.fundo,
-        body: SafeArea(
-          child: Column(
-            children: [
-              const BarraDeAbas(
-                rolavel: true,
-                abas: [
-                  Tab(text: 'Início'),
-                  Tab(text: 'Safra'),
+    return Scaffold(
+      backgroundColor: AppCores.fundo,
+      body: SafeArea(
+        child: Column(
+          children: [
+            BarraDeAbas(
+              controller: _abas,
+              abas: const [
+                Tab(text: 'Visão Geral'),
+                Tab(text: 'Safra'),
+              ],
+            ),
+            Expanded(
+              child: TabBarView(
+                controller: _abas,
+                children: [
+                  _buildVisaoGeralTab(propriedadesVM, context),
+                  _buildSafraTab(context),
                 ],
               ),
-              Expanded(
-                child: TabBarView(
-                  children: [
-                    _buildInicioTab(propriedadesVM, context),
-                    _buildSafraTab(context),
-                  ],
-                ),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildInicioTab(
+  Widget _buildVisaoGeralTab(
     PropriedadesUsuarioViewModel propriedadesVM,
     BuildContext context,
   ) {
@@ -175,21 +198,12 @@ class _HomeViewState extends State<HomeView>
       color: AppCores.verdePrimario,
       onRefresh: () => _recarregarTudo(propriedadeSelecionada.id),
       child: SingleChildScrollView(
+        controller: _rolagemVisaoGeral,
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Visão Geral',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: AppCores.verdePrimario,
-              ),
-            ),
-            const SizedBox(height: 16),
-
             ResumoPropriedade(propriedade: propriedadeSelecionada),
 
             const SizedBox(height: 24),
@@ -345,7 +359,6 @@ class _HomeViewState extends State<HomeView>
 
     if (cadastrou == true && mounted) {
       context.read<AtividadesMudaram>().invalidar();
-      await _agendaViewModel.recarregarMesVisivel();
     }
   }
 
@@ -370,7 +383,6 @@ class _HomeViewState extends State<HomeView>
 
     if (alterou == true && mounted) {
       context.read<AtividadesMudaram>().invalidar();
-      await _agendaViewModel.recarregarMesVisivel();
     }
   }
 
@@ -666,53 +678,51 @@ class _HomeViewState extends State<HomeView>
       return Center(
         child: Text(
           safraVM.mensagemErro!,
-          style: const TextStyle(color: Colors.red),
+          style: const TextStyle(color: AppCores.erro),
           textAlign: TextAlign.center,
         ),
       );
     }
 
-    return Container(
-      color: AppCores.fundo,
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SafraSelectorWidget(
-              safras: safraVM.safras,
-              safraSelecionada: safraVM.safraSelecionada,
-              onSelecionar: (safra) {
-                safraVM.selecionarSafra(safra);
-              },
-              mostrarAcoes: true,
-              isLoading: safraVM.isLoading,
-              onNovaSafra: _mostrarDialogoNovaSafra,
-              onEncerrarSafra: _encerrarSafraSelecionada,
-              onReativarSafra: _reativarSafraSelecionada,
-            ),
+    return SingleChildScrollView(
+      controller: _rolagemSafra,
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SafraSelectorWidget(
+            safras: safraVM.safras,
+            safraSelecionada: safraVM.safraSelecionada,
+            onSelecionar: (safra) {
+              safraVM.selecionarSafra(safra);
+            },
+            mostrarAcoes: true,
+            isLoading: safraVM.isLoading,
+            onNovaSafra: _mostrarDialogoNovaSafra,
+            onEncerrarSafra: _encerrarSafraSelecionada,
+            onReativarSafra: _reativarSafraSelecionada,
+          ),
 
+          const SizedBox(height: 16),
+
+          if (safraVM.safraSelecionada != null) ...[
+            SafraSummaryCard(safra: safraVM.safraSelecionada!),
             const SizedBox(height: 16),
-
-            if (safraVM.safraSelecionada != null) ...[
-              SafraSummaryCard(safra: safraVM.safraSelecionada!),
-              const SizedBox(height: 16),
-            ],
-
-            ListenableBuilder(
-              listenable: _agendaViewModel,
-              builder: (context, _) => SafraRelatorioWidget(
-                eventos: safraVM.relatorio,
-                relatorioFinanceiro: safraVM.relatorioFinanceiro,
-                isLoading: safraVM.isLoadingRelatorio,
-                mostrarTitulo: false,
-                idPropriedade: safraVM.propriedadeIdAtual,
-                idSafra: safraVM.safraSelecionada?.id,
-                nomeDoTalhao: _agendaViewModel.nomeDoTalhao,
-              ),
-            ),
           ],
-        ),
+
+          ListenableBuilder(
+            listenable: _agendaViewModel,
+            builder: (context, _) => SafraRelatorioWidget(
+              eventos: safraVM.relatorio,
+              relatorioFinanceiro: safraVM.relatorioFinanceiro,
+              isLoading: safraVM.isLoadingRelatorio,
+              mostrarTitulo: false,
+              idPropriedade: safraVM.propriedadeIdAtual,
+              idSafra: safraVM.safraSelecionada?.id,
+              nomeDoTalhao: _agendaViewModel.nomeDoTalhao,
+            ),
+          ),
+        ],
       ),
     );
   }

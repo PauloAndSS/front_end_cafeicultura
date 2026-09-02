@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhoes_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/talhao/cadastrar_talhao_view.dart';
@@ -8,6 +9,7 @@ import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/reinicio_de_secao.dart';
 
 enum StatusTalhaoFiltro { ativos, encerrados }
 
@@ -19,9 +21,17 @@ class TalhaoView extends StatefulWidget {
 }
 
 class _TalhaoViewState extends State<TalhaoView>
-    with AutomaticKeepAliveClientMixin {
+    with AutomaticKeepAliveClientMixin, ReinicioDeSecaoMixin {
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  SecaoPrincipal get secaoDoReinicio => SecaoPrincipal.talhoes;
+
+  @override
+  void aoReiniciarSecao() {
+    voltarAoTopo(_scrollController);
+  }
 
   StatusTalhaoFiltro _filtroSelecionado = StatusTalhaoFiltro.ativos;
   final ScrollController _scrollController = ScrollController();
@@ -67,6 +77,8 @@ class _TalhaoViewState extends State<TalhaoView>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    observarReinicioDeSecao(context);
 
     final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
     final talhoesVM = context.watch<TalhoesViewModel>();

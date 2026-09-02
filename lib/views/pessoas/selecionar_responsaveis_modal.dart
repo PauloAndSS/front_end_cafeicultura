@@ -101,6 +101,7 @@ class _SelecionarResponsaveisSheetState
                 dica: 'Buscar por nome',
               ),
               BarraDeAbas(
+                corDeFundo: Colors.white,
                 rolavel: true,
                 abas: [
                   for (final papel in categoriasDeResponsavel)

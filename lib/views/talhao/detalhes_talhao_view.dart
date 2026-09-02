@@ -621,14 +621,17 @@ class _CabecalhoAbas extends SliverPersistentHeaderDelegate {
   const _CabecalhoAbas(this.abas);
 
   @override
-  double get minExtent => abas.preferredSize.height;
+  double get minExtent => alturaDaFaixaDeAbas;
 
   @override
-  double get maxExtent => abas.preferredSize.height;
+  double get maxExtent => alturaDaFaixaDeAbas;
 
   @override
   Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return ColoredBox(color: Colors.white, child: abas);
+    return DecoratedBox(
+      decoration: decoracaoDaFaixaDeAbas(AppCores.fundo),
+      child: abas,
+    );
   }
 
   @override

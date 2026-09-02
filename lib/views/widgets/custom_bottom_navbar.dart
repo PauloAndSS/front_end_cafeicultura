@@ -3,6 +3,53 @@ import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
+extension _AparenciaDaSecao on SecaoPrincipal {
+  String get rotulo {
+    switch (this) {
+      case SecaoPrincipal.home:
+        return 'Home';
+      case SecaoPrincipal.atividades:
+        return 'Atividades';
+      case SecaoPrincipal.talhoes:
+        return 'Talhões';
+      case SecaoPrincipal.financeiro:
+        return 'Financeiro';
+      case SecaoPrincipal.armazem:
+        return 'Armazém';
+    }
+  }
+
+  IconData get icone {
+    switch (this) {
+      case SecaoPrincipal.home:
+        return Icons.home_outlined;
+      case SecaoPrincipal.atividades:
+        return Icons.coffee_outlined;
+      case SecaoPrincipal.talhoes:
+        return Icons.agriculture_outlined;
+      case SecaoPrincipal.financeiro:
+        return Icons.attach_money_outlined;
+      case SecaoPrincipal.armazem:
+        return Icons.warehouse_outlined;
+    }
+  }
+
+  IconData get iconeSelecionado {
+    switch (this) {
+      case SecaoPrincipal.home:
+        return Icons.home;
+      case SecaoPrincipal.atividades:
+        return Icons.coffee;
+      case SecaoPrincipal.talhoes:
+        return Icons.agriculture;
+      case SecaoPrincipal.financeiro:
+        return Icons.attach_money;
+      case SecaoPrincipal.armazem:
+        return Icons.warehouse;
+    }
+  }
+}
+
 class CustomBottomNavBar extends StatelessWidget {
   final bool ocultarSelecao;
 
@@ -13,6 +60,8 @@ class CustomBottomNavBar extends StatelessWidget {
 
     if (navVM.indiceAtual != index) {
       navVM.alterarAba(index);
+    } else {
+      navVM.reiniciarSecaoAtual();
     }
 
     if (ocultarSelecao) {
@@ -60,33 +109,13 @@ class CustomBottomNavBar extends StatelessWidget {
           selectedIndex: ocultarSelecao ? 0 : currentIndex,
           onDestinationSelected: (index) => _onTabTapped(context, index),
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home),
-              label: 'Home',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.coffee_outlined),
-              selectedIcon: Icon(Icons.coffee),
-              label: 'Atividades',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.agriculture_outlined),
-              selectedIcon: Icon(Icons.agriculture),
-              label: 'Talhões',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.attach_money_outlined),
-              selectedIcon: Icon(Icons.attach_money),
-              label: 'Financeiro',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.warehouse_outlined),
-              selectedIcon: Icon(Icons.warehouse),
-              label: 'Armazém',
-            ),
-          ],
+          destinations: SecaoPrincipal.values.map((secao) {
+            return NavigationDestination(
+              icon: Icon(secao.icone),
+              selectedIcon: Icon(secao.iconeSelecionado),
+              label: secao.rotulo,
+            );
+          }).toList(),
         ),
       ),
     );

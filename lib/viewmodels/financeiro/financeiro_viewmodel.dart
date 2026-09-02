@@ -26,6 +26,10 @@ class FinanceiroViewModel extends ChangeNotifier
   int? _idPropriedade;
   int? _idSafra;
 
+  int? _geracaoFinanceiroSincronizada;
+  int? _geracaoAtividadesSincronizada;
+  bool _sincronizando = false;
+
   RelatorioFinanceiroSafra get relatorio => _relatorio;
   List<Despesa> get despesas =>
       _relatorio.transacoes.map((t) => t.despesa).toList();
@@ -56,7 +60,35 @@ class FinanceiroViewModel extends ChangeNotifier
     notificarSeVivo();
   }
 
-Future<void> _buscarSemBloqueio() async {
+  Future<void> sincronizarCom({
+    required int geracaoFinanceiro,
+    required int geracaoAtividades,
+  }) async {
+    final primeiraLeitura = _geracaoFinanceiroSincronizada == null;
+
+    final mudou =
+        geracaoFinanceiro != _geracaoFinanceiroSincronizada ||
+        geracaoAtividades != _geracaoAtividadesSincronizada;
+
+    _geracaoFinanceiroSincronizada = geracaoFinanceiro;
+    _geracaoAtividadesSincronizada = geracaoAtividades;
+
+    if (primeiraLeitura || !mudou || _sincronizando) return;
+    if (_idPropriedade == null || _idSafra == null) return;
+
+    _sincronizando = true;
+    try {
+      await carregarRelatorio(
+        idPropriedade: _idPropriedade!,
+        idSafra: _idSafra!,
+        emSegundoPlano: true,
+      );
+    } finally {
+      _sincronizando = false;
+    }
+  }
+
+  Future<void> _buscarSemBloqueio() async {
     try {
       _relatorio = await _serviceSafra.buscarRelatorioFinanceiro(
         idPropriedade: _idPropriedade!,

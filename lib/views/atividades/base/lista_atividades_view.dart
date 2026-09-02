@@ -12,7 +12,9 @@ import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/filtro_st
 import 'package:frond_end_cafeicultura_mobile/views/widgets/calendario/calendario_atividades.dart';
 import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/atividades_mudaram.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/reinicio_de_secao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 
@@ -52,9 +54,18 @@ class ListaAtividadesView<T extends EventoAgricola> extends StatefulWidget {
 }
 
 class _ListaAtividadesViewState<T extends EventoAgricola>
-    extends State<ListaAtividadesView<T>> with AutomaticKeepAliveClientMixin {
+    extends State<ListaAtividadesView<T>>
+    with AutomaticKeepAliveClientMixin, ReinicioDeSecaoMixin {
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  SecaoPrincipal get secaoDoReinicio => SecaoPrincipal.atividades;
+
+  @override
+  void aoReiniciarSecao() {
+    voltarAoTopo(_controladorDeRolagem);
+  }
 
   final _controladorDeRolagem = ScrollController();
 
@@ -132,7 +143,6 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
 
     if (cadastrou == true && mounted) {
       context.read<AtividadesMudaram>().invalidar();
-      _recarregar();
     }
   }
 
@@ -150,7 +160,6 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
 
     if (alterou == true && mounted) {
       context.read<AtividadesMudaram>().invalidar();
-      _recarregar();
     }
   }
 
@@ -187,6 +196,8 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+
+    observarReinicioDeSecao(context);
 
     final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
 

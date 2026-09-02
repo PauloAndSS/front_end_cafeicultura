@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
+const double _espessuraDaBorda = 1.0;
+
+const double alturaDaFaixaDeAbas = kTextTabBarHeight + _espessuraDaBorda;
+
 TabBar abasPadrao({
   required List<Tab> abas,
   TabController? controller,
@@ -24,25 +28,36 @@ TabBar abasPadrao({
   );
 }
 
+BoxDecoration decoracaoDaFaixaDeAbas(Color corDeFundo) {
+  return BoxDecoration(
+    color: corDeFundo,
+    border: const Border(
+      bottom: BorderSide(color: AppCores.borda, width: _espessuraDaBorda),
+    ),
+  );
+}
+
 class BarraDeAbas extends StatelessWidget implements PreferredSizeWidget {
   final List<Tab> abas;
   final TabController? controller;
   final bool rolavel;
+  final Color corDeFundo;
 
   const BarraDeAbas({
     super.key,
     required this.abas,
     this.controller,
     this.rolavel = false,
+    this.corDeFundo = AppCores.fundo,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(kTextTabBarHeight);
+  Size get preferredSize => const Size.fromHeight(alturaDaFaixaDeAbas);
 
   @override
   Widget build(BuildContext context) {
-    return ColoredBox(
-      color: Colors.white,
+    return DecoratedBox(
+      decoration: decoracaoDaFaixaDeAbas(corDeFundo),
       child: abasPadrao(abas: abas, controller: controller, rolavel: rolavel),
     );
   }
