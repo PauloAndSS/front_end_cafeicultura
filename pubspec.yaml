@@ -42,6 +42,8 @@ dependencies:
   intl: ^0.20.2
   table_calendar: ^3.2.1
   web_socket_channel: ^3.0.3
+  geolocator: ^14.0.3
+  flutter_svg: ^2.3.0
 
 dev_dependencies:
   flutter_test:
@@ -66,3 +68,4 @@ flutter:
   assets:
     - assets/images/banner_cafe.png
     - assets/images/logo_cafe.png
+    - assets/images/icons/clima/

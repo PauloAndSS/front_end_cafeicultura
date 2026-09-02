@@ -3,6 +3,7 @@ import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/ev
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/agenda_propriedade_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/clima/weather_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/cotacao_cafe_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhoes_viewmodel.dart';
@@ -10,6 +11,7 @@ import 'package:frond_end_cafeicultura_mobile/views/atividades/trato_cultural/de
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/atividades_do_dia_sheet.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/blocos_detalhes_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/home/widgets/cotacao_cafe_widget.dart';
+import 'package:frond_end_cafeicultura_mobile/views/home/widgets/weather_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/corpo_com_estado.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_tipo_atividade_sheet.dart';
 import 'package:frond_end_cafeicultura_mobile/views/home/widgets/resumo_propriedade.dart';
@@ -39,10 +41,11 @@ class HomeView extends StatefulWidget {
   State<HomeView> createState() => _HomeViewState();
 }
 
-class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin {
+class _HomeViewState extends State<HomeView>
+    with AutomaticKeepAliveClientMixin {
   final _agendaViewModel = AgendaPropriedadeViewModel();
   final _cotacaoCafeViewModel = CotacaoCafeViewModel();
-
+  final _weatherViewModel = WeatherViewModel();
   int? _idPropriedadeDaAgenda;
 
   DateTime? _diaSelecionadoNaAgenda;
@@ -60,6 +63,7 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
   void dispose() {
     _agendaViewModel.dispose();
     _cotacaoCafeViewModel.dispose();
+    _weatherViewModel.dispose(); // Limpando o ViewModel da memória
     super.dispose();
   }
 
@@ -93,7 +97,8 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
         });
       }
 
-      if (idPropriedade != safraVM.propriedadeIdAtual || !safraVM.dadosCarregados) {
+      if (idPropriedade != safraVM.propriedadeIdAtual ||
+          !safraVM.dadosCarregados) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           safraVM.carregarDadosDaPropriedade(idPropriedade);
         });
@@ -140,12 +145,18 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
     );
   }
 
-  Widget _buildInicioTab(PropriedadesUsuarioViewModel propriedadesVM, BuildContext context) {
+  Widget _buildInicioTab(
+    PropriedadesUsuarioViewModel propriedadesVM,
+    BuildContext context,
+  ) {
     if (propriedadesVM.isLoading && propriedadesVM.propriedades.isEmpty) {
-      return const Center(child: CircularProgressIndicator(color: AppCores.verdePrimario));
+      return const Center(
+        child: CircularProgressIndicator(color: AppCores.verdePrimario),
+      );
     }
 
-    if (propriedadesVM.idPropriedadeSelecionada == null || propriedadesVM.propriedades.isEmpty) {
+    if (propriedadesVM.idPropriedadeSelecionada == null ||
+        propriedadesVM.propriedades.isEmpty) {
       return const Center(
         child: Text(
           'Nenhuma propriedade cadastrada ou selecionada.\nUse o menu superior para adicionar uma.',
@@ -196,20 +207,15 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
             _construirSecaoAtividades(propriedadeSelecionada.id),
 
             const SizedBox(height: 24),
-
-            const Text(
-              'Cotação do Café',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppCores.verdePrimario,
-              ),
+            ChangeNotifierProvider.value(
+              value: _weatherViewModel,
+              child: const WeatherWidget(),
             ),
             const SizedBox(height: 12),
-
             ListenableBuilder(
               listenable: _cotacaoCafeViewModel,
-              builder: (context, _) => CotacaoCafeWidget(viewModel: _cotacaoCafeViewModel),
+              builder: (context, _) =>
+                  CotacaoCafeWidget(viewModel: _cotacaoCafeViewModel),
             ),
           ],
         ),
@@ -223,7 +229,9 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
         if (talhoesVM.isLoading && talhoesVM.talhoes.isEmpty) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 48),
-            child: Center(child: CircularProgressIndicator(color: AppCores.verdePrimario)),
+            child: Center(
+              child: CircularProgressIndicator(color: AppCores.verdePrimario),
+            ),
           );
         }
 
@@ -241,7 +249,11 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
         child: Column(
           children: [
             IconButton(
-              icon: const Icon(Icons.add_circle_outline, size: 64, color: AppCores.verdePrimario),
+              icon: const Icon(
+                Icons.add_circle_outline,
+                size: 64,
+                color: AppCores.verdePrimario,
+              ),
               onPressed: () {
                 Navigator.push(
                   context,
@@ -254,7 +266,11 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
             const SizedBox(height: 8),
             const Text(
               'Cadastrar Novo Talhão',
-              style: TextStyle(color: AppCores.verdePrimario, fontSize: 16, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                color: AppCores.verdePrimario,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
@@ -267,8 +283,8 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
       listenable: _agendaViewModel,
       builder: (context, _) {
         return CorpoComEstado(
-          isLoading: _agendaViewModel.isLoading &&
-              !_agendaViewModel.carregouAlgumaVez,
+          isLoading:
+              _agendaViewModel.isLoading && !_agendaViewModel.carregouAlgumaVez,
           mensagemErro: _agendaViewModel.mensagemErro,
           aoTentarNovamente: () => _agendaViewModel.recarregarMesVisivel(),
           vazio: false,
@@ -335,7 +351,10 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
 
   Future<void> _abrirDetalhes(EventoAgricola atividade) async {
     if (atividade is! TratoCultural) {
-      mostrarInfo(context, 'Os detalhes desta atividade ainda não estão disponíveis.');
+      mostrarInfo(
+        context,
+        'Os detalhes desta atividade ainda não estão disponíveis.',
+      );
       return;
     }
 
@@ -377,13 +396,17 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
         return StatefulBuilder(
           builder: (context, setStateDialogo) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               title: const Text('Nova safra'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Defina a data de início da safra para registrar o ciclo.'),
+                  const Text(
+                    'Defina a data de início da safra para registrar o ciclo.',
+                  ),
                   const SizedBox(height: 12),
                   SeletorDataEmBloco(
                     data: dataInicioSelecionada,
@@ -415,8 +438,13 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
                   style: FilledButton.styleFrom(
                     backgroundColor: AppCores.verdeSecundario,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                   ),
                   label: const Text('Salvar'),
                 ),
@@ -435,7 +463,10 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
     final idPropriedade = propriedadesVm.idPropriedadeSelecionada;
 
     if (idPropriedade == null) {
-      mostrarAviso(context, 'Selecione uma propriedade antes de cadastrar uma safra.');
+      mostrarAviso(
+        context,
+        'Selecione uma propriedade antes de cadastrar uma safra.',
+      );
       return;
     }
 
@@ -449,9 +480,13 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
       return;
     }
 
-    mostrarResultado(context, sucesso
-              ? 'Safra cadastrada com sucesso.'
-              : viewModel.mensagemErro ?? 'Não foi possível cadastrar a safra.', sucesso: sucesso);
+    mostrarResultado(
+      context,
+      sucesso
+          ? 'Safra cadastrada com sucesso.'
+          : viewModel.mensagemErro ?? 'Não foi possível cadastrar a safra.',
+      sucesso: sucesso,
+    );
   }
 
   Future<void> _encerrarSafraSelecionada() async {
@@ -477,7 +512,9 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
         return StatefulBuilder(
           builder: (context, setState) {
             return AlertDialog(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
               title: const Text('Encerrar safra'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -551,9 +588,13 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
       return;
     }
 
-    mostrarResultado(context, sucesso
-              ? 'Safra encerrada com sucesso.'
-              : viewModel.mensagemErro ?? 'Não foi possível encerrar a safra.', sucesso: sucesso);
+    mostrarResultado(
+      context,
+      sucesso
+          ? 'Safra encerrada com sucesso.'
+          : viewModel.mensagemErro ?? 'Não foi possível encerrar a safra.',
+      sucesso: sucesso,
+    );
   }
 
   Future<void> _reativarSafraSelecionada() async {
@@ -603,26 +644,32 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
       return;
     }
 
-    mostrarResultado(context, sucesso
-              ? 'Safra reativada com sucesso.'
-              : viewModel.mensagemErro ?? 'Não foi possível reativar a safra.', sucesso: sucesso);
+    mostrarResultado(
+      context,
+      sucesso
+          ? 'Safra reativada com sucesso.'
+          : viewModel.mensagemErro ?? 'Não foi possível reativar a safra.',
+      sucesso: sucesso,
+    );
   }
 
   Widget _buildSafraTab(BuildContext context) {
     final safraVM = context.watch<SafraViewModel>();
 
     if (safraVM.isLoading && safraVM.safras.isEmpty) {
-      return const Center(child: CircularProgressIndicator(color: AppCores.verdePrimario));
+      return const Center(
+        child: CircularProgressIndicator(color: AppCores.verdePrimario),
+      );
     }
 
     if (safraVM.mensagemErro != null && safraVM.safras.isEmpty) {
-       return Center(
-         child: Text(
-           safraVM.mensagemErro!,
-           style: const TextStyle(color: Colors.red),
-           textAlign: TextAlign.center,
-         )
-       );
+      return Center(
+        child: Text(
+          safraVM.mensagemErro!,
+          style: const TextStyle(color: Colors.red),
+          textAlign: TextAlign.center,
+        ),
+      );
     }
 
     return Container(
@@ -632,7 +679,6 @@ class _HomeViewState extends State<HomeView> with AutomaticKeepAliveClientMixin 
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             SafraSelectorWidget(
               safras: safraVM.safras,
               safraSelecionada: safraVM.safraSelecionada,
