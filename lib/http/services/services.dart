@@ -86,6 +86,7 @@ abstract class BaseService {
     required Future<http.Response> Function() enviar,
     required R Function(http.Response resposta) aoSucesso,
     R Function()? aoListaVazia,
+    Map<int, R Function()>? resultadosPorStatus,
     Map<int, String>? errosPorStatus,
     required String erroMsg,
     required String acao,
@@ -99,6 +100,9 @@ abstract class BaseService {
       }
 
       _logarResposta(response, acao);
+
+      final resultadoDeStatus = resultadosPorStatus?[response.statusCode];
+      if (resultadoDeStatus != null) return resultadoDeStatus();
 
       final erroDeStatus = errosPorStatus?[response.statusCode];
       if (erroDeStatus != null) throw ApiException(erroDeStatus);

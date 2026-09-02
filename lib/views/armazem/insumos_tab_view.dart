@@ -13,8 +13,13 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/modal_selecao.dart';
 
 class InsumosTabView extends StatefulWidget {
   final InsumosViewModel viewModel;
+  final int? idPropriedade;
 
-  const InsumosTabView({super.key, required this.viewModel});
+  const InsumosTabView({
+    super.key,
+    required this.viewModel,
+    required this.idPropriedade,
+  });
 
   @override
   State<InsumosTabView> createState() => _InsumosTabViewState();
@@ -55,6 +60,14 @@ class _InsumosTabViewState extends State<InsumosTabView>
         .toList();
   }
 
+  void _recarregar() {
+    final idPropriedade = widget.idPropriedade;
+
+    if (idPropriedade == null) return;
+
+    widget.viewModel.carregarInsumos(idPropriedade: idPropriedade);
+  }
+
   Future<void> _cadastrar() async {
     final criado = await abrirCadastroDeInsumo(context, widget.viewModel);
 
@@ -74,13 +87,16 @@ class _InsumosTabViewState extends State<InsumosTabView>
 
   void _abrirDetalhe(Insumo insumo) {
     final id = insumo.id;
-    if (id == null) return;
+    final idPropriedade = widget.idPropriedade;
+
+    if (id == null || idPropriedade == null) return;
 
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => DetalhesInsumoView(
           idInsumo: id,
+          idPropriedade: idPropriedade,
           viewModel: widget.viewModel,
         ),
       ),
@@ -102,32 +118,39 @@ class _InsumosTabViewState extends State<InsumosTabView>
           style: TextStyle(color: Colors.white),
         ),
       ),
-      body: ListenableBuilder(
-        listenable: widget.viewModel,
-        builder: (context, child) {
-          final vm = widget.viewModel;
-
-          return CorpoComEstado(
-            isLoading: vm.isCarregandoInsumos,
-            mensagemErro: vm.insumos.isEmpty ? vm.mensagemErroInsumos : null,
-            vazio: vm.insumos.isEmpty,
-            aoTentarNovamente: vm.carregarInsumos,
-            construirVazio: (context) => EstadoVazio(
-              icone: Icons.inventory_2_outlined,
+      body: widget.idPropriedade == null
+          ? const EstadoVazio(
+              icone: Icons.holiday_village_outlined,
               mensagem:
-                  'Nenhum insumo no armazém.\nCadastre o primeiro para começar a controlar o estoque.',
-              acao: SizedBox(
-                width: 220,
-                child: CustomButton(
-                  text: 'Cadastrar insumo',
-                  onPressed: _cadastrar,
-                ),
-              ),
+                  'Selecione uma propriedade para ver o estoque do armazém.',
+            )
+          : ListenableBuilder(
+              listenable: widget.viewModel,
+              builder: (context, child) {
+                final vm = widget.viewModel;
+
+                return CorpoComEstado(
+                  isLoading: vm.isCarregandoInsumos,
+                  mensagemErro:
+                      vm.insumos.isEmpty ? vm.mensagemErroInsumos : null,
+                  vazio: vm.insumos.isEmpty,
+                  aoTentarNovamente: _recarregar,
+                  construirVazio: (context) => EstadoVazio(
+                    icone: Icons.inventory_2_outlined,
+                    mensagem:
+                        'Nenhum insumo no armazém.\nCadastre o primeiro para começar a controlar o estoque.',
+                    acao: SizedBox(
+                      width: 220,
+                      child: CustomButton(
+                        text: 'Cadastrar insumo',
+                        onPressed: _cadastrar,
+                      ),
+                    ),
+                  ),
+                  construirConteudo: (context) => _construirLista(vm.insumos),
+                );
+              },
             ),
-            construirConteudo: (context) => _construirLista(vm.insumos),
-          );
-        },
-      ),
     );
   }
 

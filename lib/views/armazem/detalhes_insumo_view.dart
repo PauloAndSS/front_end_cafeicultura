@@ -13,11 +13,13 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dar
 
 class DetalhesInsumoView extends StatefulWidget {
   final int idInsumo;
+  final int idPropriedade;
   final InsumosViewModel viewModel;
 
   const DetalhesInsumoView({
     super.key,
     required this.idInsumo,
+    required this.idPropriedade,
     required this.viewModel,
   });
 
@@ -31,7 +33,10 @@ class _DetalhesInsumoViewState extends State<DetalhesInsumoView> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      widget.viewModel.abrirDetalhe(widget.idInsumo);
+      widget.viewModel.abrirDetalhe(
+        widget.idInsumo,
+        idPropriedade: widget.idPropriedade,
+      );
     });
   }
 
@@ -58,7 +63,10 @@ class _DetalhesInsumoViewState extends State<DetalhesInsumoView> {
             isLoading: vm.isCarregandoDetalhe,
             mensagemErro: vm.mensagemErroDetalhe,
             vazio: vm.insumoDetalhe == null,
-            aoTentarNovamente: () => vm.abrirDetalhe(widget.idInsumo),
+            aoTentarNovamente: () => vm.abrirDetalhe(
+              widget.idInsumo,
+              idPropriedade: widget.idPropriedade,
+            ),
             construirVazio: (context) => const EstadoVazio(
               icone: Icons.inventory_2_outlined,
               mensagem: 'Os dados deste insumo não estão disponíveis.',

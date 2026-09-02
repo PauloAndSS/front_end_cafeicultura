@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/cadastrar_trato_cultural_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/base/formulario_atividade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/selecionar_insumos_modal.dart';
@@ -100,6 +99,7 @@ class _CadastrarTratoCulturalViewState
           rotuloVazio: 'Selecionar insumos',
           selecionados: _insumosSelecionados,
           rotuloItem: (insumo) => insumo.descricaoComQuantidade,
+          rotuloContagem: _insumosSelecionados.contagem,
           aoAbrir: _abrirSelecaoInsumos,
           aoRemover: (insumo) => setState(() {
             _insumosSelecionados = _insumosSelecionados
@@ -112,13 +112,6 @@ class _CadastrarTratoCulturalViewState
   }
 
   Future<void> _abrirSelecaoInsumos() async {
-    final idProprietario = context.read<SessionViewModel>().idUsuario;
-
-    if (idProprietario == null) {
-      mostrarErro(context, 'Sessão expirada. Entre novamente para cadastrar insumos.');
-      return;
-    }
-
     final idPropriedade =
         context.read<PropriedadesUsuarioViewModel>().idPropriedadeSelecionada;
 
@@ -139,7 +132,6 @@ class _CadastrarTratoCulturalViewState
       viewModel: _viewModel,
       catalogoDePessoas: _viewModel,
       selecionadosAtuais: _insumosSelecionados,
-      idProprietario: idProprietario,
       idPropriedade: idPropriedade,
       fornecedores: fornecedores,
     );

@@ -16,7 +16,6 @@ sealed class CompraDeInsumos {
   });
 
   factory CompraDeInsumos.novoInsumo({
-    required int idProprietario,
     required Insumo insumo,
     required Despesa despesa,
     required double qtdComprada,
@@ -30,7 +29,7 @@ sealed class CompraDeInsumos {
 
   Map<String, dynamic> get referenciaDoInsumo;
 
-  String? get mensagemDeConflito;
+  bool get conflitaPorDescricao;
 
   String get qtdFormatada =>
       '${formatarDecimal(qtdComprada)} ${insumo.medida.sigla}';
@@ -40,29 +39,24 @@ sealed class CompraDeInsumos {
   Map<String, dynamic> toJson() {
     return {
       ...referenciaDoInsumo,
-      'despesa': {...despesa.toJson(), 'idEvento': null},
+      ...despesa.toJson(),
       'qtdComprada': qtdComprada,
     };
   }
 }
 
 final class CompraDeInsumoNovo extends CompraDeInsumos {
-  final int idProprietario;
-
   CompraDeInsumoNovo({
-    required this.idProprietario,
     required super.insumo,
     required super.despesa,
     required super.qtdComprada,
   }) : super._();
 
   @override
-  Map<String, dynamic> get referenciaDoInsumo => {
-        'insumo': {'idProprietario': idProprietario, ...insumo.toJson()},
-      };
+  Map<String, dynamic> get referenciaDoInsumo => {'novoInsumo': insumo.toJson()};
 
   @override
-  String? get mensagemDeConflito => 'Já existe um insumo com essa descrição.';
+  bool get conflitaPorDescricao => true;
 }
 
 final class CompraDeInsumoExistente extends CompraDeInsumos {
@@ -81,5 +75,5 @@ final class CompraDeInsumoExistente extends CompraDeInsumos {
   Map<String, dynamic> get referenciaDoInsumo => {'idInsumo': insumo.id};
 
   @override
-  String? get mensagemDeConflito => null;
+  bool get conflitaPorDescricao => false;
 }

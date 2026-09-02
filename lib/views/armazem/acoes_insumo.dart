@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/insumos/insumos_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/cadastrar_insumo_dialog.dart';
@@ -10,12 +9,10 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dar
 import 'package:provider/provider.dart';
 
 class _ContextoDeCompra {
-  final int idProprietario;
   final int idPropriedade;
   final List<Pessoa> fornecedores;
 
   const _ContextoDeCompra({
-    required this.idProprietario,
     required this.idPropriedade,
     required this.fornecedores,
   });
@@ -33,7 +30,6 @@ Future<Insumo?> abrirCadastroDeInsumo(
     context: context,
     viewModel: viewModel,
     catalogoDePessoas: viewModel,
-    idProprietario: dados.idProprietario,
     idPropriedade: dados.idPropriedade,
     fornecedores: dados.fornecedores,
   );
@@ -61,16 +57,6 @@ Future<_ContextoDeCompra?> _reunirContexto(
   BuildContext context,
   InsumosViewModel viewModel,
 ) async {
-  final idProprietario = context.read<SessionViewModel>().idUsuario;
-
-  if (idProprietario == null) {
-    mostrarErro(
-      context,
-      'Sessão expirada. Entre novamente para movimentar o armazém.',
-    );
-    return null;
-  }
-
   final idPropriedade =
       context.read<PropriedadesUsuarioViewModel>().idPropriedadeSelecionada;
 
@@ -87,7 +73,6 @@ Future<_ContextoDeCompra?> _reunirContexto(
   if (!context.mounted) return null;
 
   return _ContextoDeCompra(
-    idProprietario: idProprietario,
     idPropriedade: idPropriedade,
     fornecedores: fornecedores,
   );

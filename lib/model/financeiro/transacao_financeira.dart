@@ -81,7 +81,8 @@ abstract class TransacaoFinanceira {
   TransacaoFinanceira.fromJson(Map<String, dynamic> json)
       : id = json['id'],
         idPropriedade = json['idPropriedade'],
-        dataHoraTransacao = lerDataDoJson(json['dataHoraTransacao']),
+        dataHoraTransacao =
+            lerDataDoJson(json['dataHoraTransacao'] ?? json['dataHora']),
         valor = lerValorDoJson(json['valor']),
         formaPagamento =
             FormaPagamento.deCodigo(json['formaPagamento']) ??

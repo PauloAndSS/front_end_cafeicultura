@@ -1,6 +1,7 @@
 import 'package:frond_end_cafeicultura_mobile/model/financeiro/transacao_financeira.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 
 export 'package:frond_end_cafeicultura_mobile/model/financeiro/transacao_financeira.dart';
 
@@ -79,5 +80,7 @@ class Despesa extends TransacaoFinanceira {
 }
 
 extension ResumoDeDespesas on Iterable<Despesa> {
-  String get contagemComTotal => '$length despesa(s) — Total: $totalFormatado';
+  String get contagem => contarItens(length, 'despesa', 'despesas');
+
+  String get contagemComTotal => '$contagem — Total: $totalFormatado';
 }

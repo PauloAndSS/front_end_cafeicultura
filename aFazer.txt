@@ -1,10 +1,8 @@
-###############################################################################################################################
-A FAZER
-###############################################################################################################################
 -> verificar BaseService se é uma classe Deus, e quais as desvantagens, como afetaria o desenvolvimento futuro
 
 -> atualizar documentação -> focar em programadores novos que querem entender o código. Por onde começar? O Readme.md faz sentido para isso? Deve ser implementado algum plugin para isso? 
 
--> Cadastro de Safra tá dando merda
+-> O dispose das telas ocorre quando alguem notifica se houve mudança, né? Como funciona na prática? Exemplo, se evento foi adicionado, dá dispose no calendário da home.
 
--> Testar cadastro de compra de insumo, dentro e fora de evento
+-> Onde em insumosService/ buscarPorPropriedade você usa os query params? Rota de busca dos insumos padrão é http://localhost:3333/api/v1/insumos?idPropriedade=5
+

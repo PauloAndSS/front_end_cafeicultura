@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 import 'package:http/http.dart' as http;
@@ -8,24 +6,12 @@ class ServicesInsumo extends BaseService {
   @override
   String get recurso => 'insumos';
 
-  Future<Insumo?> cadastrar(Insumo insumo, int idProprietario) {
+  Future<List<Insumo>> buscarPorPropriedade({required int idPropriedade}) {
     return executarRequisicao(
-      enviar: () => http.post(
-        url,
+      enviar: () => http.get(
+        rota('', {'idPropriedade': '$idPropriedade'}),
         headers: defaultHeaders,
-        body: jsonEncode({'idProprietario': idProprietario, ...insumo.toJson()}),
       ),
-      aoSucesso: (resposta) =>
-          extrairObjetoOuNulo(resposta.bodyBytes, Insumo.fromJson),
-      errosPorStatus: {409: 'Já existe um insumo com essa descrição.'},
-      erroMsg: 'Erro ao cadastrar insumo.',
-      acao: 'cadastrar insumo',
-    );
-  }
-
-  Future<List<Insumo>> buscarTodos() {
-    return executarRequisicao(
-      enviar: () => http.get(url, headers: defaultHeaders),
       aoSucesso: (resposta) =>
           extrairLista(resposta.bodyBytes, Insumo.fromJson),
       aoListaVazia: () => const [],
@@ -34,14 +20,56 @@ class ServicesInsumo extends BaseService {
     );
   }
 
-  Future<Insumo?> buscarPorId(int id) {
+  Future<Insumo?> buscarPorDescricao({
+    required String descricao,
+    required int idPropriedade,
+  }) {
     return executarRequisicao(
-      enviar: () => http.get(rota('$id'), headers: defaultHeaders),
+      enviar: () => http.get(
+        rota('buscar', {
+          'descricao': descricao,
+          'idPropriedade': '$idPropriedade',
+        }),
+        headers: defaultHeaders,
+      ),
+      aoSucesso: (resposta) => _primeiroInsumo(resposta.bodyBytes),
+      aoListaVazia: () => null,
+      erroMsg: 'Erro ao localizar o insumo pela descrição.',
+      acao: 'localizar o insumo pela descrição',
+    );
+  }
+
+  Future<Insumo?> buscarPorId(int id, {required int idPropriedade}) {
+    return executarRequisicao(
+      enviar: () => http.get(
+        rota('$id', {'idPropriedade': '$idPropriedade'}),
+        headers: defaultHeaders,
+      ),
       aoSucesso: (resposta) =>
           extrairObjetoOuNulo(resposta.bodyBytes, Insumo.fromJson),
-      errosPorStatus: {404: 'Insumo não encontrado.'},
       erroMsg: 'Erro ao buscar o insumo.',
       acao: 'buscar o insumo',
     );
+  }
+
+  Insumo? _primeiroInsumo(List<int> bodyBytes) {
+    if (bodyBytes.isEmpty) return null;
+
+    final bruto = _mapaDaResposta(extrairDadosResposta(bodyBytes));
+
+    if (bruto == null || bruto['id'] == null) return null;
+
+    return Insumo.fromJson(bruto);
+  }
+
+  Map<String, dynamic>? _mapaDaResposta(dynamic dados) {
+    if (dados is Map<String, dynamic>) return dados;
+    if (dados is! List) return null;
+
+    for (final item in dados) {
+      if (item is Map<String, dynamic>) return item;
+    }
+
+    return null;
   }
 }

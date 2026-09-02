@@ -55,8 +55,7 @@ abstract class DetalhesAtividadeViewModel<T extends EventoAgricola>
 
   bool get podeExcluir => chamadaExcluir != null && !_atividade.finalizado;
 
-  bool get podeLancarDespesa =>
-      !_atividade.finalizado && _atividade.status != StatusEvento.agendado;
+  bool get podeLancarDespesa => !_atividade.finalizado;
 
   List<Despesa> get despesas =>
       _atividade.transacoesFinanceiras.whereType<Despesa>().toList();

@@ -33,3 +33,6 @@ String formatarDecimal(num valor) => _decimalBr.format(valor);
 final _moedaBr = NumberFormat.currency(locale: 'pt_BR', symbol: r'R$');
 
 String formatarMoeda(num valor) => _moedaBr.format(valor);
+
+String contarItens(int quantidade, String singular, String plural) =>
+    '$quantidade ${quantidade == 1 ? singular : plural}';

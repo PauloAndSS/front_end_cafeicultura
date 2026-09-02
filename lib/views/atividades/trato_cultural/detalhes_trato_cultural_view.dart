@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/model/talhao.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/detalhes_trato_cultural_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/base/detalhes_atividade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/selecionar_insumos_modal.dart';
 import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/secao_lista_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/blocos_detalhe.dart';
 
 class DetalhesTratoCulturalView extends StatefulWidget {
@@ -37,13 +37,6 @@ class _DetalhesTratoCulturalViewState extends State<DetalhesTratoCulturalView> {
   }
 
   Future<void> _editarInsumos() async {
-    final idProprietario = context.read<SessionViewModel>().idUsuario;
-
-    if (idProprietario == null) {
-      mostrarErro(context, 'Sessão expirada. Entre novamente para alterar os insumos.');
-      return;
-    }
-
     final idPropriedade =
         context.read<PropriedadesUsuarioViewModel>().idPropriedadeSelecionada;
 
@@ -64,13 +57,24 @@ class _DetalhesTratoCulturalViewState extends State<DetalhesTratoCulturalView> {
       viewModel: _viewModel,
       catalogoDePessoas: _viewModel,
       selecionadosAtuais: _viewModel.trato.insumosUtilizados,
-      idProprietario: idProprietario,
       idPropriedade: idPropriedade,
       fornecedores: fornecedores,
     );
 
     if (escolhidos == null || !mounted) return;
 
+    await _aplicarInsumos(escolhidos);
+  }
+
+  Future<void> _removerInsumo(InsumoUtilizado insumo) {
+    return _aplicarInsumos(
+      _viewModel.trato.insumosUtilizados
+          .where((atual) => atual.idInsumo != insumo.idInsumo)
+          .toList(),
+    );
+  }
+
+  Future<void> _aplicarInsumos(List<InsumoUtilizado> escolhidos) async {
     final sucesso = await _viewModel.alterarInsumos(escolhidos);
 
     if (!mounted) return;
@@ -80,6 +84,20 @@ class _DetalhesTratoCulturalViewState extends State<DetalhesTratoCulturalView> {
     } else {
       mostrarErro(context, _viewModel.mensagemErro ?? 'Erro ao alterar os insumos.');
     }
+  }
+
+  Widget _construirSecaoInsumos(TratoCultural trato, bool editavel) {
+    return SecaoListaAtividade<InsumoUtilizado>(
+      titulo: 'Insumos utilizados',
+      icone: Icons.inventory_2_outlined,
+      rotuloVazio: 'Selecionar insumos',
+      textoVazio: 'Nenhum insumo lançado',
+      rotuloContagem: trato.insumosUtilizados.contagem,
+      itens: trato.insumosUtilizados,
+      rotuloItem: (insumo) => insumo.descricaoComQuantidade,
+      aoAbrir: editavel ? _editarInsumos : null,
+      aoRemover: _removerInsumo,
+    );
   }
 
   @override
@@ -100,16 +118,11 @@ class _DetalhesTratoCulturalViewState extends State<DetalhesTratoCulturalView> {
       ],
       construirSecoesExtras: (context, trato, editavel) => [
         const Divider(height: 32, color: AppCores.borda),
-        SecaoEditavel(
-          titulo: 'Insumos utilizados',
-          conteudo: ChipsLista(
-            itens: trato.insumosUtilizados,
-            rotuloItem: (insumo) => insumo.descricaoComQuantidade,
-            textoVazio: 'Nenhum insumo lançado',
-          ),
-          onEditar: editavel ? _editarInsumos : null,
-        ),
+        _construirSecaoInsumos(trato, editavel),
       ],
+      secaoExtraVazia: (trato) => trato.insumosUtilizados.isEmpty,
+      construirSecaoExtraNaConfirmacao: (context, trato) =>
+          _construirSecaoInsumos(trato, !_viewModel.isLoading),
     );
   }
 }

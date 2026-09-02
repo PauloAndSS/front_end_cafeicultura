@@ -33,12 +33,13 @@ class InsumosViewModel extends ChangeNotifier
 
   String? get mensagemErroCompra => _cargaCompra.mensagemErro;
 
-  Future<void> abrirDetalhe(int id) {
+  Future<void> abrirDetalhe(int id, {required int idPropriedade}) {
     if (_cargaDetalhe.isLoading) return Future.value();
 
     return _cargaDetalhe.executar(
       chamada: () async {
-        _insumoDetalhe = await _serviceInsumo.buscarPorId(id);
+        _insumoDetalhe =
+            await _serviceInsumo.buscarPorId(id, idPropriedade: idPropriedade);
       },
       aoFalhar: () {},
     );
@@ -46,6 +47,7 @@ class InsumosViewModel extends ChangeNotifier
 
   Future<Insumo?> registrarCompra({
     required Insumo insumo,
+    required int idPropriedade,
     required Despesa despesa,
     required double qtdComprada,
   }) {
@@ -53,7 +55,7 @@ class InsumosViewModel extends ChangeNotifier
 
     return _cargaCompra.executar<Insumo?>(
       chamada: () async {
-        final resposta = await _serviceCompra.cadastrar(
+        await _serviceCompra.cadastrar(
           CompraDeInsumos.insumoExistente(
             insumo: insumo,
             despesa: despesa,
@@ -61,27 +63,22 @@ class InsumosViewModel extends ChangeNotifier
           ),
         );
 
-        return _refletirCompra(insumo, resposta);
+        return _relerSaldo(insumo, idPropriedade);
       },
       aoFalhar: () => null,
     );
   }
 
-  Future<Insumo?> _refletirCompra(Insumo comprado, Insumo? resposta) async {
-    if (resposta != null && resposta.qtdEstoque != null) {
-      substituirInsumo(resposta);
-      _sincronizarDetalhe(resposta);
+  Future<Insumo> _relerSaldo(Insumo comprado, int idPropriedade) async {
+    final id = comprado.id;
 
-      return resposta;
-    }
+    final relido = id == null
+        ? null
+        : await _serviceInsumo.buscarPorId(id, idPropriedade: idPropriedade);
 
-    await carregarInsumos();
+    final atualizado = relido ?? comprado;
 
-    final atualizado = insumos.firstWhere(
-      (insumo) => insumo.id == comprado.id,
-      orElse: () => resposta ?? comprado,
-    );
-
+    substituirInsumo(atualizado);
     _sincronizarDetalhe(atualizado);
 
     return atualizado;

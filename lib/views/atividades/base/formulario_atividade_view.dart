@@ -231,7 +231,6 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
       _dataInicioController.text = formatarDataBr(escolhida);
 
       _descartarEscopoForaDaData(escolhida);
-      _descartarDespesasDeAgendada();
       _ajustarDataFimAoEscopo();
     });
   }
@@ -245,10 +244,6 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
         !(_safraSelecionada!.periodo?.contem(dia) ?? false)) {
       _safraSelecionada = null;
     }
-  }
-
-  void _descartarDespesasDeAgendada() {
-    if (!_ehRetroativa) _despesas = [];
   }
 
   void _limparDataFim() {
@@ -440,7 +435,6 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
         _dataInicioController.clear();
         _talhaoSelecionado = null;
         _safraSelecionada = null;
-        _descartarDespesasDeAgendada();
         _limparDataFim();
       });
 
@@ -687,6 +681,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
               rotuloVazio: 'Selecionar responsáveis',
               selecionados: _responsaveisSelecionados,
               rotuloItem: (pessoa) => pessoa.nomeParaExibicao,
+              rotuloContagem: _responsaveisSelecionados.contagem,
               aoAbrir: _abrirSelecaoResponsaveis,
               aoRemover: (pessoa) => setState(() {
                 _responsaveisSelecionados = _responsaveisSelecionados
@@ -700,20 +695,18 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
               widget.construirCamposFinais!(context),
             ],
 
-            if (_ehRetroativa) ...[
-              const SizedBox(height: 24),
-              rotuloDeCampo('Despesas'),
-              SeletorMultiploAtividade<Despesa>(
-                icone: Icons.payments_outlined,
-                rotuloVazio: 'Adicionar despesa',
-                selecionados: _despesas,
-                rotuloItem: (despesa) => despesa.resumoComBeneficiado,
-                rotuloContagem: _despesas.contagemComTotal,
-                aoAbrir: _abrirCadastroTransacao,
-                aoRemover: _removerDespesa,
-                aoTocarItem: _abrirDetalhesDespesa,
-              ),
-            ],
+            const SizedBox(height: 24),
+            rotuloDeCampo('Despesas'),
+            SeletorMultiploAtividade<Despesa>(
+              icone: Icons.payments_outlined,
+              rotuloVazio: 'Adicionar despesa',
+              selecionados: _despesas,
+              rotuloItem: (despesa) => despesa.resumoComBeneficiado,
+              rotuloContagem: _despesas.contagemComTotal,
+              aoAbrir: _abrirCadastroTransacao,
+              aoRemover: _removerDespesa,
+              aoTocarItem: _abrirDetalhesDespesa,
+            ),
 
             const SizedBox(height: 32),
 

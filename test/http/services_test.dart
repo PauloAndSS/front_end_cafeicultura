@@ -7,13 +7,11 @@ import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dar
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/eventos/services_trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_auth.dart';
-import 'package:frond_end_cafeicultura_mobile/http/services/services_insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_pessoas.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_propriedade.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_safra.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_talhao.dart';
-import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/cliente.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/funcionario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
@@ -190,20 +188,6 @@ void main() {
   });
 
   group('errosPorStatus', () {
-    test('409 no cadastro de insumo usa a mensagem propria', () async {
-      final erro = await erroDe(
-        () => comRespostaFixa(
-          () => ServicesInsumo().cadastrar(
-            Insumo(descricao: 'Adubo', medida: MedidaInsumo.quilograma),
-            1,
-          ),
-          respostaJson({'error': 'conflito'}, 409),
-        ),
-      );
-
-      expect(erro.mensagem, 'Já existe um insumo com essa descrição.');
-    });
-
     test('403 ao excluir talhao explica o impedimento', () async {
       final erro = await erroDe(
         () => comRespostaFixa(

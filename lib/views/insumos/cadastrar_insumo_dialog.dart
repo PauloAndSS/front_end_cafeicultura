@@ -19,7 +19,6 @@ Future<Insumo?> mostrarCadastroInsumo({
   required BuildContext context,
   required CarregarInsumosMixin viewModel,
   required CarregarPessoasMixin catalogoDePessoas,
-  required int idProprietario,
   required int idPropriedade,
   List<Pessoa> fornecedores = const [],
 }) {
@@ -29,7 +28,6 @@ Future<Insumo?> mostrarCadastroInsumo({
     builder: (_) => _CadastrarInsumoDialog(
       viewModel: viewModel,
       catalogoDePessoas: catalogoDePessoas,
-      idProprietario: idProprietario,
       idPropriedade: idPropriedade,
       fornecedores: fornecedores,
     ),
@@ -39,14 +37,12 @@ Future<Insumo?> mostrarCadastroInsumo({
 class _CadastrarInsumoDialog extends StatefulWidget {
   final CarregarInsumosMixin viewModel;
   final CarregarPessoasMixin catalogoDePessoas;
-  final int idProprietario;
   final int idPropriedade;
   final List<Pessoa> fornecedores;
 
   const _CadastrarInsumoDialog({
     required this.viewModel,
     required this.catalogoDePessoas,
-    required this.idProprietario,
     required this.idPropriedade,
     required this.fornecedores,
   });
@@ -91,7 +87,7 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
     });
 
     final criado = await widget.viewModel.cadastrarInsumo(
-      idProprietario: widget.idProprietario,
+      idPropriedade: widget.idPropriedade,
       descricao: _nomeController.text,
       medida: _medidaSelecionada!,
       despesa: _montarDespesa(),

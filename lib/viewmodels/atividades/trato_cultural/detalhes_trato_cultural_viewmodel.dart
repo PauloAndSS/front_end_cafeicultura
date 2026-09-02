@@ -50,8 +50,10 @@ class DetalhesTratoCulturalViewModel
   Future<bool> alterarInsumos(List<InsumoUtilizado> escolhidos) {
     return executarEdicao(
       chamada: () => _tratoService.alterarInsumos(atividade.id!, escolhidos),
-      aplicar: () =>
-          atividade = atividade.copyWith(insumosUtilizados: escolhidos),
+      aplicar: () {
+        atividade = atividade.copyWith(insumosUtilizados: escolhidos);
+        marcarInsumosDesatualizados();
+      },
     );
   }
 }

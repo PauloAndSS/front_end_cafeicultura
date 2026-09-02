@@ -10,7 +10,7 @@ class SeletorMultiploAtividade<T> extends StatelessWidget {
   final List<T> selecionados;
   final String Function(T item) rotuloItem;
   final VoidCallback aoAbrir;
-  final ValueChanged<T> aoRemover;
+  final ValueChanged<T>? aoRemover;
   final String? rotuloContagem;
   final bool Function(T item)? podeRemover;
   final ValueChanged<T>? aoTocarItem;
@@ -22,7 +22,7 @@ class SeletorMultiploAtividade<T> extends StatelessWidget {
     required this.selecionados,
     required this.rotuloItem,
     required this.aoAbrir,
-    required this.aoRemover,
+    this.aoRemover,
     this.rotuloContagem,
     this.podeRemover,
     this.aoTocarItem,

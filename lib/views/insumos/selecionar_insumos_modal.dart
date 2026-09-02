@@ -16,7 +16,6 @@ Future<List<InsumoUtilizado>?> mostrarSelecaoInsumos({
   required CarregarInsumosMixin viewModel,
   required CarregarPessoasMixin catalogoDePessoas,
   required List<InsumoUtilizado> selecionadosAtuais,
-  required int idProprietario,
   required int idPropriedade,
   List<Pessoa> fornecedores = const [],
 }) {
@@ -31,7 +30,6 @@ Future<List<InsumoUtilizado>?> mostrarSelecaoInsumos({
       viewModel: viewModel,
       catalogoDePessoas: catalogoDePessoas,
       selecionadosAtuais: selecionadosAtuais,
-      idProprietario: idProprietario,
       idPropriedade: idPropriedade,
       fornecedores: fornecedores,
     ),
@@ -42,7 +40,6 @@ class _SelecionarInsumosSheet extends StatefulWidget {
   final CarregarInsumosMixin viewModel;
   final CarregarPessoasMixin catalogoDePessoas;
   final List<InsumoUtilizado> selecionadosAtuais;
-  final int idProprietario;
   final int idPropriedade;
   final List<Pessoa> fornecedores;
 
@@ -50,7 +47,6 @@ class _SelecionarInsumosSheet extends StatefulWidget {
     required this.viewModel,
     required this.catalogoDePessoas,
     required this.selecionadosAtuais,
-    required this.idProprietario,
     required this.idPropriedade,
     required this.fornecedores,
   });
@@ -77,10 +73,8 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
 
     _buscaController.addListener(_aoBuscar);
 
-    if (!widget.viewModel.insumosCarregados) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        widget.viewModel.carregarInsumos();
-      });
+    if (!widget.viewModel.insumosCarregadosDe(widget.idPropriedade)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _carregarCatalogo());
     }
   }
 
@@ -88,6 +82,10 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
   void dispose() {
     _buscaController.dispose();
     super.dispose();
+  }
+
+  void _carregarCatalogo() {
+    widget.viewModel.carregarInsumos(idPropriedade: widget.idPropriedade);
   }
 
   void _aoBuscar() {
@@ -109,7 +107,6 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
       context: context,
       viewModel: widget.viewModel,
       catalogoDePessoas: widget.catalogoDePessoas,
-      idProprietario: widget.idProprietario,
       idPropriedade: widget.idPropriedade,
       fornecedores: widget.fornecedores,
     );
@@ -236,7 +233,7 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
             '${vm.mensagemErroInsumos!}\n\nVocê ainda pode cadastrar um insumo novo pelo botão acima.',
         acao: CustomButton(
           text: 'Tentar novamente',
-          onPressed: vm.carregarInsumos,
+          onPressed: _carregarCatalogo,
         ),
       );
     }

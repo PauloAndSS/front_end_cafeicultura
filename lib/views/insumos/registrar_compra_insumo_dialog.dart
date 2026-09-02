@@ -82,6 +82,7 @@ class _RegistrarCompraDialogState extends State<_RegistrarCompraDialog> {
 
     final atualizado = await widget.viewModel.registrarCompra(
       insumo: widget.insumo,
+      idPropriedade: widget.idPropriedade,
       despesa: _montarDespesa(),
       qtdComprada: AppMasks.paraDouble(_qtdCompradaController.text)!,
     );

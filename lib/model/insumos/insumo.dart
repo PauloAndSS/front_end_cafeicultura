@@ -117,3 +117,7 @@ class InsumoUtilizado {
   @override
   String toString() => descricaoComQuantidade;
 }
+
+extension ResumoDeInsumosUtilizados on Iterable<InsumoUtilizado> {
+  String get contagem => contarItens(length, 'insumo', 'insumos');
+}

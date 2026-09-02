@@ -22,11 +22,6 @@ class InsumoCard extends StatelessWidget {
       titulo: insumo.descricao,
       onTap: onTap,
       corpo: [
-        LinhaCartao(
-          icone: Icons.straighten,
-          titulo: 'Unidade de medida',
-          valor: insumo.unidadeFormatada,
-        ),
         const SizedBox(height: 12),
         LinhaCartao(
           icone: Icons.warehouse_outlined,

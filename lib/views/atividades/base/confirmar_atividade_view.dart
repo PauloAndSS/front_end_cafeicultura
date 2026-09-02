@@ -6,6 +6,7 @@ import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/detalhes_atividade_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/secoes_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_data.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
@@ -14,6 +15,13 @@ import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
+
+typedef SecaoVaziaAtividade<T> = bool Function(T atividade);
+
+typedef ConstrutorSecaoAtividade<T> = Widget Function(
+  BuildContext context,
+  T atividade,
+);
 
 class ConfirmarAtividadeView<T extends EventoAgricola>
     extends StatefulWidget {
@@ -26,6 +34,10 @@ class ConfirmarAtividadeView<T extends EventoAgricola>
   final String ajudaDataInicio;
   final String ajudaDataFim;
 
+  final SecaoVaziaAtividade<T>? secaoExtraVazia;
+
+  final ConstrutorSecaoAtividade<T>? construirSecaoExtra;
+
   const ConfirmarAtividadeView({
     super.key,
     required this.viewModel,
@@ -33,6 +45,8 @@ class ConfirmarAtividadeView<T extends EventoAgricola>
     required this.titulo,
     required this.ajudaDataInicio,
     required this.ajudaDataFim,
+    this.secaoExtraVazia,
+    this.construirSecaoExtra,
   });
 
   @override
@@ -46,6 +60,18 @@ class _ConfirmarAtividadeViewState<T extends EventoAgricola>
 
   String get _nomeTalhao =>
       widget.talhao?.nomeExibicao ?? 'Talhão #${_viewModel.atividade.idTalhao}';
+
+  late final bool _pedirResponsaveis =
+      _viewModel.atividade.responsaveis.isEmpty;
+
+  late final bool _pedirDespesas = _viewModel.despesas.isEmpty;
+
+  late final bool _pedirSecaoExtra =
+      widget.construirSecaoExtra != null &&
+          (widget.secaoExtraVazia?.call(_viewModel.atividade) ?? false);
+
+  bool get _pedirAlgumaSecao =>
+      _pedirResponsaveis || _pedirSecaoExtra || _pedirDespesas;
 
   Periodo? _janelaDoLancamento() {
     final safra =
@@ -200,6 +226,8 @@ class _ConfirmarAtividadeViewState<T extends EventoAgricola>
             aoTocar: _selecionarDataFim,
           ),
 
+          ..._construirSecoesPendentes(),
+
           const SizedBox(height: 8),
           const CaixaAvisoAtencao(
             mensagem: 'Depois de confirmada, a atividade não poderá mais ser '
@@ -214,6 +242,39 @@ class _ConfirmarAtividadeViewState<T extends EventoAgricola>
         ],
       ),
     );
+  }
+
+  List<Widget> _construirSecoesPendentes() {
+    if (!_pedirAlgumaSecao) return const [];
+
+    final editavel = !_viewModel.isLoading;
+
+    return [
+      const Divider(height: 32, color: AppCores.borda),
+      const _AvisoSecoesPendentes(),
+      const SizedBox(height: 16),
+      if (_pedirResponsaveis) ...[
+        SecaoResponsaveisAtividade<T>(
+          viewModel: _viewModel,
+          podeEditar: editavel,
+        ),
+        const SizedBox(height: 20),
+      ],
+      if (_pedirSecaoExtra) ...[
+        widget.construirSecaoExtra!(context, _viewModel.atividade),
+        const SizedBox(height: 20),
+      ],
+      if (_pedirDespesas) ...[
+        SecaoDespesasAtividade<T>(
+          viewModel: _viewModel,
+          podeEditar: editavel,
+          motivoSomenteLeitura: 'Aguarde a conclusão da operação em andamento '
+              'para alterar as despesas.',
+        ),
+        const SizedBox(height: 20),
+      ],
+      const Divider(height: 32, color: AppCores.borda),
+    ];
   }
 
   Widget _construirCampoData({
@@ -232,6 +293,19 @@ class _ConfirmarAtividadeViewState<T extends EventoAgricola>
           readOnly: true,
         ),
       ),
+    );
+  }
+}
+
+class _AvisoSecoesPendentes extends StatelessWidget {
+  const _AvisoSecoesPendentes();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Text(
+      'Ainda dá para registrar o que ficou de fora. É opcional, e cada item é '
+      'salvo assim que você o seleciona.',
+      style: TextStyle(fontSize: 13, color: Colors.black54),
     );
   }
 }
