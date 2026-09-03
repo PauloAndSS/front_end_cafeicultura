@@ -26,7 +26,7 @@ class CotacaoCafeViewModel extends ChangeNotifier {
 
   Future<Map<String, dynamic>> _buscarCotacao() async {
     final response = await http
-        .get(Uri.parse('https://scrapping-coffe.onrender.com/cotacoes'))
+        .get(Uri.parse('https://coffe-cotacao.sysgrano.app/cotacoes'))
         .timeout(const Duration(seconds: 30));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {

@@ -16,6 +16,7 @@ class CotacaoCafeWidget extends StatefulWidget {
 class _CotacaoCafeWidgetState extends State<CotacaoCafeWidget> {
   final PageController _controladorDePagina = PageController();
   int _paginaAtual = 0;
+  static const int _totalDePaginas = 3;
 
   @override
   void dispose() {
@@ -69,6 +70,7 @@ class _CotacaoCafeWidgetState extends State<CotacaoCafeWidget> {
             children: [
               _buildPaginaPainel(resposta),
               _buildPaginaCooabriel(resposta),
+              _buildPaginaCccv(resposta),
             ],
           ),
         ),
@@ -146,6 +148,17 @@ class _CotacaoCafeWidgetState extends State<CotacaoCafeWidget> {
     return _buildTabelaCooabriel(itensDeCafe);
   }
 
+  Widget _buildPaginaCccv(RespostaCotacaoCafe resposta) {
+    if (!resposta.temDadosDaCccv) {
+      return _buildFonteIndisponivel(
+        fonte: 'CCCV',
+        mensagem: 'Cotação indisponível para esta fonte.',
+      );
+    }
+
+    return _buildTabelaCccv(resposta.cccv!);
+  }
+
   List<ItemCooabriel> _apenasCafe(List<ItemCooabriel> itens) {
     return itens
         .where((item) => !item.tipo.toLowerCase().contains('pimenta'))
@@ -199,6 +212,110 @@ class _CotacaoCafeWidgetState extends State<CotacaoCafeWidget> {
                           fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: AppCores.verdeSecundario,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabelaCccv(CccvCotacao cccv) {
+    final linhas = <(String, double, double)>[
+      ('Arábica Dura', cccv.cotacaoDia.arabicaDura, cccv.mediaMensal.arabicaDura),
+      ('Arábica Rio', cccv.cotacaoDia.arabicaRio, cccv.mediaMensal.arabicaRio),
+      ('Conilon', cccv.cotacaoDia.conilon, cccv.mediaMensal.conilon),
+    ];
+    final rotuloHoje = cccv.cotacaoDia.dia != null
+        ? 'Hoje (dia ${cccv.cotacaoDia.dia})'
+        : 'Hoje';
+
+    return Container(
+      key: const ValueKey('cccv-tabela'),
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+      decoration: BoxDecoration(
+        color: AppCores.fundo,
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildRotuloDaFonte('CCCV'),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Expanded(flex: 3, child: SizedBox()),
+              Expanded(
+                flex: 2,
+                child: Text(
+                  rotuloHoje,
+                  textAlign: TextAlign.right,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: Colors.black45,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Expanded(
+                flex: 2,
+                child: Text(
+                  'Média mensal',
+                  textAlign: TextAlign.right,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.black45,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Expanded(
+            child: ListView.separated(
+              padding: EdgeInsets.zero,
+              itemCount: linhas.length,
+              separatorBuilder: (_, _) => const Divider(height: 1, color: Colors.black12),
+              itemBuilder: (context, i) {
+                final (nome, hoje, mensal) = linhas[i];
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: Text(
+                          nome,
+                          style: const TextStyle(fontSize: 13, color: Colors.black87),
+                        ),
+                      ),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          _formatarMoeda(hoje),
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w700,
+                            color: AppCores.verdeSecundario,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        flex: 2,
+                        child: Text(
+                          _formatarMoeda(mensal),
+                          textAlign: TextAlign.right,
+                          style: const TextStyle(fontSize: 13, color: Colors.black54),
                         ),
                       ),
                     ],
@@ -370,7 +487,7 @@ class _CotacaoCafeWidgetState extends State<CotacaoCafeWidget> {
   Widget _buildIndicadorDePagina() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(2, (index) {
+      children: List.generate(_totalDePaginas, (index) {
         final ativa = index == _paginaAtual;
         return AnimatedContainer(
           duration: const Duration(milliseconds: 200),
