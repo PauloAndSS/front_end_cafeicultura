@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:frond_end_cafeicultura_mobile/model/clima/weather_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
-import 'dart:math' as math;
 
 class WeatherViewModel extends ChangeNotifier {
   WeatherModel? currentWeather;

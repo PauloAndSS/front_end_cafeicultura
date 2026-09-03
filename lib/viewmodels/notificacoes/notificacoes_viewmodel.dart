@@ -37,6 +37,7 @@ class NotificacoesViewModel extends ChangeNotifier
   final _leituras = RegistroDeLeituras();
 
   final Map<int, TratoCultural> _atividadesPorEvento = {};
+  final Set<String> _vistas = {};
 
   List<Notificacao> _notificacoes = [];
   List<NotificacaoAgrupada> _grupos = [];
@@ -46,6 +47,7 @@ class NotificacoesViewModel extends ChangeNotifier
   int? _idPropriedadeAtual;
   int? _propriedadeJaTentada;
   int _geracaoDoCacheVista = 0;
+  String? _falhaDeLeitura;
 
   List<NotificacaoAgrupada> get grupos => List.unmodifiable(_grupos);
 
@@ -89,11 +91,12 @@ class NotificacoesViewModel extends ChangeNotifier
     return carregar(idPropriedade);
   }
 
-  Future<void> carregar(int idPropriedade) {
+  Future<void> carregar(int idPropriedade) async {
     final trocouPropriedade = _idPropriedadeAtual != idPropriedade;
 
     if (trocouPropriedade) {
       _atividadesPorEvento.clear();
+      _vistas.clear();
       _notificacoes = [];
       _grupos = [];
     }
@@ -101,7 +104,7 @@ class NotificacoesViewModel extends ChangeNotifier
     _idPropriedadeAtual = idPropriedade;
     _propriedadeJaTentada = idPropriedade;
 
-    return cargaPrincipal.executar(
+    await cargaPrincipal.executar(
       chamada: () async {
         if (trocouPropriedade || !talhoesCarregados) {
           await carregarTalhoes(idPropriedade);
@@ -120,6 +123,8 @@ class NotificacoesViewModel extends ChangeNotifier
       },
       aoFalhar: () {},
     );
+
+    await sincronizarLeituras();
   }
 
   Future<void> recarregar() {
@@ -145,29 +150,48 @@ class NotificacoesViewModel extends ChangeNotifier
 
   Future<bool> marcarTodasComoLidas() => _marcar(naoLidas);
 
-  Future<void> marcarLidasSemAcaoPendente() async {
-    final semAcao = _grupos
-        .where((grupo) => !grupo.lida)
-        .where((grupo) => !grupo.ehConfirmacao || estaConfirmada(grupo))
-        .toList();
+  bool aguardaLeitura(NotificacaoAgrupada grupo) =>
+      !grupo.lida && !grupo.ehConfirmacao;
 
-    if (semAcao.isEmpty) return;
+  void registrarVista(NotificacaoAgrupada grupo) {
+    if (!aguardaLeitura(grupo)) return;
 
-    await _marcar(semAcao);
+    _vistas.add(grupo.representante.chaveDeAgrupamento);
   }
 
   Future<void> encerrarVisita() async {
-    await marcarLidasSemAcaoPendente();
+    await _marcar(_gruposParaAutoLeitura());
+    _vistas.clear();
     await sincronizarLeituras();
   }
 
-  Future<void> sincronizarLeituras() {
-    if (!_leituras.temPendentes) return Future.value();
+  Future<void> sincronizarLeituras() async {
+    if (!_leituras.temPendentes) return;
 
-    return _cargaLeitura.executar(
-      chamada: () => _service.marcarComoLidas(_leituras.pendentes.toList()),
+    final enviados = _leituras.pendentes.toList();
+
+    final enviou = await _cargaLeitura.executar(
+      chamada: () => _service.marcarComoLidas(enviados),
       aoFalhar: () => false,
     );
+
+    if (enviou) {
+      await _leituras.confirmar(enviados);
+      _falhaDeLeitura = null;
+
+      return;
+    }
+
+    _falhaDeLeitura = _cargaLeitura.mensagemErro ??
+        'Não foi possível salvar as notificações lidas no servidor.';
+  }
+
+  String? consumirFalhaDeLeitura() {
+    final falha = _falhaDeLeitura;
+
+    _falhaDeLeitura = null;
+
+    return falha;
   }
 
   Future<bool> excluirAtividade(NotificacaoAgrupada grupo) {
@@ -229,6 +253,15 @@ class NotificacoesViewModel extends ChangeNotifier
     );
   }
 
+  List<NotificacaoAgrupada> _gruposParaAutoLeitura() => _grupos
+      .where((grupo) => !grupo.lida)
+      .where((grupo) => estaConfirmada(grupo) || _foiVista(grupo))
+      .toList();
+
+  bool _foiVista(NotificacaoAgrupada grupo) =>
+      aguardaLeitura(grupo) &&
+      _vistas.contains(grupo.representante.chaveDeAgrupamento);
+
   void _aplicarLeitura(List<int> ids) {
     final lidos = ids.toSet();
 
@@ -282,13 +315,10 @@ class NotificacoesViewModel extends ChangeNotifier
 
     final futuras = grupos.where((grupo) => !grupo.ehConfirmacao).toList();
 
-    final iminentes = futuras
-        .where((grupo) => diasAPartirDeHoje(dataDoEvento(grupo)) <= 1)
-        .toList();
-
-    final proximas = futuras
-        .where((grupo) => diasAPartirDeHoje(dataDoEvento(grupo)) > 1)
-        .toList();
+    final jaComecaram = _porHorizonte(futuras, (dias) => dias < 0);
+    final hoje = _porHorizonte(futuras, (dias) => dias == 0);
+    final amanha = _porHorizonte(futuras, (dias) => dias == 1);
+    final proximas = _porHorizonte(futuras, (dias) => dias > 1);
 
     return [
       if (precisamDeResposta.isNotEmpty)
@@ -296,10 +326,20 @@ class NotificacoesViewModel extends ChangeNotifier
           'Precisa de resposta',
           _ordenar(precisamDeResposta, crescente: false),
         ),
-      if (iminentes.isNotEmpty)
+      if (jaComecaram.isNotEmpty)
+        SecaoDeNotificacoes(
+          'Já começaram',
+          _ordenar(jaComecaram, crescente: true),
+        ),
+      if (hoje.isNotEmpty)
+        SecaoDeNotificacoes(
+          'Acontece hoje',
+          _ordenar(hoje, crescente: true),
+        ),
+      if (amanha.isNotEmpty)
         SecaoDeNotificacoes(
           'Acontece amanhã',
-          _ordenar(iminentes, crescente: true),
+          _ordenar(amanha, crescente: true),
         ),
       if (proximas.isNotEmpty)
         SecaoDeNotificacoes(
@@ -308,6 +348,14 @@ class NotificacoesViewModel extends ChangeNotifier
         ),
     ];
   }
+
+  List<NotificacaoAgrupada> _porHorizonte(
+    List<NotificacaoAgrupada> futuras,
+    bool Function(int dias) filtro,
+  ) =>
+      futuras
+          .where((grupo) => filtro(diasAPartirDeHoje(dataDoEvento(grupo))))
+          .toList();
 
   List<NotificacaoAgrupada> _ordenar(
     List<NotificacaoAgrupada> grupos, {

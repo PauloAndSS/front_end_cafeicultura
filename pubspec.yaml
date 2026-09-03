@@ -44,6 +44,7 @@ dependencies:
   web_socket_channel: ^3.0.3
   geolocator: ^14.0.3
   flutter_svg: ^2.3.0
+  visibility_detector: ^0.4.0
 
 dev_dependencies:
   flutter_test:

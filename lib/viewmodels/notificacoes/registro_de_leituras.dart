@@ -50,6 +50,16 @@ class RegistroDeLeituras {
     await _gravar();
   }
 
+  Future<void> confirmar(Iterable<int> ids) async {
+    final anterior = _lidas.length;
+
+    _lidas.removeAll(ids);
+
+    if (_lidas.length == anterior) return;
+
+    await _gravar();
+  }
+
   Future<void> _podar(List<Notificacao> doServidor) async {
     final aindaPendentes = doServidor
         .where((notificacao) => !notificacao.lida)

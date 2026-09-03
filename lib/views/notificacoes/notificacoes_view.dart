@@ -10,6 +10,7 @@ import 'package:frond_end_cafeicultura_mobile/views/atividades/base/confirmar_at
 import 'package:frond_end_cafeicultura_mobile/views/atividades/trato_cultural/detalhes_trato_cultural_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/trato_cultural/editar_trato_cultural_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/notificacoes/widgets/notificacao_card.dart';
+import 'package:frond_end_cafeicultura_mobile/views/notificacoes/widgets/sentinela_de_leitura.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/abas_padrao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
@@ -56,6 +57,12 @@ class _NotificacoesViewState extends State<NotificacoesView> {
     if (idPropriedade == null) return;
 
     await _viewModel.garantirCarregado(idPropriedade);
+
+    if (!mounted) return;
+
+    final falha = _viewModel.consumirFalhaDeLeitura();
+
+    if (falha != null) mostrarErro(context, falha);
   }
 
   Future<bool> _marcarComoLida(NotificacaoAgrupada grupo) async {
@@ -93,8 +100,13 @@ class _NotificacoesViewState extends State<NotificacoesView> {
     mostrarSucesso(context, 'Notificações marcadas como lidas.');
   }
 
-  Future<void> _abrirDetalhes(TratoCultural trato) async {
+  Future<void> _abrirDetalhes(
+    NotificacaoAgrupada grupo,
+    TratoCultural trato,
+  ) async {
     final viewModel = context.read<NotificacoesViewModel>();
+
+    viewModel.registrarVista(grupo);
 
     await Navigator.of(context).push<bool>(
       MaterialPageRoute(
@@ -315,13 +327,21 @@ class _NotificacoesViewState extends State<NotificacoesView> {
           ? 'Talhão não informado'
           : viewModel.nomeDoTalhao(trato.idTalhao),
       confirmada: viewModel.estaConfirmada(grupo),
-      aoAbrir: trato == null ? null : () => _abrirDetalhes(trato),
+      aoAbrir: trato == null ? null : () => _abrirDetalhes(grupo, trato),
       aoResponderSim: trato == null ? null : () => _responderSim(grupo, trato),
       aoAlterar: trato == null ? null : () => _alterarInformacoes(grupo, trato),
       aoExcluir: trato == null ? null : () => _excluirTrato(grupo, trato),
     );
 
-    if (!podeDispensar) return card;
+    final observado = viewModel.aguardaLeitura(grupo)
+        ? SentinelaDeLeitura(
+            chave: grupo.representante.chaveDeAgrupamento,
+            aoLer: () => viewModel.registrarVista(grupo),
+            child: card,
+          )
+        : card;
+
+    if (!podeDispensar) return observado;
 
     return Dismissible(
       key: ValueKey(grupo.representante.chaveDeAgrupamento),
@@ -331,7 +351,7 @@ class _NotificacoesViewState extends State<NotificacoesView> {
         alinhamento: Alignment.centerRight,
       ),
       confirmDismiss: (_) => _marcarComoLida(grupo),
-      child: card,
+      child: observado,
     );
   }
 }
