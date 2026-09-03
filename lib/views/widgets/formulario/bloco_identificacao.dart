@@ -35,7 +35,7 @@ class BlocoIdentificacao extends StatelessWidget {
           CustomTextField(
             label: 'Nome Completo',
             controller: controllerNome,
-            validator: Validator.validarNome,
+            validator: Validator.validarNomePessoaFisica,
             hintText: dicaNome,
           ),
           CustomTextField(

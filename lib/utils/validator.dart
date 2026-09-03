@@ -129,7 +129,16 @@ class Validator {
     if (nome.length > 100) {
       return 'O nome deve ter no máximo 100 caracteres';
     }
-    if (!_regexNome.hasMatch(nome)) {
+
+    return null;
+  }
+
+  static String? validarNomePessoaFisica(String? value) {
+    final erroDeTamanho = validarNome(value);
+    if (erroDeTamanho != null) {
+      return erroDeTamanho;
+    }
+    if (!_regexNome.hasMatch(value!.trim())) {
       return 'O nome deve conter apenas letras';
     }
 
@@ -179,6 +188,9 @@ class Validator {
     }
     return null;
   }
+
+  static String? selecaoObrigatoria(Object? valor) =>
+      valor == null ? 'Obrigatório' : null;
 
   static String? beneficiadoObrigatorio(Object? beneficiado) =>
       beneficiado == null ? 'Obrigatório' : null;

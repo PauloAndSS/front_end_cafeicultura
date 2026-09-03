@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/cadastrar_pessoa_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/cliente.dart';
@@ -72,11 +73,7 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
     if (_formKey.currentState!.validate()) {
       FocusScope.of(context).unfocus();
 
-      if (_viewModel.papelSelecionado == null) return;
-
-      final bool isPessoaFisica = _razaoSocialController.text.trim().isEmpty;
-
-      final pessoaBase = isPessoaFisica
+      final pessoaBase = _isPessoaFisica
           ? PessoaFisica(
               nome: _nomeController.text.trim(),
               cpf: CPF.criar(_cpfController.text),
@@ -175,8 +172,10 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<TipoPapel>(
-                        value: _viewModel.papelSelecionado,
+                        initialValue: _viewModel.papelSelecionado,
                         hint: const Text('Selecione o papel'),
+                        validator: Validator.selecaoObrigatoria,
+                        autovalidateMode: AutovalidateMode.onUserInteraction,
                         decoration: InputDecoration(
                           contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16,
