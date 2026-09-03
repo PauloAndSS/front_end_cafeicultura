@@ -120,7 +120,7 @@ class _EntrarViewState extends State<EntrarView> {
                           label: "Senha",
                           controller: _senhaController,
                           isPassword: true,
-                          validator: Validator.validarSenha,
+                          validator: Validator.validarSenhaLogin,
                           hintText: "Digite sua senha",
                         ),
 

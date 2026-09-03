@@ -75,12 +75,33 @@ class Validator {
     return null;
   }
 
+  static final RegExp _regexSenhaForte =
+      RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>]).+$');
+
+  static final RegExp _regexEmoji = RegExp(
+    r'[\u{1F1E6}-\u{1F1FF}\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}]',
+    unicode: true,
+  );
+
+  static String? validarSenhaLogin(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'A senha é obrigatória';
+    }
+    return null;
+  }
+
   static String? validarSenha(String? value) {
     if (value == null || value.isEmpty) {
       return 'A senha é obrigatória';
     }
     if (value.length < 8) {
       return 'A senha deve ter no mínimo 8 caracteres';
+    }
+    if (_regexEmoji.hasMatch(value)) {
+      return 'A senha não pode conter emojis';
+    }
+    if (!_regexSenhaForte.hasMatch(value)) {
+      return 'A senha deve conter letra maiúscula, minúscula, número e símbolo (!@#\$%^&*(),.?":{}|<>)';
     }
     return null;
   }
@@ -95,12 +116,30 @@ class Validator {
     return null;
   }
 
+  static final RegExp _regexNome = RegExp(r"^[a-zA-ZÀ-ÖØ-öø-ÿ' -]+$");
+
   static String? validarNome(String? value) {
     if (value == null || value.trim().isEmpty) {
       return 'O nome é obrigatório';
     }
-    if (value.trim().length < 3) {
+    final nome = value.trim();
+    if (nome.length < 3) {
       return 'O nome deve conter pelo menos 3 caracteres';
+    }
+    if (nome.length > 100) {
+      return 'O nome deve ter no máximo 100 caracteres';
+    }
+
+    return null;
+  }
+
+  static String? validarNomePessoaFisica(String? value) {
+    final erroDeTamanho = validarNome(value);
+    if (erroDeTamanho != null) {
+      return erroDeTamanho;
+    }
+    if (!_regexNome.hasMatch(value!.trim())) {
+      return 'O nome deve conter apenas letras';
     }
 
     return null;
@@ -110,8 +149,12 @@ class Validator {
     if (value == null || value.trim().isEmpty) {
       return 'A Razão Social é obrigatória';
     }
-    if (value.trim().length < 3) {
+    final razaoSocial = value.trim();
+    if (razaoSocial.length < 3) {
       return 'Razão Social muito curta';
+    }
+    if (razaoSocial.length > 100) {
+      return 'Razão Social deve ter no máximo 100 caracteres';
     }
     return null;
   }
@@ -145,6 +188,9 @@ class Validator {
     }
     return null;
   }
+
+  static String? selecaoObrigatoria(Object? valor) =>
+      valor == null ? 'Obrigatório' : null;
 
   static String? beneficiadoObrigatorio(Object? beneficiado) =>
       beneficiado == null ? 'Obrigatório' : null;

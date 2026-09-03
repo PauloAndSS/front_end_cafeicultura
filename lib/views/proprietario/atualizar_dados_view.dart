@@ -278,7 +278,7 @@ return PopScope(
                       label: _isPessoaFisica ? 'Nome' : 'Razão Social',
                       controller: _nomeController,
                       validator: _isPessoaFisica
-                          ? Validator.validarNome
+                          ? Validator.validarNomePessoaFisica
                           : Validator.validarRazaoSocial,
                     ),
                     const SizedBox(height: 16),
