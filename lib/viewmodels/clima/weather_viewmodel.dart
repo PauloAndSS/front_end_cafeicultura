@@ -7,6 +7,7 @@ import 'package:geolocator/geolocator.dart';
 class WeatherViewModel extends ChangeNotifier {
   WeatherModel? currentWeather;
   List<WeatherModel> futureWeather = [];
+  String? cidade;
   bool isLoading = false;
   String? errorMessage;
   static const String _apiKey = '5fe49eb837725464a65c8e346b93b109';
@@ -17,6 +18,11 @@ class WeatherViewModel extends ChangeNotifier {
     if (currentWeather != null) list.add(currentWeather!);
     list.addAll(futureWeather);
     return list;
+  }
+
+  String get localizacaoExibida {
+    final nome = cidade?.trim() ?? '';
+    return nome.isEmpty ? 'Localização atual' : nome;
   }
 
   Future<void> fetchWeatherTimeline(double lat, double lon) async {
@@ -44,6 +50,8 @@ class WeatherViewModel extends ChangeNotifier {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
+
+      cidade = data['name'] as String?;
 
       currentWeather = WeatherModel(
         date: DateTime.now(),

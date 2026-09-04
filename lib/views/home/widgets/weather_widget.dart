@@ -65,7 +65,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
       key: const ValueKey('conteudo'),
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildCabecalho(),
+        _buildCabecalho(vm.localizacaoExibida),
         const SizedBox(height: 16),
         SizedBox(
           height: 165, // Altura ajustada para caber os novos detalhes
@@ -85,7 +85,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
     );
   }
 
-  Widget _buildCabecalho() {
+  Widget _buildCabecalho(String localizacao) {
     return Row(
       children: [
         Container(
@@ -101,11 +101,11 @@ class _WeatherWidgetState extends State<WeatherWidget> {
           ),
         ),
         const SizedBox(width: 12),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Previsão do Tempo',
                 style: TextStyle(
                   fontSize: 16,
@@ -114,8 +114,10 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                 ),
               ),
               Text(
-                'Localização atual',
-                style: TextStyle(fontSize: 12, color: Colors.black54),
+                localizacao,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 12, color: Colors.black54),
               ),
             ],
           ),
