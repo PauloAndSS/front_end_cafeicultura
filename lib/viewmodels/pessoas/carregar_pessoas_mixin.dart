@@ -16,29 +16,14 @@ class _EstadoDaCategoria {
   final List<PapelPessoa> pessoas = [];
 
   final EstadoDeCarga carga;
-  final EstadoDeCarga cargaMais;
 
-  int pagina = 1;
-  int totalPaginas = 1;
   bool carregada = false;
 
-  _EstadoDaCategoria._(this.carga, this.cargaMais);
-
-  factory _EstadoDaCategoria(VoidCallback aoMudar) {
-    final carga = EstadoDeCarga(aoMudar: aoMudar);
-
-    return _EstadoDaCategoria._(
-      carga,
-      EstadoDeCarga(aoMudar: aoMudar, erroCompartilhadoCom: carga),
-    );
-  }
+  _EstadoDaCategoria(VoidCallback aoMudar)
+      : carga = EstadoDeCarga(aoMudar: aoMudar);
 }
 
 mixin CarregarPessoasMixin on NotificaSeVivoMixin {
-  static const int _limitePorPagina = 20;
-
-  static const int _maxPaginas = 50;
-
   final Map<TipoPapel, _EstadoDaCategoria> _categorias = {};
 
   _EstadoDaCategoria _estadoDe(TipoPapel papel) => _categorias.putIfAbsent(
@@ -53,15 +38,7 @@ mixin CarregarPessoasMixin on NotificaSeVivoMixin {
 
   bool isCarregando(TipoPapel papel) => _estadoDe(papel).carga.isLoading;
 
-  bool isCarregandoMais(TipoPapel papel) => _estadoDe(papel).cargaMais.isLoading;
-
   String? mensagemErroDe(TipoPapel papel) => _estadoDe(papel).carga.mensagemErro;
-
-  bool temMaisDe(TipoPapel papel) {
-    final estado = _estadoDe(papel);
-
-    return estado.pagina < estado.totalPaginas && estado.pagina < _maxPaginas;
-  }
 
   List<PapelPessoa> get responsaveis => List.unmodifiable(
         categoriasDeResponsavel.expand((papel) => _estadoDe(papel).pessoas),
@@ -70,47 +47,18 @@ mixin CarregarPessoasMixin on NotificaSeVivoMixin {
   Future<void> carregarCategoria(TipoPapel papel, {bool recarregar = false}) {
     final estado = _estadoDe(papel);
 
-    if (estado.carga.isLoading || estado.cargaMais.isLoading) {
-      return Future.value();
-    }
+    if (estado.carga.isLoading) return Future.value();
 
     if (estado.carregada && !recarregar) return Future.value();
 
     return estado.carga.executar(
       chamada: () async {
-        final resultado = await servicoDoPapel(papel)
-            .listar(pagina: 1, limite: _limitePorPagina);
+        final encontrados = await servicoDoPapel(papel).listar();
 
-        estado.pagina = resultado.pagina;
-        estado.totalPaginas = resultado.totalPaginas;
         estado.pessoas
           ..clear()
-          ..addAll(_comIdentificacao(resultado.data));
+          ..addAll(_comIdentificacao(encontrados));
         estado.carregada = true;
-      },
-      aoFalhar: () {},
-    );
-  }
-
-  Future<void> carregarMaisDe(TipoPapel papel) {
-    final estado = _estadoDe(papel);
-
-    if (estado.carga.isLoading ||
-        estado.cargaMais.isLoading ||
-        !temMaisDe(papel)) {
-      return Future.value();
-    }
-
-    final proximaPagina = estado.pagina + 1;
-
-    return estado.cargaMais.executar(
-      chamada: () async {
-        final resultado = await servicoDoPapel(papel)
-            .listar(pagina: proximaPagina, limite: _limitePorPagina);
-
-        estado.pagina = proximaPagina;
-        estado.totalPaginas = resultado.totalPaginas;
-        estado.pessoas.addAll(_comIdentificacao(resultado.data));
       },
       aoFalhar: () {},
     );
@@ -127,6 +75,6 @@ mixin CarregarPessoasMixin on NotificaSeVivoMixin {
         .toList();
   }
 
-  List<PapelPessoa> _comIdentificacao(List<PapelPessoa> pagina) =>
-      pagina.where((papel) => papel.id != null).toList();
+  List<PapelPessoa> _comIdentificacao(List<PapelPessoa> lista) =>
+      lista.where((papel) => papel.id != null).toList();
 }

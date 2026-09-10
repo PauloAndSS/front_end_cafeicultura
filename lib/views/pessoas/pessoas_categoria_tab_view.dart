@@ -19,8 +19,6 @@ class PessoasCategoriaTabView extends StatefulWidget {
 
 class _PessoasCategoriaTabViewState extends State<PessoasCategoriaTabView>
     with AutomaticKeepAliveClientMixin {
-  final _scrollController = ScrollController();
-
   @override
   bool get wantKeepAlive => true;
 
@@ -30,27 +28,11 @@ class _PessoasCategoriaTabViewState extends State<PessoasCategoriaTabView>
   void initState() {
     super.initState();
 
-    _scrollController.addListener(_aoRolar);
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (widget.viewModel.carregado) return;
 
       widget.viewModel.carregar();
     });
-  }
-
-  @override
-  void dispose() {
-    _scrollController.removeListener(_aoRolar);
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _aoRolar() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      widget.viewModel.carregarMais();
-    }
   }
 
   Future<void> _abrirDetalhes(PapelPessoa papelPessoa) async {
@@ -91,40 +73,24 @@ class _PessoasCategoriaTabViewState extends State<PessoasCategoriaTabView>
   Widget _construirGrade() {
     final vm = widget.viewModel;
 
-    return Padding(
+    return GridView.builder(
       padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-      child: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.75,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final papelPessoa = vm.pessoas[index];
-
-                return PessoaCardWidget(
-                  nome: papelPessoa.pessoa.nomeParaExibicao,
-                  subtitulo: papelPessoa.pessoa.documentoFormatado,
-                  onTap: () => _abrirDetalhes(papelPessoa),
-                );
-              },
-              childCount: vm.pessoas.length,
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: RodapePaginacao(
-              carregando: vm.isLoadingMore,
-              mensagemErro: vm.mensagemErro,
-              aoTentarNovamente: vm.carregarMais,
-            ),
-          ),
-        ],
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 16,
+        childAspectRatio: 0.75,
       ),
+      itemCount: vm.pessoas.length,
+      itemBuilder: (context, index) {
+        final papelPessoa = vm.pessoas[index];
+
+        return PessoaCardWidget(
+          nome: papelPessoa.pessoa.nomeParaExibicao,
+          subtitulo: papelPessoa.pessoa.documentoFormatado,
+          onTap: () => _abrirDetalhes(papelPessoa),
+        );
+      },
     );
   }
 }

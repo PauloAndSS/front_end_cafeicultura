@@ -327,6 +327,7 @@ class _NotificacoesViewState extends State<NotificacoesView> {
           ? 'Talhão não informado'
           : viewModel.nomeDoTalhao(trato.idTalhao),
       confirmada: viewModel.estaConfirmada(grupo),
+      precisaDeResposta: viewModel.precisaDeResposta(grupo),
       aoAbrir: trato == null ? null : () => _abrirDetalhes(grupo, trato),
       aoResponderSim: trato == null ? null : () => _responderSim(grupo, trato),
       aoAlterar: trato == null ? null : () => _alterarInformacoes(grupo, trato),

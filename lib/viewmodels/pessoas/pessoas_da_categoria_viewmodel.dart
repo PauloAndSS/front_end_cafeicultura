@@ -7,8 +7,6 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/notifica_se_vivo_mixin.
 
 class PessoasDaCategoriaViewModel extends ChangeNotifier
     with NotificaSeVivoMixin, EstadoDeCarregamentoMixin {
-  static const int _limite = 20;
-
   final TipoPapel papel;
 
   final ServicePapelPessoa<PapelPessoa> _service;
@@ -17,61 +15,30 @@ class PessoasDaCategoriaViewModel extends ChangeNotifier
       {ServicePapelPessoa<PapelPessoa>? service})
       : _service = service ?? servicoDoPapel(papel);
 
-  late final EstadoDeCarga _cargaMais = EstadoDeCarga(
-    aoMudar: notificarSeVivo,
-    erroCompartilhadoCom: cargaPrincipal,
-  );
-
   final List<PapelPessoa> _pessoas = [];
 
-  int _paginaAtual = 1;
-  int _totalPaginas = 1;
   bool _carregado = false;
 
   List<PapelPessoa> get pessoas => List.unmodifiable(_pessoas);
 
   bool get carregado => _carregado;
 
-  bool get isLoadingMore => _cargaMais.isLoading;
-
-  bool get temMais => _paginaAtual < _totalPaginas;
-
   Future<void> carregar() {
-    if (isLoading || _cargaMais.isLoading) return Future.value();
+    if (isLoading) return Future.value();
 
     return cargaPrincipal.executar(
       chamada: () async {
-        final resultado = await _service.listar(pagina: 1, limite: _limite);
+        final encontrados = await _service.listar();
 
-        _paginaAtual = resultado.pagina;
-        _totalPaginas = resultado.totalPaginas;
         _pessoas
           ..clear()
-          ..addAll(_comIdentificacao(resultado.data));
+          ..addAll(_comIdentificacao(encontrados));
         _carregado = true;
       },
       aoFalhar: () {},
     );
   }
 
-  Future<void> carregarMais() {
-    if (isLoading || _cargaMais.isLoading || !temMais) return Future.value();
-
-    final proximaPagina = _paginaAtual + 1;
-
-    return _cargaMais.executar(
-      chamada: () async {
-        final resultado =
-            await _service.listar(pagina: proximaPagina, limite: _limite);
-
-        _paginaAtual = proximaPagina;
-        _totalPaginas = resultado.totalPaginas;
-        _pessoas.addAll(_comIdentificacao(resultado.data));
-      },
-      aoFalhar: () {},
-    );
-  }
-
-  List<PapelPessoa> _comIdentificacao(List<PapelPessoa> pagina) =>
-      pagina.where((papel) => papel.id != null).toList();
+  List<PapelPessoa> _comIdentificacao(List<PapelPessoa> lista) =>
+      lista.where((papel) => papel.id != null).toList();
 }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_pessoas_mixin.dart';
-import 'package:frond_end_cafeicultura_mobile/views/pessoas/widgets/lista_papel_paginada.dart';
+import 'package:frond_end_cafeicultura_mobile/views/pessoas/widgets/lista_papel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/abas_padrao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
@@ -140,7 +140,7 @@ class _SelecionarBeneficiadoSheetState
   }
 
   Widget _construirCategoria(TipoPapel papel) {
-    return ListaPapelPaginada(
+    return ListaPapel(
       catalogo: widget.catalogo,
       papel: papel,
       termoBusca: _termoBusca,

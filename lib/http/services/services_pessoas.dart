@@ -58,29 +58,18 @@ abstract class ServicePapelPessoa<T extends PapelPessoa> extends BaseService {
       '${tipoPapel.titulo} possui atividades e/ou despesas cadastradas '
       'e não pode ser excluído.';
 
-  /// Listagem paginada da própria rota do papel (`/meeiros`, `/clientes`, ...).
+  /// Lista completa da própria rota do papel (`/meeiros`, `/clientes`, ...).
+  ///
+  /// A rota **não pagina**: devolve `{ dados: [...] }` com tudo o que existe.
   ///
   /// Desserializa com `montar`, e não com `PapelPessoaFactory`: a rota já diz
   /// qual é o papel, e o payload dela **não traz o campo `papel`** — a factory
   /// lançaria em todo item.
-  Future<ResultadoPaginadoDTO<T>> listar({int pagina = 1, int limite = 20}) {
+  Future<List<T>> listar() {
     return executarRequisicao(
-      enviar: () => http.get(
-        rota('', {'pagina': '$pagina', 'limite': '$limite'}),
-        headers: defaultHeaders,
-      ),
-      aoSucesso: (resposta) => ResultadoPaginadoDTO<T>.deEnvelopeDeDados(
-        extrairDadosPaginados(resposta.bodyBytes),
-        montar,
-        paginaSolicitada: pagina,
-        limiteSolicitado: limite,
-      ),
-      aoListaVazia: () => ResultadoPaginadoDTO<T>(
-        data: const [],
-        total: 0,
-        pagina: pagina,
-        totalPaginas: pagina,
-      ),
+      enviar: () => http.get(url, headers: defaultHeaders),
+      aoSucesso: (resposta) => extrairListaDeDados(resposta.bodyBytes, montar),
+      aoListaVazia: () => <T>[],
       erroMsg: 'Erro ao buscar a lista de ${tipoPapel.rotuloPlural}.',
       acao: 'buscar os ${tipoPapel.rotuloPlural}',
     );

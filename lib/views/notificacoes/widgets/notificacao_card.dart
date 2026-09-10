@@ -18,6 +18,8 @@ class NotificacaoCard extends StatelessWidget {
 
   final bool confirmada;
 
+  final bool precisaDeResposta;
+
   final VoidCallback? aoAbrir;
   final VoidCallback? aoResponderSim;
   final VoidCallback? aoAlterar;
@@ -30,13 +32,14 @@ class NotificacaoCard extends StatelessWidget {
     required this.dataDoEvento,
     required this.nomeTalhao,
     this.confirmada = false,
+    required this.precisaDeResposta,
     this.aoAbrir,
     this.aoResponderSim,
     this.aoAlterar,
     this.aoExcluir,
   });
 
-  bool get _mostrarPergunta => grupo.ehConfirmacao && !confirmada;
+  bool get _mostrarPergunta => precisaDeResposta && !confirmada;
 
   String get _titulo =>
       atividade?.tituloExibicao ?? grupo.representante.tituloGenerico;
@@ -51,14 +54,14 @@ class NotificacaoCard extends StatelessWidget {
 
   String get _rotuloBadge {
     if (confirmada) return 'Confirmada';
-    if (grupo.ehConfirmacao) return 'Ocorreu?';
+    if (precisaDeResposta) return 'Ocorreu?';
 
     return rotuloDeHorizonte(dataDoEvento);
   }
 
   Color get _corBadge {
     if (confirmada) return AppCores.sucesso;
-    if (grupo.ehConfirmacao) return AppCores.aviso;
+    if (precisaDeResposta) return AppCores.aviso;
 
     return diasAPartirDeHoje(dataDoEvento) <= 2
         ? AppCores.verdePrimario

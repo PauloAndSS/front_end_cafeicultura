@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/notificacoes/notificacoes_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/notificacoes/registro_de_leituras.dart';
 import 'package:http/http.dart' as http;
@@ -15,8 +16,12 @@ Map<String, dynamic> notificacaoJson({
   required int id,
   required int idEvento,
   String tipoNotificacao = 'FUTURO_UM',
+  int criadaHaDias = 0,
   bool lida = false,
 }) {
+  final dia = hoje();
+  final criacao = DateTime(dia.year, dia.month, dia.day - criadaHaDias, 7);
+
   return {
     'id': id,
     'idProprietario': 35,
@@ -24,7 +29,7 @@ Map<String, dynamic> notificacaoJson({
     'idEvento': idEvento,
     'tipoEvento': 'tratosculturais',
     'tipoNotificacao': tipoNotificacao,
-    'dataCriacao': '2026-08-27T07:00:00',
+    'dataCriacao': criacao.toIso8601String(),
     'lida': lida,
   };
 }
@@ -67,6 +72,7 @@ class Servidor {
       final viewModel = NotificacoesViewModel();
 
       await viewModel.carregar(idPropriedade);
+      viewModel.naoLidas.forEach(viewModel.registrarVista);
       await viewModel.encerrarVisita();
 
       viewModel.dispose();
@@ -130,6 +136,89 @@ void main() {
       expect(servidor.idsEnviados..sort(), [1, 2, 3]);
     });
 
+    test('o lembrete do dia entra em nao lidas e no lote de auto-leitura',
+        () async {
+      final servidor = Servidor(
+        notificacoes: [
+          notificacaoJson(id: 5, idEvento: 75, tipoNotificacao: 'PRESENTE'),
+        ],
+      );
+
+      await servidor.atende(() async {
+        final viewModel = NotificacoesViewModel();
+        await viewModel.carregar(idPropriedade);
+
+        expect(viewModel.naoLidas, hasLength(1));
+        expect(
+          viewModel.naoLidas.single.tipoNotificacao,
+          TipoNotificacao.presente,
+        );
+        expect(viewModel.secoesNaoLidas.single.titulo, 'Acontece hoje');
+
+        viewModel.registrarVista(viewModel.naoLidas.single);
+        await viewModel.encerrarVisita();
+        viewModel.dispose();
+      });
+
+      expect(servidor.idsEnviados, [5]);
+    });
+
+    test('lembrete cujo dia ja passou pede resposta e nao e auto-lido',
+        () async {
+      final servidor = Servidor(
+        notificacoes: [
+          notificacaoJson(id: 6, idEvento: 76, criadaHaDias: 10),
+        ],
+      );
+
+      await servidor.atende(() async {
+        final viewModel = NotificacoesViewModel();
+        await viewModel.carregar(idPropriedade);
+
+        final grupo = viewModel.naoLidas.single;
+
+        expect(grupo.tipoNotificacao, TipoNotificacao.futuroUm);
+        expect(viewModel.precisaDeResposta(grupo), isTrue);
+        expect(viewModel.aguardaLeitura(grupo), isFalse);
+        expect(
+          viewModel.secoesNaoLidas.map((secao) => secao.titulo),
+          ['Precisa de resposta'],
+        );
+
+        viewModel.registrarVista(grupo);
+        await viewModel.encerrarVisita();
+        viewModel.dispose();
+      });
+
+      expect(servidor.leituras, isEmpty);
+    });
+
+    test('a secao Ja comecaram nao existe mais: tudo no passado pede resposta',
+        () async {
+      final servidor = Servidor(
+        notificacoes: [
+          notificacaoJson(id: 7, idEvento: 77, criadaHaDias: 3, lida: true),
+          notificacaoJson(
+            id: 8,
+            idEvento: 78,
+            tipoNotificacao: 'PASSADO',
+            lida: true,
+          ),
+        ],
+      );
+
+      await servidor.atende(() async {
+        final viewModel = NotificacoesViewModel();
+        await viewModel.carregar(idPropriedade);
+
+        expect(viewModel.secoesLidas, hasLength(1));
+        expect(viewModel.secoesLidas.single.titulo, 'Precisa de resposta');
+        expect(viewModel.secoesLidas.single.grupos, hasLength(2));
+
+        viewModel.dispose();
+      });
+    });
+
     test('a confirmacao pendente fica de fora do lote', () async {
       final servidor = Servidor(
         notificacoes: [
@@ -189,15 +278,14 @@ void main() {
       expect(await pendentesNoDisco(lista), {1, 2});
     });
 
-    test('flush aceito tambem nao apaga: quem confirma e a carga seguinte',
-        () async {
+    test('flush aceito limpa os ids: o 204 e a confirmacao', () async {
       final lista = [notificacaoJson(id: 1, idEvento: 71)];
 
       final servidor = Servidor(notificacoes: lista, statusDaLeitura: 204);
       await servidor.umaVisitaCompleta();
 
       expect(servidor.leituras, hasLength(1));
-      expect(await pendentesNoDisco(lista), {1});
+      expect(await pendentesNoDisco(lista), isEmpty);
     });
 
     test('o servidor devolvendo lida e o que poda o registro', () async {

@@ -62,12 +62,13 @@ void main() {
   });
 
   group('o cron classifica o evento no dia certo', () {
-    test('os cinco offsets caem nos tipos esperados', () {
+    test('os seis offsets caem nos tipos esperados', () {
       final esperados = {
         DateTime(2026, 9, 4): 7,
         DateTime(2026, 8, 31): 3,
         DateTime(2026, 8, 30): 2,
         DateTime(2026, 8, 29): 1,
+        DateTime(2026, 8, 28): 0,
         DateTime(2026, 8, 27): -1,
       };
 
@@ -88,7 +89,7 @@ void main() {
       }
     });
 
-    test('o dia do evento nao gera notificacao', () {
+    test('o dia do evento classifica como 0, que e o PRESENTE', () {
       expect(diffDoCron(dataParaJson(DateTime(2026, 8, 28)), cron), 0);
     });
 
@@ -155,10 +156,10 @@ void main() {
       expect(diasEntre(DateTime(2026, 8, 28), DateTime(2026, 8, 27)), -1);
     });
 
-    test('bate com o calculo do cron para os cinco horizontes', () {
+    test('bate com o calculo do cron para os seis horizontes', () {
       final cronDia = DateTime(2026, 8, 28, 7);
 
-      for (final offset in [7, 3, 2, 1, -1]) {
+      for (final offset in [7, 3, 2, 1, 0, -1]) {
         final evento = DateTime(2026, 8, 28 + offset);
 
         expect(diasEntre(cronDia, evento), offset);

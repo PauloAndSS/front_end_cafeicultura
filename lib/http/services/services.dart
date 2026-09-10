@@ -309,4 +309,16 @@ abstract class BaseService {
 
     return const [];
   }
+
+  List<T> extrairListaDeDados<T>(
+    List<int> bodyBytes,
+    T Function(Map<String, dynamic>) fromJson,
+  ) {
+    final envelope = extrairDadosPaginados(bodyBytes);
+    final dados = envelope['dados'] ?? envelope['data'];
+
+    if (dados is! List) return const [];
+
+    return dados.whereType<Map<String, dynamic>>().map(fromJson).toList();
+  }
 }

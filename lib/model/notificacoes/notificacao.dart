@@ -21,6 +21,7 @@ enum TipoNotificacao {
   futuroTres('FUTURO_TRES', 3),
   futuroDois('FUTURO_DOIS', 2),
   futuroUm('FUTURO_UM', 1),
+  presente('PRESENTE', 0),
   passado('PASSADO', -1);
 
   const TipoNotificacao(this.codigoApi, this.diasAteEvento);
@@ -33,6 +34,7 @@ enum TipoNotificacao {
 
   String get rotulo => switch (this) {
         TipoNotificacao.passado => 'Ocorreu?',
+        TipoNotificacao.presente => 'Hoje',
         TipoNotificacao.futuroUm => 'Amanhã',
         _ => 'Em $diasAteEvento dias',
       };
@@ -134,6 +136,15 @@ class Notificacao {
 
   String get tituloGenerico => tipoEvento?.rotulo ?? 'Atividade';
 
-  String get chaveDeAgrupamento =>
-      '$idEvento|${tipoEvento?.codigoApi}|${tipoNotificacao?.codigoApi}';
+  String get chaveDeAgrupamento => '$idEvento|${tipoEvento?.codigoApi}';
+
+  static List<Notificacao> substituirDoEvento(
+    List<Notificacao> atuais,
+    Notificacao nova,
+  ) {
+    final semOEvento =
+        atuais.where((atual) => atual.idEvento != nova.idEvento);
+
+    return [nova, ...semOEvento];
+  }
 }

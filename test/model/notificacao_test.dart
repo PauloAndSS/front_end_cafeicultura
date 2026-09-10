@@ -35,12 +35,20 @@ void main() {
   });
 
   group('TipoNotificacao', () {
-    test('deCodigo mapeia os cinco codigos do backend', () {
+    test('deCodigo mapeia os seis codigos do backend', () {
       expect(TipoNotificacao.deCodigo('FUTURO_SETE')?.diasAteEvento, 7);
       expect(TipoNotificacao.deCodigo('FUTURO_TRES')?.diasAteEvento, 3);
       expect(TipoNotificacao.deCodigo('FUTURO_DOIS')?.diasAteEvento, 2);
       expect(TipoNotificacao.deCodigo('FUTURO_UM')?.diasAteEvento, 1);
+      expect(TipoNotificacao.deCodigo('PRESENTE')?.diasAteEvento, 0);
       expect(TipoNotificacao.deCodigo('PASSADO')?.diasAteEvento, -1);
+    });
+
+    test('PRESENTE e lembrete do proprio dia, nao confirmacao', () {
+      final presente = TipoNotificacao.deCodigo('PRESENTE')!;
+
+      expect(presente.ehConfirmacao, isFalse);
+      expect(presente.rotulo, 'Hoje');
     });
 
     test('codigo desconhecido devolve nulo em vez de estourar', () {
@@ -66,6 +74,16 @@ void main() {
       );
 
       expect(lembrete.dataPrevistaDoEvento, DateTime(2026, 9, 3));
+    });
+
+    test('PRESENTE aponta para o proprio dia da criacao', () {
+      final lembrete = notificacao(
+        id: 4,
+        tipoNotificacao: 'PRESENTE',
+        dataCriacao: '2026-08-27T05:00:00',
+      );
+
+      expect(lembrete.dataPrevistaDoEvento, DateTime(2026, 8, 27));
     });
 
     test('PASSADO aponta para o dia anterior ao da criacao', () {
@@ -112,14 +130,25 @@ void main() {
       expect(grupos.single.representante.id, 2);
     });
 
-    test('separa por evento e por tipo de notificacao', () {
+    test('agrupa por evento, e a linha mais nova representa o grupo', () {
       final grupos = NotificacaoAgrupada.agrupar([
-        notificacao(id: 1, idEvento: 43),
+        notificacao(id: 1, idEvento: 43, dataCriacao: '2026-08-27T07:00:00'),
         notificacao(id: 2, idEvento: 64),
-        notificacao(id: 3, idEvento: 43, tipoNotificacao: 'FUTURO_UM'),
+        notificacao(
+          id: 3,
+          idEvento: 43,
+          tipoNotificacao: 'FUTURO_UM',
+          dataCriacao: '2026-08-28T07:00:00',
+        ),
       ]);
 
-      expect(grupos, hasLength(3));
+      expect(grupos, hasLength(2));
+
+      final doEvento43 = grupos.singleWhere((grupo) => grupo.idEvento == 43);
+
+      expect(doEvento43.representante.id, 3);
+      expect(doEvento43.tipoNotificacao, TipoNotificacao.futuroUm);
+      expect(doEvento43.ids, [1, 3]);
     });
 
     test('grupo com uma unica nao lida conta como nao lido', () {
@@ -173,6 +202,44 @@ void main() {
       expect(lido.lida, isTrue);
       expect(lido.ids, grupo.ids);
       expect(lido.representante.id, grupo.representante.id);
+    });
+  });
+
+  group('substituirDoEvento', () {
+    test('a nova do evento derruba as antigas do mesmo evento', () {
+      final atuais = [
+        notificacao(id: 1, idEvento: 43, tipoNotificacao: 'FUTURO_UM'),
+        notificacao(id: 2, idEvento: 64, tipoNotificacao: 'FUTURO_TRES'),
+      ];
+      final nova = notificacao(id: 3, idEvento: 43, tipoNotificacao: 'PASSADO');
+
+      final resultado = Notificacao.substituirDoEvento(atuais, nova);
+
+      expect(resultado.map((n) => n.id), [3, 2]);
+    });
+
+    test('a nova entra na frente e preserva os outros eventos', () {
+      final atuais = [notificacao(id: 1, idEvento: 64)];
+      final nova = notificacao(id: 2, idEvento: 43, tipoNotificacao: 'PRESENTE');
+
+      final resultado = Notificacao.substituirDoEvento(atuais, nova);
+
+      expect(resultado.map((n) => n.id), [2, 1]);
+      expect(atuais, hasLength(1));
+    });
+
+    test('agrupar depois da substituicao mostra um grupo so por evento', () {
+      final atuais = [
+        notificacao(id: 1, idEvento: 43, tipoNotificacao: 'PRESENTE'),
+      ];
+      final nova = notificacao(id: 2, idEvento: 43, tipoNotificacao: 'PASSADO');
+
+      final grupos = NotificacaoAgrupada.agrupar(
+        Notificacao.substituirDoEvento(atuais, nova),
+      );
+
+      expect(grupos, hasLength(1));
+      expect(grupos.single.tipoNotificacao, TipoNotificacao.passado);
     });
   });
 

@@ -374,25 +374,24 @@ void main() {
   });
 
   group('listagem por papel de pessoa', () {
-    Map<String, dynamic> envelope(List<Map<String, dynamic>> dados,
-            {int pagina = 1, int limite = 20}) =>
-        {'pagina': pagina, 'limite': limite, 'dados': dados};
+    Map<String, dynamic> envelope(List<Map<String, dynamic>> dados) =>
+        {'dados': dados};
 
     Map<String, dynamic> meeiro(int id) =>
         {'id': id, 'nome': 'Meeiro $id', 'cpf': '529.982.247-25'};
 
-    test('usa GET na rota do papel com pagina e limite', () async {
+    test('usa GET na rota do papel, sem query de paginacao', () async {
       late http.Request enviada;
 
       await comRespostaFixa(
-        () => ServicesMeeiro().listar(pagina: 2, limite: 20),
-        respostaJson(envelope(const [], pagina: 2), 200),
+        () => ServicesMeeiro().listar(),
+        respostaJson(envelope(const []), 200),
         capturar: (requisicao) => enviada = requisicao,
       );
 
       expect(enviada.method, 'GET');
       expect(enviada.url.path, endsWith('/meeiros'));
-      expect(enviada.url.queryParameters, {'pagina': '2', 'limite': '20'});
+      expect(enviada.url.queryParameters, isEmpty);
     });
 
     test('desserializa o envelope de dados com o model do proprio papel',
@@ -411,10 +410,18 @@ void main() {
         ),
       );
 
-      expect(resultado.data.single.id, 99);
-      expect(resultado.data.single.pessoa, isA<PessoaJuridica>());
-      expect(resultado.data.single.pessoa.nomeParaExibicao,
-          'AgroInsumos QA LTDA');
+      expect(resultado.single.id, 99);
+      expect(resultado.single.pessoa, isA<PessoaJuridica>());
+      expect(resultado.single.pessoa.nomeParaExibicao, 'AgroInsumos QA LTDA');
+    });
+
+    test('devolve a categoria inteira numa resposta so', () async {
+      final resultado = await comRespostaFixa(
+        () => ServicesMeeiro().listar(),
+        respostaJson(envelope([meeiro(1), meeiro(2), meeiro(3)]), 200),
+      );
+
+      expect(resultado.map((papel) => papel.id), [1, 2, 3]);
     });
 
     test('envelope embrulhado em array e desembrulhado', () async {
@@ -423,72 +430,34 @@ void main() {
         respostaJson([envelope([meeiro(12)])], 200),
       );
 
-      expect(resultado.data.single.id, 12);
+      expect(resultado.single.id, 12);
     });
 
-    test('pagina cheia deixa a rolagem pedir a proxima', () async {
+    test('envelope sem a chave dados devolve lista vazia', () async {
       final resultado = await comRespostaFixa(
-        () => ServicesMeeiro().listar(limite: 2),
-        respostaJson(envelope([meeiro(1), meeiro(2)], limite: 2), 200),
+        () => ServicesMeeiro().listar(),
+        respostaJson({'mensagem': 'ok'}, 200),
       );
 
-      expect(resultado.pagina, 1);
-      expect(resultado.totalPaginas, 2);
+      expect(resultado, isEmpty);
     });
 
-    test('pagina incompleta encerra a rolagem', () async {
-      final resultado = await comRespostaFixa(
-        () => ServicesMeeiro().listar(pagina: 3, limite: 2),
-        respostaJson(envelope([meeiro(9)], pagina: 3, limite: 2), 200),
-      );
-
-      expect(resultado.pagina, 3);
-      expect(resultado.totalPaginas, 3);
-    });
-
-    test('lista vazia nao pede mais nenhuma pagina', () async {
+    test('lista vazia devolve vazio', () async {
       final resultado = await comRespostaFixa(
         () => ServicesCliente().listar(),
         respostaJson(envelope(const []), 200),
       );
 
-      expect(resultado.data, isEmpty);
-      expect(resultado.totalPaginas, resultado.pagina);
+      expect(resultado, isEmpty);
     });
 
-    test('totalPaginas do backend vence a inferencia', () async {
+    test('404 com corpo JSON devolve vazio', () async {
       final resultado = await comRespostaFixa(
-        () => ServicesMeeiro().listar(limite: 2),
-        respostaJson(
-          {...envelope([meeiro(1), meeiro(2)], limite: 2), 'totalPaginas': 7},
-          200,
-        ),
-      );
-
-      expect(resultado.totalPaginas, 7);
-    });
-
-    test('total e limite derivam o total de paginas', () async {
-      final resultado = await comRespostaFixa(
-        () => ServicesMeeiro().listar(limite: 2),
-        respostaJson(
-          {...envelope([meeiro(1), meeiro(2)], limite: 2), 'total': 5},
-          200,
-        ),
-      );
-
-      expect(resultado.totalPaginas, 3);
-    });
-
-    test('404 com corpo JSON encerra a rolagem na pagina pedida', () async {
-      final resultado = await comRespostaFixa(
-        () => ServicesMeeiro().listar(pagina: 4),
+        () => ServicesMeeiro().listar(),
         respostaJson({'mensagem': 'Nenhum meeiro encontrado'}, 404),
       );
 
-      expect(resultado.data, isEmpty);
-      expect(resultado.pagina, 4);
-      expect(resultado.totalPaginas, 4);
+      expect(resultado, isEmpty);
     });
 
     test('mensagem de erro nomeia o papel no plural', () async {

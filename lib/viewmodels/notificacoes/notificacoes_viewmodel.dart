@@ -83,6 +83,9 @@ class NotificacoesViewModel extends ChangeNotifier
   DateTime dataDoEvento(NotificacaoAgrupada grupo) =>
       atividadeDe(grupo)?.dataInicio ?? grupo.dataPrevistaDoEvento;
 
+  bool precisaDeResposta(NotificacaoAgrupada grupo) =>
+      grupo.ehConfirmacao || diasAPartirDeHoje(dataDoEvento(grupo)) < 0;
+
   Future<void> garantirCarregado(int idPropriedade) {
     if (isLoading || _propriedadeJaTentada == idPropriedade) {
       return Future.value();
@@ -151,7 +154,7 @@ class NotificacoesViewModel extends ChangeNotifier
   Future<bool> marcarTodasComoLidas() => _marcar(naoLidas);
 
   bool aguardaLeitura(NotificacaoAgrupada grupo) =>
-      !grupo.lida && !grupo.ehConfirmacao;
+      !grupo.lida && !precisaDeResposta(grupo);
 
   void registrarVista(NotificacaoAgrupada grupo) {
     if (!aguardaLeitura(grupo)) return;
@@ -230,7 +233,7 @@ class NotificacoesViewModel extends ChangeNotifier
     if (!notificacao.ehInterpretavel) return;
     if (_notificacoes.any((atual) => atual.id == notificacao.id)) return;
 
-    _notificacoes = [notificacao, ..._notificacoes];
+    _notificacoes = Notificacao.substituirDoEvento(_notificacoes, notificacao);
     _reagrupar();
     notificarSeVivo();
 
@@ -310,12 +313,11 @@ class NotificacoesViewModel extends ChangeNotifier
   }
 
   List<SecaoDeNotificacoes> _secoes(List<NotificacaoAgrupada> grupos) {
-    final precisamDeResposta =
-        grupos.where((grupo) => grupo.ehConfirmacao).toList();
+    final precisamDeResposta = grupos.where(precisaDeResposta).toList();
 
-    final futuras = grupos.where((grupo) => !grupo.ehConfirmacao).toList();
+    final futuras =
+        grupos.where((grupo) => !precisaDeResposta(grupo)).toList();
 
-    final jaComecaram = _porHorizonte(futuras, (dias) => dias < 0);
     final hoje = _porHorizonte(futuras, (dias) => dias == 0);
     final amanha = _porHorizonte(futuras, (dias) => dias == 1);
     final proximas = _porHorizonte(futuras, (dias) => dias > 1);
@@ -325,11 +327,6 @@ class NotificacoesViewModel extends ChangeNotifier
         SecaoDeNotificacoes(
           'Precisa de resposta',
           _ordenar(precisamDeResposta, crescente: false),
-        ),
-      if (jaComecaram.isNotEmpty)
-        SecaoDeNotificacoes(
-          'Já começaram',
-          _ordenar(jaComecaram, crescente: true),
         ),
       if (hoje.isNotEmpty)
         SecaoDeNotificacoes(

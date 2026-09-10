@@ -7,19 +7,18 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 
 /// A lista de uma categoria dentro de um painel de seleção: carrega sob
-/// demanda, pagina ao rolar e filtra pelo termo de busca do painel.
+/// demanda e filtra pelo termo de busca do painel.
 ///
-/// A busca alcança **só o que já foi carregado** — o backend ainda não expõe
-/// filtro por nome. Por isso a lista continua paginando enquanto o termo não
-/// encontra ninguém.
-class ListaPapelPaginada extends StatefulWidget {
+/// A rota do papel devolve a categoria inteira numa resposta só, então a busca
+/// alcança todo mundo — o filtro é local porque o backend não expõe `?busca=`.
+class ListaPapel extends StatefulWidget {
   final CarregarPessoasMixin catalogo;
   final TipoPapel papel;
   final String termoBusca;
   final Widget Function(BuildContext contexto, PapelPessoa papelPessoa)
       construirItem;
 
-  const ListaPapelPaginada({
+  const ListaPapel({
     super.key,
     required this.catalogo,
     required this.papel,
@@ -28,13 +27,11 @@ class ListaPapelPaginada extends StatefulWidget {
   });
 
   @override
-  State<ListaPapelPaginada> createState() => _ListaPapelPaginadaState();
+  State<ListaPapel> createState() => _ListaPapelState();
 }
 
-class _ListaPapelPaginadaState extends State<ListaPapelPaginada>
+class _ListaPapelState extends State<ListaPapel>
     with AutomaticKeepAliveClientMixin {
-  final _scrollController = ScrollController();
-
   @override
   bool get wantKeepAlive => true;
 
@@ -42,25 +39,9 @@ class _ListaPapelPaginadaState extends State<ListaPapelPaginada>
   void initState() {
     super.initState();
 
-    _scrollController.addListener(_aoRolar);
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.catalogo.carregarCategoria(widget.papel);
     });
-  }
-
-  @override
-  void dispose() {
-    _scrollController.removeListener(_aoRolar);
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  void _aoRolar() {
-    if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      widget.catalogo.carregarMaisDe(widget.papel);
-    }
   }
 
   List<PapelPessoa> _filtrar(List<PapelPessoa> todos) {
@@ -111,21 +92,6 @@ class _ListaPapelPaginadaState extends State<ListaPapelPaginada>
 
     final visiveis = _filtrar(carregados);
 
-    if (visiveis.isEmpty && catalogo.temMaisDe(papel)) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) catalogo.carregarMaisDe(papel);
-      });
-
-      return const EstadoVazio(
-        icone: Icons.search,
-        mensagem: 'Procurando mais pessoas...',
-        acao: Padding(
-          padding: EdgeInsets.only(top: 16),
-          child: CircularProgressIndicator(color: AppCores.verdePrimario),
-        ),
-      );
-    }
-
     if (visiveis.isEmpty) {
       return EstadoVazio(
         icone: Icons.group_off_outlined,
@@ -135,19 +101,11 @@ class _ListaPapelPaginadaState extends State<ListaPapelPaginada>
       );
     }
 
-    final carregandoMais = catalogo.isCarregandoMais(papel);
-
     return ListView.builder(
-      controller: _scrollController,
       padding: const EdgeInsets.only(top: 8, bottom: 16),
-      itemCount: visiveis.length + (carregandoMais ? 1 : 0),
-      itemBuilder: (context, index) {
-        if (index == visiveis.length) {
-          return const RodapePaginacao(carregando: true);
-        }
-
-        return widget.construirItem(context, visiveis[index]);
-      },
+      itemCount: visiveis.length,
+      itemBuilder: (context, index) =>
+          widget.construirItem(context, visiveis[index]),
     );
   }
 }
