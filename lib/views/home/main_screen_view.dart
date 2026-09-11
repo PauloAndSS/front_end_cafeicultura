@@ -11,6 +11,9 @@ import '../talhao/talhao_view.dart';
 import 'home_view.dart';
 import '../../viewmodels/navegacao_viewmodel.dart';
 
+// 👇 1. IMPORTAMOS O BANNER AQUI 👇
+import 'package:frond_end_cafeicultura_mobile/views/widgets/cadastro_incompleto.dart'; 
+
 class MainScreenView extends StatefulWidget {
   const MainScreenView({super.key});
 
@@ -78,12 +81,24 @@ class _MainScreenViewState extends State<MainScreenView> {
       
       appBar: const CustomAppBar(),
 
-      body: PageView(
-        controller: _pageController,
-        onPageChanged: _onPageChanged,
-        physics: const BouncingScrollPhysics(),
-        children: telas,
+      // 👇 2. ALTERAMOS O BODY PARA COLOCAR O BANNER NO TOPO 👇
+      body: Column(
+        children: [
+          // O banner fica no topo, independente da aba selecionada
+          const BannerCadastroIncompleto(),
+          
+          // O Expanded faz o PageView ocupar o resto do espaço da tela
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              onPageChanged: _onPageChanged,
+              physics: const BouncingScrollPhysics(),
+              children: telas,
+            ),
+          ),
+        ],
       ),
+      // 👆 FIM DA ALTERAÇÃO 👆
 
       bottomNavigationBar: const CustomBottomNavBar(),
     );

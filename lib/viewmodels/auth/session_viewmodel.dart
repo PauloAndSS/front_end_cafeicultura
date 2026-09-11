@@ -9,10 +9,16 @@ class SessionViewModel extends ChangeNotifier {
   bool _isInitializing = true; 
   int? _idUsuario;
 
+  bool _dadosProprietarioIncompletos = false;
+  bool _enderecoIncompleto = false;
+
   bool get isLoggedIn => _isLoggedIn;
   String get nomeUsuario => _nomeUsuario;
   bool get isInitializing => _isInitializing;
   int? get idUsuario => _idUsuario;
+
+  bool get dadosProprietarioIncompletos => _dadosProprietarioIncompletos;
+  bool get enderecoIncompleto => _enderecoIncompleto;
 
   SessionViewModel() {
     _verificarSessaoSalva();
@@ -28,19 +34,27 @@ class SessionViewModel extends ChangeNotifier {
       _nomeUsuario = prefs.getString('nome_usuario') ?? 'Produtor';
       _idUsuario = idSalvo;
       BaseService.sessionCookie = cookieSalvo; 
+
+      _dadosProprietarioIncompletos = prefs.getBool('dados_incompletos') ?? false;
+      _enderecoIncompleto = prefs.getBool('endereco_incompleto') ?? false;
     }
 
     _isInitializing = false; 
     notifyListeners(); 
   }
 
-  Future<void> login(int idUsuario, String nome) async {
+  Future<void> login(int idUsuario, String nome, [bool dadosIncompletos = false, bool enderecoIncompleto = false]) async {
     final prefs = await SharedPreferences.getInstance();
     final cookie = BaseService.sessionCookie ?? '';
 
     await prefs.setInt('id_usuario', idUsuario);
     await prefs.setString('nome_usuario', nome);
     await prefs.setString('cookie_sessao', cookie);
+
+    await prefs.setBool('dados_incompletos', dadosIncompletos);
+    await prefs.setBool('endereco_incompleto', enderecoIncompleto);
+    _dadosProprietarioIncompletos = dadosIncompletos;
+    _enderecoIncompleto = enderecoIncompleto;
 
     _isLoggedIn = true;
     _nomeUsuario = nome;
@@ -61,6 +75,11 @@ class SessionViewModel extends ChangeNotifier {
     await prefs.remove('nome_usuario');
     await prefs.remove('cookie_sessao'); 
 
+    await prefs.remove('dados_incompletos');
+    await prefs.remove('endereco_incompleto');
+    _dadosProprietarioIncompletos = false;
+    _enderecoIncompleto = false;
+
     _isLoggedIn = false;
     _nomeUsuario = '';
     _idUsuario = null;
@@ -76,5 +95,17 @@ class SessionViewModel extends ChangeNotifier {
     await prefs.setString('nome_usuario', novoNome);
     
     notifyListeners(); 
+  }
+
+  Future<void> atualizarStatusCadastro({bool dadosIncompletos = false, bool enderecoIncompleto = false}) async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    _dadosProprietarioIncompletos = dadosIncompletos;
+    _enderecoIncompleto = enderecoIncompleto;
+    
+    await prefs.setBool('dados_incompletos', dadosIncompletos);
+    await prefs.setBool('endereco_incompleto', enderecoIncompleto);
+    
+    notifyListeners();
   }
 }

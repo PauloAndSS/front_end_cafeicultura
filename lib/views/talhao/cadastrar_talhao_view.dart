@@ -5,6 +5,7 @@ import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/cadastrar_talhao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhao_propriedades_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/safra/safra_view_page.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:provider/provider.dart';
@@ -154,7 +155,10 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pop();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const SafraViewPage()),
+        );
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

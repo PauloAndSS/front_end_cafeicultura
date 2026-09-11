@@ -10,6 +10,7 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/uf_dropdown.dart';
+import 'package:frond_end_cafeicultura_mobile/views/talhao/cadastrar_talhao_view.dart';
 import 'package:provider/provider.dart';
 
 class CadastrarPropriedadeView extends StatefulWidget {
@@ -79,6 +80,7 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
       );
 
       if (resultado == true && mounted) {
+        // Recarrega as propriedades
         Provider.of<PropriedadesUsuarioViewModel>(context, listen: false)
             .carregarPropriedades();
 
@@ -88,7 +90,10 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
             backgroundColor: Colors.green,
           ),
         );
-        Navigator.of(context).pop();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const CadastrarTalhaoView()),
+        );
       } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

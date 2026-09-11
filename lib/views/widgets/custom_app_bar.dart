@@ -8,6 +8,9 @@ import 'package:frond_end_cafeicultura_mobile/views/safra/safra_view_page.dart';
 import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 
+// 👇 ADICIONAMOS A IMPORTAÇÃO DO BANNER AQUI 👇
+import 'package:frond_end_cafeicultura_mobile/views/widgets/cadastro_incompleto.dart';
+
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({super.key});
 
@@ -45,6 +48,9 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
         )
         ? propriedadesVM.idPropriedadeSelecionada
         : null;
+
+    // 👇 CHAMA A FUNÇÃO GLOBAL AQUI PARA SABER SE TEM PENDÊNCIA 👇
+    final pendencia = verificarPendenciasDeCadastro(context);
 
     return AppBar(
       backgroundColor: const Color(0xFF8FA67E),
@@ -149,13 +155,91 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       ),
       actions: [
         IconButton(
-          icon: const Icon(
-            Icons.notifications_none,
-            color: Colors.white,
-            size: 26,
+          // 👇 ADICIONAMOS A BOLINHA DE NOTIFICAÇÃO E A LÓGICA DO CLIQUE 👇
+          icon: Stack(
+            children: [
+              const Icon(
+                Icons.notifications_none,
+                color: Colors.white,
+                size: 26,
+              ),
+              if (pendencia != null) // Mostra bolinha vermelha se houver pendência
+                Positioned(
+                  right: 0,
+                  top: 2,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: const BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 10,
+                      minHeight: 10,
+                    ),
+                  ),
+                ),
+            ],
           ),
           tooltip: 'Notificações',
-          onPressed: () {},
+          onPressed: () {
+            if (pendencia != null) {
+              // Se tiver pendência, mostra a janela na base da tela
+              showModalBottomSheet(
+                context: context,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                ),
+                builder: (context) {
+                  return Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Icons.info_outline, size: 48, color: Color(0xFF67835C)),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Pendência no Cadastro',
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          pendencia.mensagem,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(fontSize: 16, color: Colors.black87),
+                        ),
+                        const SizedBox(height: 24),
+                        SizedBox(
+                          width: double.infinity,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF67835C),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                            onPressed: () {
+                              Navigator.pop(context); 
+                              _navegarFormulario(context, pendencia.telaDestino);
+                            },
+                            child: Text(pendencia.textoBotao, style: const TextStyle(fontSize: 16)),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            } else {
+              // Se tiver completo, só avisa que não tem notificações
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Nenhuma notificação no momento.')),
+              );
+            }
+          },
+          // 👆 FIM DAS ADIÇÕES DO SINO 👇
         ),
 
         // MENU DE PERFIL (Corrigido)
@@ -198,7 +282,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           onSelected: (String escolha) async {
             if (escolha == 'pessoas') {
               _navegarSubstituindo(context, const PessoasView());
-            } else if (escolha == 'safras') { // Adicionado a verificação de safras aqui!
+            } else if (escolha == 'safras') { 
               _navegarSubstituindo(context, const SafraViewPage());
             } else if (escolha == 'sair') {
               await session.logout();
