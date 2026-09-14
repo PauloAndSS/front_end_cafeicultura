@@ -12,7 +12,7 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/financeiro/financeiro_v
 import 'package:frond_end_cafeicultura_mobile/viewmodels/financeiro/financeiro_mudou.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/atividades_mudaram.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/notificacoes/notificacoes_viewmodel.dart';
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:frond_end_cafeicultura_mobile/views/auth/first_acess.dart';
 import 'package:frond_end_cafeicultura_mobile/views/home/main_screen_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
@@ -21,7 +21,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   await initializeDateFormatting('pt_BR', null);
-
+  await dotenv.load();
   runApp(
     MultiProvider(
       providers: [

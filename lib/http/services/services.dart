@@ -10,14 +10,14 @@ abstract class BaseService {
     required TargetPlatform platform,
   }) {
     if (isWeb) {
-      return 'http://localhost:3333/api/v1';
+      return 'https://api.sysgrano.app/api/v1';
     }
 
     if (platform == TargetPlatform.android) {
-      return 'http://10.0.2.2:3333/api/v1';
+      return 'https://api.sysgrano.app/api/v1';
     }
 
-    return 'http://localhost:3333/api/v1';
+    return 'https://api.sysgrano.app/api/v1';
   }
 
   String get baseUrl => resolveBaseUrl(

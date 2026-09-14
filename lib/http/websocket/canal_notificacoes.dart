@@ -8,8 +8,20 @@ import 'package:web_socket_channel/io.dart';
 
 Uri uriDoSocket(String baseUrl) {
   final base = Uri.parse(baseUrl);
+  final esquema = switch (base.scheme) {
+    'https' => 'wss',
+    'http' => 'ws',
+    _ => throw FormatException(
+      'Esquema não suportado para WebSocket: ${base.scheme}',
+    ),
+  };
 
-  return Uri(scheme: 'ws', host: base.host, port: base.port, path: '/');
+  return Uri(
+    scheme: esquema,
+    host: base.host,
+    port: base.hasPort ? base.port : null,
+    path: '/',
+  );
 }
 
 Notificacao? interpretarMensagem(dynamic mensagem) {

@@ -3,14 +3,14 @@ import 'package:flutter/foundation.dart';
 import 'package:frond_end_cafeicultura_mobile/model/clima/weather_model.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
-
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 class WeatherViewModel extends ChangeNotifier {
   WeatherModel? currentWeather;
   List<WeatherModel> futureWeather = [];
   String? cidade;
   bool isLoading = false;
   String? errorMessage;
-  static const String _apiKey = '5fe49eb837725464a65c8e346b93b109';
+  static final String _apiKey = dotenv.get('API_CLIMA_CHAVE'); 
   static const String _baseUrl = 'https://api.openweathermap.org/data/2.5';
 
   List<WeatherModel> get allWeatherTimeline {

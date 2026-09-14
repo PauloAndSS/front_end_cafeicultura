@@ -29,6 +29,12 @@ void main() {
       expect(uri.toString(), 'ws://localhost:3333/');
     });
 
+    test('mantem TLS ao derivar o endereco de uma API HTTPS', () {
+      final uri = uriDoSocket('https://api.sysgrano.app/api/v1');
+
+      expect(uri.toString(), 'wss://api.sysgrano.app/');
+    });
+
     test('descarta o prefixo da API porque o upgrade nao filtra path', () {
       final uri = uriDoSocket('http://10.0.2.2:3333/api/v1');
 
