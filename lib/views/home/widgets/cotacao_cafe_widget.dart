@@ -118,15 +118,73 @@ class _CotacaoCafeWidgetState extends State<CotacaoCafeWidget> {
 
 
 
-  Widget _buildPaginaPainel(RespostaCotacaoCafe resposta) {
-    if (!resposta.temDadosDoPainel) {
-      return _buildFonteIndisponivel(
-        fonte: 'Painel do Café',
-        mensagem: 'Cotação indisponível para esta fonte.',
-      );
-    }
-    return _buildCotacao(fonte: 'Painel do Café', item: resposta.painelDoCafe.first);
+Widget _buildPaginaPainel(RespostaCotacaoCafe resposta) {
+  final itens = resposta.painelDoCafe;
+
+  if (!resposta.temDadosDoPainel || itens.isEmpty) {
+    return _buildFonteIndisponivel(
+      fonte: 'Painel do Café',
+      mensagem: 'Cotação indisponível para esta fonte.',
+    );
   }
+
+  return _buildTabelaPainel(itens);
+}
+
+Widget _buildTabelaPainel(List<ItemCotacaoCafe> itens) {
+  return Container(
+    key: const ValueKey('painel-tabela'),
+    width: double.infinity,
+    padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+    decoration: BoxDecoration(
+      color: AppCores.fundo,
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _buildRotuloDaFonte('Painel do Café'),
+        const SizedBox(height: 8),
+        Expanded(
+          child: ListView.separated(
+            padding: EdgeInsets.zero,
+            itemCount: itens.length,
+            separatorBuilder: (_, _) =>
+                const Divider(height: 1, color: Colors.black12),
+            itemBuilder: (_, index) {
+              final item = itens[index];
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.nome,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Colors.black87,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      item.preco,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: AppCores.verdeSecundario,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    ),
+  );
+}
 
 
   Widget _buildPaginaCooabriel(RespostaCotacaoCafe resposta) {

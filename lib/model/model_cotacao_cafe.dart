@@ -10,6 +10,8 @@ class ItemCotacaoCafe {
       valor: (json['value'] as num?)?.toDouble() ?? 0,
     );
   }
+
+  String get preco => valor.toStringAsFixed(2);
 }
 
 class ItemCooabriel {
@@ -154,7 +156,8 @@ class RespostaCotacaoCafe {
       cooabriel: parseListaCooabriel(json['cooabriel']),
       painelDoCafe: parseListaPainel(json['painel_do_cafe']),
       cccv: parseCccv(json['cccv']),
-      erros: (json['erros'] as List?)
+      erros:
+          (json['erros'] as List?)
               ?.map((e) => e.toString())
               .toList(growable: false) ??
           const [],
