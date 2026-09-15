@@ -29,10 +29,13 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final tipoPapel = PessoaFactory.obterTipoPapel(widget.papelPessoa);
-      _viewModel.buscarPorId(widget.papelPessoa.id!, tipoPapel);
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _recarregar());
+  }
+
+  Future<void> _recarregar() {
+    final tipoPapel = PessoaFactory.obterTipoPapel(widget.papelPessoa);
+
+    return _viewModel.buscarPorId(widget.papelPessoa.id!, tipoPapel);
   }
 
   @override
@@ -90,7 +93,7 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
         actions: acoesDeDialogo(
           context: context,
           rotuloConfirmar: 'Salvar',
-          corConfirmar: AppCores.verdeSecundario,
+          corConfirmar: AppCores.acao,
           aoCancelar: () => Navigator.pop(context, false),
           aoConfirmar: () {
             if (formKey.currentState!.validate()) {
@@ -135,7 +138,7 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
               label,
               style: const TextStyle(
                 fontSize: 16,
-                color: Colors.black54,
+                color: AppCores.textoSecundario,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -145,7 +148,7 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
               value,
               style: const TextStyle(
                 fontSize: 16,
-                color: Colors.black87,
+                color: AppCores.textoPrimario,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -166,9 +169,6 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
       child: Scaffold(
         backgroundColor: AppCores.fundo,
         appBar: AppBarPadrao(
-          cor: AppCores.fundo,
-          corConteudo: Colors.black87,
-          elevacao: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: () => Navigator.pop(context, _houveAlteracao),
@@ -177,139 +177,142 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
         body: ListenableBuilder(
           listenable: _viewModel,
           builder: (context, child) {
-            if (_viewModel.isLoading) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppCores.verdeSecundario),
-              );
+            if (_viewModel.isLoading && _viewModel.pessoaDetalhe == null) {
+              return const Center(child: CircularProgressIndicator());
             }
 
             final papelAtual = _viewModel.pessoaDetalhe ?? widget.papelPessoa;
             final pessoaBase = papelAtual.pessoa;
 
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 16),
-                  const Icon(
-                    Icons.person_outline,
-                    size: 100,
-                    color: Colors.black87,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    pessoaBase.nomeParaExibicao,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.black87,
+            return RefreshIndicator(
+              onRefresh: _recarregar,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 16),
+                    const Icon(
+                      Icons.person_outline,
+                      size: 100,
+                      color: AppCores.textoPrimario,
                     ),
-                  ),
-                  const SizedBox(height: 24),
+                    const SizedBox(height: 16),
+                    Text(
+                      pessoaBase.nomeParaExibicao,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w400,
+                        color: AppCores.textoPrimario,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
 
-                  BotaoExcluir(
-                    titulo: 'Excluir Pessoa?',
-                    mensagem:
-                        'Deseja realmente excluir '
-                        '${widget.papelPessoa.pessoa.nomeParaExibicao}? '
-                        'Esta ação não poderá ser desfeita.',
-                    bloqueado: _viewModel.isLoading,
-                    aoConfirmar: _excluir,
-                  ),
+                    BotaoExcluir(
+                      titulo: 'Excluir Pessoa?',
+                      mensagem:
+                          'Deseja realmente excluir '
+                          '${widget.papelPessoa.pessoa.nomeParaExibicao}? '
+                          'Esta ação não poderá ser desfeita.',
+                      bloqueado: _viewModel.isLoading,
+                      aoConfirmar: _excluir,
+                    ),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Detalhes :',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        _buildInfoRow(
-                          'Função :',
-                          PessoaFactory.obterTipoPapel(papelAtual).titulo,
-                        ),
-
-                        _buildInfoRow(
-                          pessoaBase is PessoaJuridica ? 'CNPJ :' : 'CPF :',
-                          pessoaBase.documentoFormatado,
-                        ),
-
-                        if (pessoaBase is PessoaJuridica &&
-                            (pessoaBase.inscricaoEstadual?.isNotEmpty ?? false))
-                          _buildInfoRow(
-                            'Insc. Estadual :',
-                            pessoaBase.inscricaoEstadual!,
-                          ),
-
-                        if (papelAtual is Funcionario) ...[
-                          _buildInfoRow(
-                            'CTPS :',
-                            (papelAtual.ctps != null &&
-                                    papelAtual.ctps!.isNotEmpty)
-                                ? papelAtual.ctps!
-                                : 'Não informado',
-                          ),
-
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 4.0),
-                            child: Row(
-                              children: [
-                                const SizedBox(
-                                  width: 130,
-                                  child: Text(
-                                    'Salário :',
-                                    style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.black54,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ),
-                                Expanded(
-                                  child: Text(
-                                    'R\$ ${papelAtual.salario?.toStringAsFixed(2).replaceAll('.', ',') ?? '0,00'}',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.black87,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(
-                                    Icons.edit,
-                                    size: 22,
-                                    color: AppCores.verdeSecundario,
-                                  ),
-                                  padding: EdgeInsets.zero,
-                                  constraints: const BoxConstraints(),
-                                  onPressed: () => _editarSalario(papelAtual),
-                                ),
-                              ],
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'Detalhes :',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppCores.textoPrimario,
                             ),
                           ),
-                        ],
-                      ],
-                    ),
-                  ),
+                          const SizedBox(height: 16),
 
-                  const SizedBox(height: 32),
-                  buildSecaoEmBreve('Documentos :'),
-                  buildSecaoEmBreve('Atividades :'),
-                  const SizedBox(height: 40),
-                ],
+                          _buildInfoRow(
+                            'Função :',
+                            PessoaFactory.obterTipoPapel(papelAtual).titulo,
+                          ),
+
+                          _buildInfoRow(
+                            pessoaBase is PessoaJuridica ? 'CNPJ :' : 'CPF :',
+                            pessoaBase.documentoFormatado,
+                          ),
+
+                          if (pessoaBase is PessoaJuridica &&
+                              (pessoaBase.inscricaoEstadual?.isNotEmpty ??
+                                  false))
+                            _buildInfoRow(
+                              'Insc. Estadual :',
+                              pessoaBase.inscricaoEstadual!,
+                            ),
+
+                          if (papelAtual is Funcionario) ...[
+                            _buildInfoRow(
+                              'CTPS :',
+                              (papelAtual.ctps != null &&
+                                      papelAtual.ctps!.isNotEmpty)
+                                  ? papelAtual.ctps!
+                                  : 'Não informado',
+                            ),
+
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 4.0),
+                              child: Row(
+                                children: [
+                                  const SizedBox(
+                                    width: 130,
+                                    child: Text(
+                                      'Salário :',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        color: AppCores.textoSecundario,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      'R\$ ${papelAtual.salario?.toStringAsFixed(2).replaceAll('.', ',') ?? '0,00'}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: AppCores.textoPrimario,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(
+                                      Icons.edit,
+                                      size: 22,
+                                      color: AppCores.acao,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(),
+                                    onPressed: () => _editarSalario(papelAtual),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+                    buildSecaoEmBreve('Documentos :'),
+                    buildSecaoEmBreve('Atividades :'),
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
             );
           },

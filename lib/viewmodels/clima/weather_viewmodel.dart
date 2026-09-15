@@ -1,15 +1,31 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:frond_end_cafeicultura_mobile/model/clima/weather_model.dart';
+import 'package:frond_end_cafeicultura_mobile/model/propriedade.dart';
 import 'package:http/http.dart' as http;
 import 'package:geolocator/geolocator.dart';
+
+enum OrigemDaPrevisao { propriedade, aparelho }
+
 class WeatherViewModel extends ChangeNotifier {
   WeatherModel? currentWeather;
   List<WeatherModel> futureWeather = [];
   bool isLoading = false;
   String? errorMessage;
-  static const String _apiKey = '5fe49eb837725464a65c8e346b93b109'; 
+
+  String? localidade;
+  OrigemDaPrevisao? origem;
+  bool permissaoDeLocalizacaoNegada = false;
+
+  static const Duration validadeDaPrevisao = Duration(minutes: 30);
+
+  String? _chaveDaUltimaTentativa;
+  DateTime? _horaDaUltimaTentativa;
+
+  bool get previsaoEhDaPropriedade => origem == OrigemDaPrevisao.propriedade;
+  static const String _apiKey = '5fe49eb837725464a65c8e346b93b109';
   static const String _baseUrl = 'https://api.openweathermap.org/data/2.5';
+  static const String _geocodeUrl = 'https://api.openweathermap.org/geo/1.0';
 
   List<WeatherModel> get allWeatherTimeline {
     final list = <WeatherModel>[];
@@ -26,7 +42,6 @@ class WeatherViewModel extends ChangeNotifier {
     try {
       await _fetchCurrentWeather(lat, lon);
       await _fetchForecastWeather(lat, lon);
-      
     } catch (e) {
       errorMessage = 'Falha ao sincronizar dados meteorológicos: $e';
     } finally {
@@ -37,14 +52,17 @@ class WeatherViewModel extends ChangeNotifier {
 
   Future<void> _fetchCurrentWeather(double lat, double lon) async {
     final url = Uri.parse(
-      '$_baseUrl/weather?lat=$lat&lon=$lon&units=metric&lang=pt_br&appid=$_apiKey'
+      '$_baseUrl/weather?lat=$lat&lon=$lon&units=metric&lang=pt_br&appid=$_apiKey',
     );
-    
+
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      
+
+      final nome = data['name'] as String?;
+      if (nome != null && nome.isNotEmpty) localidade = nome;
+
       currentWeather = WeatherModel(
         date: DateTime.now(),
         temperature: (data['main']['temp'] as num).toDouble(),
@@ -58,9 +76,9 @@ class WeatherViewModel extends ChangeNotifier {
 
   Future<void> _fetchForecastWeather(double lat, double lon) async {
     final url = Uri.parse(
-      '$_baseUrl/forecast?lat=$lat&lon=$lon&units=metric&lang=pt_br&appid=$_apiKey'
+      '$_baseUrl/forecast?lat=$lat&lon=$lon&units=metric&lang=pt_br&appid=$_apiKey',
     );
-    
+
     final response = await http.get(url);
 
     if (response.statusCode == 200) {
@@ -72,12 +90,16 @@ class WeatherViewModel extends ChangeNotifier {
 
       for (var item in list) {
         final dt = DateTime.fromMillisecondsSinceEpoch(item['dt'] * 1000);
-        
+
         if (dt.day == now.day && dt.month == now.month && dt.year == now.year) {
           continue;
         }
 
-        final dayKey = DateTime(dt.year, dt.month, dt.day).millisecondsSinceEpoch;
+        final dayKey = DateTime(
+          dt.year,
+          dt.month,
+          dt.day,
+        ).millisecondsSinceEpoch;
         if (!groupedByDay.containsKey(dayKey)) {
           groupedByDay[dayKey] = [];
         }
@@ -103,69 +125,185 @@ class WeatherViewModel extends ChangeNotifier {
         final icon = middleItem['weather'][0]['icon'];
         final desc = middleItem['weather'][0]['description'];
 
-        futureWeather.add(WeatherModel(
-          date: DateTime.fromMillisecondsSinceEpoch(key),
-          temperature: (minTemp + maxTemp) / 2, // Média
-          minTemperature: minTemp,
-          maxTemperature: maxTemp,
-          description: desc,
-          iconCode: icon,
-        ));
+        futureWeather.add(
+          WeatherModel(
+            date: DateTime.fromMillisecondsSinceEpoch(key),
+            temperature: (minTemp + maxTemp) / 2, // Média
+            minTemperature: minTemp,
+            maxTemperature: maxTemp,
+            description: desc,
+            iconCode: icon,
+          ),
+        );
       }
     } else {
       throw Exception('Erro Previsão: ${response.statusCode}');
     }
   }
-Future<void> fetchWeatherForCurrentLocation() async {
+
+  String? _chaveDe(Propriedade? propriedade) {
+    if (propriedade == null) return null;
+
+    final endereco = propriedade.endereco;
+
+    return '${propriedade.id}|${endereco.cidade.trim().toLowerCase()}'
+        '|${endereco.uf.name}';
+  }
+
+  bool _tentativaExpirou() {
+    final hora = _horaDaUltimaTentativa;
+    if (hora == null) return true;
+
+    return DateTime.now().difference(hora) >= validadeDaPrevisao;
+  }
+
+  bool precisaCarregarPara(Propriedade? propriedade) {
+    if (isLoading) return false;
+    if (_chaveDe(propriedade) != _chaveDaUltimaTentativa) return true;
+
+    return _tentativaExpirou();
+  }
+
+  void _limparPrevisao() {
+    currentWeather = null;
+    futureWeather = [];
+    localidade = null;
+    origem = null;
+  }
+
+  Future<void> carregarPrevisao(
+    Propriedade? propriedade, {
+    bool forcar = false,
+  }) async {
+    if (isLoading) return;
+    if (!forcar && !precisaCarregarPara(propriedade)) return;
+
+    final chave = _chaveDe(propriedade);
+    if (chave != _chaveDaUltimaTentativa) _limparPrevisao();
+    _chaveDaUltimaTentativa = chave;
+
     isLoading = true;
     errorMessage = null;
+    permissaoDeLocalizacaoNegada = false;
     notifyListeners();
 
     try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        throw Exception('O GPS está desativado.');
+      final coordenadas = await _coordenadasDaPropriedade(propriedade);
+
+      if (coordenadas != null) {
+        origem = OrigemDaPrevisao.propriedade;
+        localidade = _nomeDaLocalidade(propriedade!);
+        await _carregarPara(coordenadas);
+        return;
       }
 
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          throw Exception('Permissão negada pelo usuário.');
-        }
-      }
-      
-      if (permission == LocationPermission.deniedForever) {
-        throw Exception('Permissão negada permanentemente.');
-      }
-
-      Position? position;
-      
-      try {
-        // 1. Tenta pegar a última localização conhecida na memória (Instantâneo)
-        position = await Geolocator.getLastKnownPosition();
-        
-        // 2. Se não houver cache, busca a atual com limite de 5 segundos
-        position ??= await Geolocator.getCurrentPosition(
-          desiredAccuracy: LocationAccuracy.low,
-          timeLimit: const Duration(seconds: 5),
-        );
-        
-        // Carrega com a posição do GPS
-        await _fetchCurrentWeather(position.latitude, position.longitude);
-        await _fetchForecastWeather(position.latitude, position.longitude);
-
-      } catch (e) {
-        // PLANO B: Se o GPS falhar (ex: Emulador sem localização setada ou falta de sinal)
-        // Usamos as coordenadas padrão do Sítio (Santa Teresa - ES)
-        debugPrint('Aviso: GPS falhou ou demorou. Usando localização padrão. Erro: $e');
-        
-        await _fetchCurrentWeather(-19.9367, -40.6004);
-        await _fetchForecastWeather(-19.9367, -40.6004);
-      }
+      final doAparelho = await _coordenadasDoAparelho();
+      origem = OrigemDaPrevisao.aparelho;
+      localidade = null;
+      await _carregarPara(doAparelho);
+    } on _SemLocalizacao catch (falha) {
+      permissaoDeLocalizacaoNegada = falha.permissaoNegada;
+      errorMessage = falha.mensagem;
+    } catch (e) {
+      errorMessage = 'Falha ao sincronizar dados meteorológicos: $e';
     } finally {
+      _horaDaUltimaTentativa = DateTime.now();
       isLoading = false;
       notifyListeners();
     }
   }
+
+  Future<void> _carregarPara(_Coordenadas ponto) async {
+    await _fetchCurrentWeather(ponto.latitude, ponto.longitude);
+    await _fetchForecastWeather(ponto.latitude, ponto.longitude);
+  }
+
+  String _nomeDaLocalidade(Propriedade propriedade) =>
+      '${propriedade.endereco.cidade} - ${propriedade.endereco.uf.name}';
+
+  Future<_Coordenadas?> _coordenadasDaPropriedade(
+    Propriedade? propriedade,
+  ) async {
+    if (propriedade == null) return null;
+
+    final endereco = propriedade.endereco;
+    if (endereco.cidade.trim().isEmpty) return null;
+
+    final consulta = Uri.encodeComponent(
+      '${endereco.cidade},${endereco.uf.name},BR',
+    );
+    final url = Uri.parse(
+      '$_geocodeUrl/direct?q=$consulta&limit=1&appid=$_apiKey',
+    );
+
+    try {
+      final resposta = await http.get(url);
+      if (resposta.statusCode != 200) return null;
+
+      final lista = json.decode(resposta.body) as List<dynamic>;
+      if (lista.isEmpty) return null;
+
+      final primeiro = lista.first as Map<String, dynamic>;
+      return _Coordenadas(
+        (primeiro['lat'] as num).toDouble(),
+        (primeiro['lon'] as num).toDouble(),
+      );
+    } catch (e) {
+      debugPrint('Geocodificação da propriedade falhou: $e');
+      return null;
+    }
+  }
+
+  Future<_Coordenadas> _coordenadasDoAparelho() async {
+    final servicoAtivo = await Geolocator.isLocationServiceEnabled();
+    if (!servicoAtivo) {
+      throw const _SemLocalizacao(
+        'A localização do aparelho está desligada, e a propriedade '
+        'selecionada não tem cidade cadastrada.',
+      );
+    }
+
+    var permissao = await Geolocator.checkPermission();
+    if (permissao == LocationPermission.denied) {
+      permissao = await Geolocator.requestPermission();
+    }
+
+    if (permissao == LocationPermission.denied ||
+        permissao == LocationPermission.deniedForever) {
+      throw const _SemLocalizacao(
+        'Sem acesso à localização. Libere a permissão ou cadastre a cidade '
+        'da propriedade para ver a previsão certa.',
+        permissaoNegada: true,
+      );
+    }
+
+    try {
+      final posicao =
+          await Geolocator.getLastKnownPosition() ??
+          await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.low,
+              timeLimit: Duration(seconds: 5),
+            ),
+          );
+
+      return _Coordenadas(posicao.latitude, posicao.longitude);
+    } catch (e) {
+      throw _SemLocalizacao('Não foi possível obter a localização: $e');
+    }
+  }
+}
+
+class _Coordenadas {
+  final double latitude;
+  final double longitude;
+
+  const _Coordenadas(this.latitude, this.longitude);
+}
+
+class _SemLocalizacao implements Exception {
+  final String mensagem;
+  final bool permissaoNegada;
+
+  const _SemLocalizacao(this.mensagem, {this.permissaoNegada = false});
 }

@@ -56,10 +56,26 @@ class _NotificacoesViewState extends State<NotificacoesView> {
     if (idPropriedade == null) return;
 
     await _viewModel.garantirCarregado(idPropriedade);
+
+    if (!mounted) return;
+
+    final falha = _viewModel.consumirFalhaDeLeitura();
+
+    if (falha != null) mostrarErro(context, falha);
   }
 
   Future<bool> _marcarComoLida(NotificacaoAgrupada grupo) async {
     final viewModel = context.read<NotificacoesViewModel>();
+
+    if (viewModel.aguardaResposta(grupo)) {
+      mostrarAviso(
+        context,
+        'Responda esta notificação no próprio cartão antes de arquivá-la.',
+      );
+
+      return false;
+    }
+
     final sucesso = await viewModel.marcarComoLida(grupo);
 
     if (!mounted) return sucesso;
@@ -122,7 +138,7 @@ class _NotificacoesViewState extends State<NotificacoesView> {
         builder: (_) => ConfirmarAtividadeView<TratoCultural>(
           viewModel: detalhes,
           talhao: viewModel.talhaoPorId(trato.idTalhao),
-          titulo: 'Confirmar Trato Cultural',
+          titulo: 'Finalizar Trato Cultural',
           ajudaDataInicio: 'Data de início do trato cultural',
           ajudaDataFim: 'Data de término do trato cultural',
         ),
@@ -197,11 +213,13 @@ class _NotificacoesViewState extends State<NotificacoesView> {
           titulo: 'Notificações',
           acoes: [
             TextButton(
-              onPressed: viewModel.temNaoLidas ? _marcarTodas : null,
+              onPressed: viewModel.temLeituraPendente ? _marcarTodas : null,
               child: Text(
                 'Marcar todas como lidas',
                 style: TextStyle(
-                  color: viewModel.temNaoLidas ? Colors.white : Colors.white54,
+                  color: viewModel.temLeituraPendente
+                      ? AppCores.sobreCasca
+                      : AppCores.sobreCascaInativo,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -224,15 +242,7 @@ class _NotificacoesViewState extends State<NotificacoesView> {
                 construirVazio: (_) => const SizedBox.shrink(),
                 construirConteudo: (_) => TabBarView(
                   children: [
-                    _construirAba(
-                      viewModel: viewModel,
-                      secoes: viewModel.secoesNaoLidas,
-                      podeDispensar: true,
-                      mensagemVazia:
-                          'Nenhuma notificação pendente. Os lembretes das '
-                          'atividades aparecem aqui.',
-                      iconeVazio: Icons.notifications_off_outlined,
-                    ),
+                    _construirAbaNaoLidas(viewModel),
                     _construirAba(
                       viewModel: viewModel,
                       secoes: viewModel.secoesLidas,
@@ -252,6 +262,48 @@ class _NotificacoesViewState extends State<NotificacoesView> {
     );
   }
 
+  Widget _construirAbaNaoLidas(NotificacoesViewModel viewModel) {
+    final secoes = viewModel.secoesNaoLidas;
+
+    final temPendencia = viewModel.pendentesDeResposta.isNotEmpty;
+
+    return RefreshIndicator(
+      color: AppCores.acao,
+      onRefresh: viewModel.recarregar,
+      child: ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 32),
+        children: secoes.isEmpty
+            ? const [
+                SizedBox(height: 100),
+                EstadoVazio(
+                  mensagem: 'Nenhuma notificação pendente. Os lembretes das '
+                      'atividades aparecem aqui.',
+                  icone: Icons.notifications_off_outlined,
+                ),
+              ]
+            : [
+                CaixaAviso(
+                  icone: Icons.swipe,
+                  cor: AppCores.acao,
+                  corDoTexto: AppCores.acao,
+                  mensagem: 'Deslize um lembrete para o lado para marcá-lo '
+                      'como lido.',
+                  itens: temPendencia
+                      ? const [
+                          'O que precisa de resposta fica aqui até você '
+                              'responder no próprio cartão.',
+                        ]
+                      : const [],
+                ),
+                const SizedBox(height: 20),
+                for (final secao in secoes)
+                  ..._construirSecao(viewModel, secao, true),
+              ],
+      ),
+    );
+  }
+
   Widget _construirAba({
     required NotificacoesViewModel viewModel,
     required List<SecaoDeNotificacoes> secoes,
@@ -260,7 +312,7 @@ class _NotificacoesViewState extends State<NotificacoesView> {
     required IconData iconeVazio,
   }) {
     return RefreshIndicator(
-      color: AppCores.verdePrimario,
+      color: AppCores.acao,
       onRefresh: viewModel.recarregar,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -271,16 +323,6 @@ class _NotificacoesViewState extends State<NotificacoesView> {
                 EstadoVazio(mensagem: mensagemVazia, icone: iconeVazio),
               ]
             : [
-                if (podeDispensar) ...[
-                  const CaixaAviso(
-                    icone: Icons.swipe,
-                    cor: AppCores.verdePrimario,
-                    corDoTexto: AppCores.verdePrimario,
-                    mensagem: 'Deslize um cartão para o lado para marcá-lo como '
-                        'lido.',
-                  ),
-                  const SizedBox(height: 20),
-                ],
                 for (final secao in secoes)
                   ..._construirSecao(viewModel, secao, podeDispensar),
               ],
@@ -315,13 +357,14 @@ class _NotificacoesViewState extends State<NotificacoesView> {
           ? 'Talhão não informado'
           : viewModel.nomeDoTalhao(trato.idTalhao),
       confirmada: viewModel.estaConfirmada(grupo),
+      precisaResponder: viewModel.aguardaResposta(grupo),
       aoAbrir: trato == null ? null : () => _abrirDetalhes(trato),
       aoResponderSim: trato == null ? null : () => _responderSim(grupo, trato),
       aoAlterar: trato == null ? null : () => _alterarInformacoes(grupo, trato),
       aoExcluir: trato == null ? null : () => _excluirTrato(grupo, trato),
     );
 
-    if (!podeDispensar) return card;
+    if (!podeDispensar || viewModel.aguardaResposta(grupo)) return card;
 
     return Dismissible(
       key: ValueKey(grupo.representante.chaveDeAgrupamento),
@@ -354,7 +397,7 @@ class _CabecalhoDeSecao extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: Colors.black54,
+                color: AppCores.textoSecundario,
                 letterSpacing: 0.5,
               ),
             ),
@@ -364,7 +407,7 @@ class _CabecalhoDeSecao extends StatelessWidget {
             style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
-              color: Colors.black38,
+              color: AppCores.textoTerciario,
             ),
           ),
         ],
@@ -385,18 +428,18 @@ class _FundoDeDispensa extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 24),
       alignment: alinhamento,
       decoration: BoxDecoration(
-        color: AppCores.verdePrimario.withValues(alpha: 0.15),
+        color: AppCores.acao.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(16),
       ),
       child: const Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.done_all, color: AppCores.verdePrimario),
+          Icon(Icons.done_all, color: AppCores.acao),
           SizedBox(width: 8),
           Text(
             'Marcar como lida',
             style: TextStyle(
-              color: AppCores.verdePrimario,
+              color: AppCores.acao,
               fontWeight: FontWeight.bold,
             ),
           ),

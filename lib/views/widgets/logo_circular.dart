@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class LogoCircular extends StatelessWidget {
   final double size;
@@ -14,7 +15,7 @@ class LogoCircular extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppCores.superficie,
         shape: BoxShape.circle,
         image: const DecorationImage(
           image: AssetImage('assets/images/logo_cafe.png'),
@@ -22,7 +23,7 @@ class LogoCircular extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.15),
+            color: AppCores.textoPrimario.withValues(alpha: 0.15),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),

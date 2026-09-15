@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
 
 Widget buildSecaoEmBreve(String titulo) {
   return Column(
@@ -9,24 +11,20 @@ Widget buildSecaoEmBreve(String titulo) {
         style: const TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.bold,
-          color: Colors.black87,
+          color: AppCores.textoPrimario,
         ),
       ),
       const SizedBox(height: 12),
       Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          border: Border.all(color: Colors.black12),
-          borderRadius: BorderRadius.circular(12),
-        ),
+        decoration: AppEstilos.cartao(),
         child: const Center(
           child: Text(
             'Em breve...',
             style: TextStyle(
               fontSize: 14,
-              color: Colors.black45,
+              color: AppCores.textoSecundario,
               fontStyle: FontStyle.italic,
             ),
           ),

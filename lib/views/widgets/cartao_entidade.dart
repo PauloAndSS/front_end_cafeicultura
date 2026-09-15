@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
 
 class CartaoEntidade extends StatelessWidget {
   final IconData icone;
@@ -28,22 +29,12 @@ class CartaoEntidade extends StatelessWidget {
     return Container(
       width: double.infinity,
       margin: margem,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: AppEstilos.cartao(),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppEstilos.raioCartao),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppEstilos.raioCartao),
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -52,7 +43,7 @@ class CartaoEntidade extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(icone, color: AppCores.verdeSecundario, size: 32),
+                    Icon(icone, color: AppCores.acao, size: 32),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -60,7 +51,7 @@ class CartaoEntidade extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: AppCores.textoPrimario,
                         ),
                       ),
                     ),
@@ -98,7 +89,7 @@ class LinhaCartao extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icone, color: Colors.black54, size: 20),
+        Icon(icone, color: AppCores.textoSecundario, size: 20),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -108,14 +99,14 @@ class LinhaCartao extends StatelessWidget {
                 titulo,
                 style: const TextStyle(
                   fontSize: 12,
-                  color: Colors.black54,
+                  color: AppCores.textoSecundario,
                   fontWeight: FontWeight.w600,
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 valor,
-                style: const TextStyle(fontSize: 15, color: Colors.black87),
+                style: const TextStyle(fontSize: 15, color: AppCores.textoPrimario),
               ),
             ],
           ),

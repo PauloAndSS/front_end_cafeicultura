@@ -73,58 +73,59 @@ class _PessoasCategoriaTabViewState extends State<PessoasCategoriaTabView>
       builder: (context, _) {
         final vm = widget.viewModel;
 
-        return CorpoComEstado(
-          isLoading: vm.isLoading,
-          mensagemErro: vm.pessoas.isEmpty ? vm.mensagemErro : null,
-          vazio: vm.pessoas.isEmpty,
-          aoTentarNovamente: vm.carregar,
-          construirVazio: (_) => EstadoVazio(
-            icone: Icons.group_off_outlined,
-            mensagem: 'Nenhum ${_papel.rotulo} cadastrado.',
+        return RefreshIndicator(
+          onRefresh: vm.carregar,
+          child: CorpoComEstado(
+            isLoading: vm.isLoading,
+            mensagemErro: vm.pessoas.isEmpty ? vm.mensagemErro : null,
+            vazio: vm.pessoas.isEmpty,
+            aoTentarNovamente: vm.carregar,
+            manterConteudoAoRecarregar: true,
+            construirVazio: (_) => EstadoVazio(
+              icone: Icons.group_off_outlined,
+              mensagem: 'Nenhum ${_papel.rotulo} cadastrado.',
+            ),
+            construirConteudo: (_) => _construirLista(),
           ),
-          construirConteudo: (_) => _construirGrade(),
         );
       },
     );
   }
 
-  Widget _construirGrade() {
+  Widget _construirLista() {
     final vm = widget.viewModel;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-      child: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          SliverGrid(
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 16,
-              childAspectRatio: 0.75,
-            ),
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final papelPessoa = vm.pessoas[index];
+    return CustomScrollView(
+      controller: _scrollController,
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverPadding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+          sliver: SliverList.builder(
+            itemCount: vm.pessoas.length,
+            itemBuilder: (context, index) {
+              final papelPessoa = vm.pessoas[index];
 
-                return PessoaCardWidget(
-                  nome: papelPessoa.pessoa.nomeParaExibicao,
-                  subtitulo: papelPessoa.pessoa.documentoFormatado,
-                  onTap: () => _abrirDetalhes(papelPessoa),
-                );
-              },
-              childCount: vm.pessoas.length,
-            ),
+              return PessoaCardWidget(
+                nome: papelPessoa.pessoa.nomeParaExibicao,
+                iniciais: papelPessoa.pessoa.iniciais,
+                subtitulo: papelPessoa.pessoa.documentoFormatado,
+                onTap: () => _abrirDetalhes(papelPessoa),
+              );
+            },
           ),
-          SliverToBoxAdapter(
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 96),
             child: RodapePaginacao(
               carregando: vm.isLoadingMore,
               mensagemErro: vm.mensagemErro,
               aoTentarNovamente: vm.carregarMais,
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

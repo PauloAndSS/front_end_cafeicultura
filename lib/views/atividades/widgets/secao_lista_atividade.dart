@@ -17,6 +17,7 @@ class SecaoListaAtividade<T> extends StatelessWidget {
   final ValueChanged<T>? aoRemover;
   final bool Function(T item)? podeRemover;
   final ValueChanged<T>? aoTocarItem;
+  final bool opcional;
 
   const SecaoListaAtividade({
     super.key,
@@ -31,6 +32,7 @@ class SecaoListaAtividade<T> extends StatelessWidget {
     this.aoRemover,
     this.podeRemover,
     this.aoTocarItem,
+    this.opcional = false,
   });
 
   @override
@@ -40,6 +42,7 @@ class SecaoListaAtividade<T> extends StatelessWidget {
     if (abrir == null) {
       return SecaoEditavel(
         titulo: titulo,
+        opcional: opcional,
         conteudo: ChipsLista<T>(
           itens: itens,
           rotuloItem: rotuloItem,
@@ -51,6 +54,7 @@ class SecaoListaAtividade<T> extends StatelessWidget {
 
     return SecaoEditavel(
       titulo: titulo,
+      opcional: opcional,
       conteudo: SeletorMultiploAtividade<T>(
         icone: icone,
         rotuloVazio: rotuloVazio,

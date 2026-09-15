@@ -31,7 +31,7 @@ Future<bool> confirmarAcao(
           onPressed: () => Navigator.pop(context, false),
           child: Text(
             rotuloCancelar,
-            style: const TextStyle(color: Colors.grey),
+            style: const TextStyle(color: AppCores.textoSecundario),
           ),
         ),
         TextButton(
@@ -67,17 +67,20 @@ List<Widget> acoesDeDialogo({
   required String rotuloConfirmar,
   required VoidCallback? aoConfirmar,
   VoidCallback? aoCancelar,
+  bool? cancelarHabilitado,
   String rotuloCancelar = 'Cancelar',
-  Color corConfirmar = AppCores.verdePrimario,
+  Color corConfirmar = AppCores.acao,
 }) {
+  final podeCancelar = cancelarHabilitado ?? (aoConfirmar != null);
+
   return [
     TextButton(
-      onPressed: aoConfirmar == null
-          ? null
-          : (aoCancelar ?? () => Navigator.of(context).pop()),
+      onPressed: podeCancelar
+          ? (aoCancelar ?? () => Navigator.of(context).pop())
+          : null,
       child: Text(
         rotuloCancelar,
-        style: const TextStyle(color: Colors.grey),
+        style: const TextStyle(color: AppCores.textoSecundario),
       ),
     ),
     TextButton(

@@ -4,6 +4,7 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultur
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_multiplo_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/selecionar_insumos_modal.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_suspenso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:provider/provider.dart';
@@ -19,29 +20,14 @@ mixin CamposTratoCulturalMixin<T extends StatefulWidget> on State<T> {
       tipoTratoSelecionado != null || insumosSelecionados.isNotEmpty;
 
   Widget construirSeletorTipoTrato(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        rotuloDeCampo('Tipo de trato'),
-        DropdownButtonFormField<TipoTrato>(
-          initialValue: tipoTratoSelecionado,
-          isExpanded: true,
-          decoration: decoracaoDeSeletor(),
-          hint: const Text(
-            'Selecione o tipo',
-            style: TextStyle(color: Colors.black26, fontSize: 14),
-          ),
-          items: viewModelDoTrato.tiposTrato.map((tipo) {
-            return DropdownMenuItem(
-              value: tipo,
-              child: Text(tipo.descricao, overflow: TextOverflow.ellipsis),
-            );
-          }).toList(),
-          onChanged: (valor) => setState(() => tipoTratoSelecionado = valor),
-          validator: (valor) => valor == null ? 'Obrigatório' : null,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
-        ),
-      ],
+    return CampoSuspenso<TipoTrato>(
+      rotulo: 'Tipo de trato',
+      valor: tipoTratoSelecionado,
+      itens: viewModelDoTrato.tiposTrato,
+      rotuloItem: (tipo) => tipo.descricao,
+      dica: 'Selecione o tipo',
+      aoSelecionar: (valor) => setState(() => tipoTratoSelecionado = valor),
+      validador: (valor) => valor == null ? 'Obrigatório' : null,
     );
   }
 
@@ -49,7 +35,7 @@ mixin CamposTratoCulturalMixin<T extends StatefulWidget> on State<T> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        rotuloDeCampo('Insumos utilizados'),
+        rotuloDeCampo(context, 'Insumos utilizados', opcional: true),
         SeletorMultiploAtividade<InsumoUtilizado>(
           icone: Icons.inventory_2_outlined,
           rotuloVazio: 'Selecionar insumos',

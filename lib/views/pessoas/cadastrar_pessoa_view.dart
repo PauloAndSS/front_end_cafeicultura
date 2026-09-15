@@ -11,13 +11,14 @@ import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/meeiro.d
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/prestador.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_suspenso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_identificacao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_formulario.dart';
 
 class CadastrarPessoaView extends StatefulWidget {
   final TipoPapel papel;
@@ -95,14 +96,14 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
   PapelPessoa _montarPapel(Pessoa pessoa) {
     return switch (_papel) {
       TipoPapel.funcionario => Funcionario(
-          pessoa: pessoa,
-          salario: double.tryParse(
-            _salarioController.text.replaceAll('.', '').replaceAll(',', '.'),
-          ),
-          ctps: _ctpsController.text.isNotEmpty
-              ? _ctpsController.text.trim()
-              : null,
+        pessoa: pessoa,
+        salario: double.tryParse(
+          _salarioController.text.replaceAll('.', '').replaceAll(',', '.'),
         ),
+        ctps: _ctpsController.text.isNotEmpty
+            ? _ctpsController.text.trim()
+            : null,
+      ),
       TipoPapel.meeiro => Meeiro(pessoa: pessoa),
       TipoPapel.fornecedor => Fornecedor(pessoa: pessoa),
       TipoPapel.prestador => PrestadorDeServico(pessoa: pessoa),
@@ -149,20 +150,11 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
       },
       child: Scaffold(
         backgroundColor: AppCores.fundo,
-        appBar: AppBarPadrao(
-          titulo: 'Cadastrar ${_papel.titulo}',
-          cor: AppCores.verdeAuth,
-          corConteudo: null,
-        ),
+        appBar: AppBarPadrao(titulo: 'Cadastrar ${_papel.titulo}'),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
-          child: Container(
-            padding: const EdgeInsets.all(24.0),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Form(
+          child: CartaoFormulario(
+            filho: Form(
               key: _formKey,
               child: ListenableBuilder(
                 listenable: _viewModel,
@@ -170,21 +162,14 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     if (_papel.aceitaPessoaJuridica) ...[
-                      rotuloDeCampo('Tipo de Cadastro'),
-                      DropdownButtonFormField<bool>(
-                        initialValue: _isPessoaFisica,
-                        decoration: decoracaoDeSeletor(),
-                        items: const [
-                          DropdownMenuItem(
-                            value: true,
-                            child: Text('Pessoa Física (CPF)'),
-                          ),
-                          DropdownMenuItem(
-                            value: false,
-                            child: Text('Pessoa Jurídica (CNPJ)'),
-                          ),
-                        ],
-                        onChanged: (valor) {
+                      CampoSuspenso<bool>(
+                        rotulo: 'Tipo de Cadastro',
+                        valor: _isPessoaFisica,
+                        itens: const [true, false],
+                        rotuloItem: (fisica) => fisica
+                            ? 'Pessoa Física (CPF)'
+                            : 'Pessoa Jurídica (CNPJ)',
+                        aoSelecionar: (valor) {
                           if (valor != null) {
                             setState(() => _isPessoaFisica = valor);
                           }
@@ -209,7 +194,7 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: AppCores.textoPrimario,
                         ),
                       ),
                       const Divider(height: 32),
@@ -224,8 +209,9 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                         label: 'Salário Base (R\$) (Opcional)',
                         controller: _salarioController,
                         hintText: '0.00',
-                        keyboardType:
-                            const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         inputFormatters: [AppMasks.decimal],
                       ),
                     ],
@@ -236,7 +222,7 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                       width: double.infinity,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppCores.verdeSecundario,
+                          backgroundColor: AppCores.acao,
                           padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
@@ -248,14 +234,14 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(
-                                  color: Colors.white,
+                                  color: AppCores.sobreAcao,
                                   strokeWidth: 2,
                                 ),
                               )
                             : Text(
                                 'Salvar ${_papel.titulo}',
                                 style: const TextStyle(
-                                  color: Colors.white,
+                                  color: AppCores.sobreAcao,
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
                                 ),

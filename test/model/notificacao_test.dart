@@ -35,11 +35,12 @@ void main() {
   });
 
   group('TipoNotificacao', () {
-    test('deCodigo mapeia os cinco codigos do backend', () {
+    test('deCodigo mapeia os seis codigos do backend', () {
       expect(TipoNotificacao.deCodigo('FUTURO_SETE')?.diasAteEvento, 7);
       expect(TipoNotificacao.deCodigo('FUTURO_TRES')?.diasAteEvento, 3);
       expect(TipoNotificacao.deCodigo('FUTURO_DOIS')?.diasAteEvento, 2);
       expect(TipoNotificacao.deCodigo('FUTURO_UM')?.diasAteEvento, 1);
+      expect(TipoNotificacao.deCodigo('PRESENTE')?.diasAteEvento, 0);
       expect(TipoNotificacao.deCodigo('PASSADO')?.diasAteEvento, -1);
     });
 
@@ -75,6 +76,18 @@ void main() {
       );
 
       expect(confirmacao.dataPrevistaDoEvento, DateTime(2026, 8, 26));
+    });
+
+    test('PRESENTE aponta para o proprio dia da criacao', () {
+      final doDia = notificacao(
+        id: 4,
+        tipoNotificacao: 'PRESENTE',
+        dataCriacao: '2026-09-15T05:00:00',
+      );
+
+      expect(doDia.dataPrevistaDoEvento, DateTime(2026, 9, 15));
+      expect(doDia.ehInterpretavel, isTrue);
+      expect(doDia.ehConfirmacao, isFalse);
     });
 
     test('atravessa a virada de mes sem somar 24 horas', () {
@@ -173,6 +186,46 @@ void main() {
       expect(lido.lida, isTrue);
       expect(lido.ids, grupo.ids);
       expect(lido.representante.id, grupo.representante.id);
+    });
+  });
+
+  group('HorizonteDaNotificacao', () {
+    test('separa vencido, hoje, amanha e proximos', () {
+      expect(
+        HorizonteDaNotificacao.de(emDias(-1)),
+        HorizonteDaNotificacao.vencido,
+      );
+      expect(HorizonteDaNotificacao.de(emDias(0)), HorizonteDaNotificacao.hoje);
+      expect(
+        HorizonteDaNotificacao.de(emDias(1)),
+        HorizonteDaNotificacao.amanha,
+      );
+      expect(
+        HorizonteDaNotificacao.de(emDias(2)),
+        HorizonteDaNotificacao.proximos,
+      );
+      expect(
+        HorizonteDaNotificacao.de(emDias(7)),
+        HorizonteDaNotificacao.proximos,
+      );
+    });
+
+    test('o passado distante continua vencido', () {
+      expect(
+        HorizonteDaNotificacao.de(emDias(-30)),
+        HorizonteDaNotificacao.vencido,
+      );
+    });
+
+    test('ignora a hora do dia', () {
+      final base = hoje();
+
+      expect(
+        HorizonteDaNotificacao.de(
+          DateTime(base.year, base.month, base.day, 23, 59),
+        ),
+        HorizonteDaNotificacao.hoje,
+      );
     });
   });
 

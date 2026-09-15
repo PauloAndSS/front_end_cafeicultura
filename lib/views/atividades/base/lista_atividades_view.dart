@@ -16,6 +16,7 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dar
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/reinicio_de_secao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/botao_cadastro_flutuante.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 
 const _margemParaProximaPagina = 300.0;
@@ -55,7 +56,10 @@ class ListaAtividadesView<T extends EventoAgricola> extends StatefulWidget {
 
 class _ListaAtividadesViewState<T extends EventoAgricola>
     extends State<ListaAtividadesView<T>>
-    with AutomaticKeepAliveClientMixin, ReinicioDeSecaoMixin {
+    with
+        AutomaticKeepAliveClientMixin,
+        ReinicioDeSecaoMixin,
+        RolagemEstendeCadastroMixin {
   @override
   bool get wantKeepAlive => true;
 
@@ -210,21 +214,21 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
     return Scaffold(
       backgroundColor: AppCores.fundo,
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _abrirCadastro,
-        backgroundColor: AppCores.verdePrimario,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: Text(
-          widget.rotuloCadastrar,
-          style: const TextStyle(color: Colors.white),
-        ),
+      floatingActionButton: BotaoCadastroFlutuante(
+        rotulo: widget.rotuloCadastrar,
+        aoTocar: _abrirCadastro,
+        estendido: cadastroEstendido,
       ),
-      body: SafeArea(
-        child: ListenableBuilder(
-          listenable: Listenable.merge([_viewModel, _agendaViewModel]),
-          builder: (context, _) {
-            return _construirCorpo(propriedadesVM.nomeDaPropriedadeSelecionada);
-          },
+      body: observarRolagemDoCadastro(
+        SafeArea(
+          child: ListenableBuilder(
+            listenable: Listenable.merge([_viewModel, _agendaViewModel]),
+            builder: (context, _) {
+              return _construirCorpo(
+                propriedadesVM.nomeDaPropriedadeSelecionada,
+              );
+            },
+          ),
         ),
       ),
     );
@@ -232,7 +236,7 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
 
   Widget _construirCorpo(String nomePropriedade) {
     return RefreshIndicator(
-      color: AppCores.verdePrimario,
+      color: AppCores.acao,
       onRefresh: _recarregar,
       child: CustomScrollView(
         controller: _controladorDeRolagem,
@@ -289,7 +293,7 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
       child: SizedBox(
         height: 160,
         child: Center(
-          child: CircularProgressIndicator(color: AppCores.verdePrimario),
+          child: CircularProgressIndicator(),
         ),
       ),
     );
@@ -321,7 +325,7 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
   Widget _construirErroDoCalendario(String mensagem) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppCores.superficie,
         borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.all(24),
@@ -355,7 +359,7 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 32.0),
       child: Text(
         widget.construirMensagemVazia(_viewModel.statusAtual, nomePropriedade),
-        style: const TextStyle(fontSize: 16, color: Colors.black54),
+        style: const TextStyle(fontSize: 16, color: AppCores.textoSecundario),
         textAlign: TextAlign.center,
       ),
     );

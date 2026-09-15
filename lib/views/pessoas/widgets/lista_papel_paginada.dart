@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_pessoas_mixin.dart';
-import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/pessoas/acoes_pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 
@@ -17,7 +17,7 @@ class ListaPapelPaginada extends StatefulWidget {
   final TipoPapel papel;
   final String termoBusca;
   final Widget Function(BuildContext contexto, PapelPessoa papelPessoa)
-      construirItem;
+  construirItem;
 
   const ListaPapelPaginada({
     super.key,
@@ -69,8 +69,10 @@ class _ListaPapelPaginadaState extends State<ListaPapelPaginada>
     if (termo.isEmpty) return todos;
 
     return todos
-        .where((papel) =>
-            papel.pessoa.nomeParaExibicao.toLowerCase().contains(termo))
+        .where(
+          (papel) =>
+              papel.pessoa.nomeParaExibicao.toLowerCase().contains(termo),
+        )
         .toList();
   }
 
@@ -91,9 +93,7 @@ class _ListaPapelPaginadaState extends State<ListaPapelPaginada>
     final carregados = catalogo.pessoasDe(papel);
 
     if (catalogo.isCarregando(papel)) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppCores.verdePrimario),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     final mensagemErro = catalogo.mensagemErroDe(papel);
@@ -121,17 +121,29 @@ class _ListaPapelPaginadaState extends State<ListaPapelPaginada>
         mensagem: 'Procurando mais pessoas...',
         acao: Padding(
           padding: EdgeInsets.only(top: 16),
-          child: CircularProgressIndicator(color: AppCores.verdePrimario),
+          child: CircularProgressIndicator(),
         ),
       );
     }
 
     if (visiveis.isEmpty) {
+      final semBusca = widget.termoBusca.isEmpty;
+
       return EstadoVazio(
-        icone: Icons.group_off_outlined,
-        mensagem: widget.termoBusca.isEmpty
-            ? 'Nenhum ${papel.rotulo} cadastrado.'
+        icone: semBusca
+            ? Icons.person_add_alt_1_outlined
+            : Icons.group_off_outlined,
+        mensagem: semBusca
+            ? 'Nenhum ${papel.rotulo} cadastrado.\n'
+                  'Cadastre o primeiro para selecioná-lo aqui.'
             : 'Nenhum ${papel.rotulo} encontrado com "${widget.termoBusca}".',
+        acao: semBusca
+            ? CustomButton(
+                text: 'Cadastrar ${papel.titulo}',
+                onPressed: () =>
+                    cadastrarPessoaDoPapel(context, catalogo, papel),
+              )
+            : null,
       );
     }
 

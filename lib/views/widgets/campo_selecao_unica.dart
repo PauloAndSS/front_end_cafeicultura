@@ -48,12 +48,12 @@ class CampoSelecaoUnica<T> extends StatelessWidget {
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
               border: Border.all(
-                color: estado.hasError ? AppCores.erro : AppCores.borda,
+                color: estado.hasError ? AppCores.erro : AppCores.bordaCampo,
               ),
             ),
             child: Row(
               children: [
-                Icon(icone, color: AppCores.verdePrimario),
+                Icon(icone, color: AppCores.acao),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -62,11 +62,11 @@ class CampoSelecaoUnica<T> extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 14,
                       color:
-                          selecionado == null ? Colors.black26 : Colors.black87,
+                          selecionado == null ? AppCores.textoTerciario : AppCores.textoPrimario,
                     ),
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: Colors.black38),
+                const Icon(Icons.chevron_right, color: AppCores.textoTerciario),
               ],
             ),
           ),

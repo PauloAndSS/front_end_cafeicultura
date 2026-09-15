@@ -22,7 +22,7 @@ Future<List<InsumoUtilizado>?> mostrarSelecaoInsumos({
   return showModalBottomSheet<List<InsumoUtilizado>>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.white,
+    backgroundColor: AppCores.superficie,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
@@ -172,12 +172,19 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
   }
 
   Widget _construirConteudo() {
-    final temCatalogo = widget.viewModel.insumos.isNotEmpty;
+    final vm = widget.viewModel;
+
+    final temCatalogo = vm.insumos.isNotEmpty;
 
     return Column(
       children: [
-        _construirAcaoCadastrar(),
-        if (temCatalogo) CampoBuscaModal(controller: _buscaController, dica: 'Buscar por descrição'),
+        if (temCatalogo || vm.mensagemErroInsumos != null)
+          _construirAcaoCadastrar(),
+        if (temCatalogo)
+          CampoBuscaModal(
+            controller: _buscaController,
+            dica: 'Buscar por descrição',
+          ),
         Expanded(child: _construirCorpo()),
       ],
     );
@@ -194,11 +201,11 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppCores.verdePrimario),
+            border: Border.all(color: AppCores.acao),
           ),
           child: const Row(
             children: [
-              Icon(Icons.add_circle_outline, color: AppCores.verdePrimario),
+              Icon(Icons.add_circle_outline, color: AppCores.acao),
               SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -206,7 +213,7 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: AppCores.verdePrimario,
+                    color: AppCores.acao,
                   ),
                 ),
               ),
@@ -222,7 +229,7 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
 
     if (vm.isCarregandoInsumos) {
       return const Center(
-        child: CircularProgressIndicator(color: AppCores.verdePrimario),
+        child: CircularProgressIndicator(),
       );
     }
 
@@ -256,10 +263,6 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
       return EstadoVazio(
         icone: Icons.search_off,
         mensagem: 'Nenhum insumo encontrado com "$_termoBusca".',
-        acao: CustomButton(
-          text: 'Cadastrar insumo',
-          onPressed: _abrirCadastroInsumo,
-        ),
       );
     }
 
@@ -274,7 +277,7 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
         return ListTile(
           leading: Checkbox(
             value: selecionado != null,
-            activeColor: AppCores.verdePrimario,
+            activeColor: AppCores.acao,
             onChanged: (marcado) {
               if (marcado == true) {
                 _marcar(insumo);
@@ -288,11 +291,11 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
             selecionado == null
                 ? insumo.medida.rotulo
                 : 'Quantidade: ${selecionado.qtdFormatada}',
-            style: const TextStyle(fontSize: 12, color: Colors.black54),
+            style: const TextStyle(fontSize: 12, color: AppCores.textoSecundario),
           ),
           trailing: selecionado == null
               ? null
-              : const Icon(Icons.edit_outlined, color: Colors.black38, size: 20),
+              : const Icon(Icons.edit_outlined, color: AppCores.textoTerciario, size: 20),
           onTap: () => _marcar(insumo),
         );
       },

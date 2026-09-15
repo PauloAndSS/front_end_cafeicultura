@@ -13,6 +13,8 @@ class CampoDeData extends StatelessWidget {
 
   final bool obrigatorio;
 
+  final bool opcional;
+
   const CampoDeData({
     super.key,
     required this.label,
@@ -20,6 +22,7 @@ class CampoDeData extends StatelessWidget {
     required this.aoTocar,
     this.hintText = 'Selecione a data',
     this.obrigatorio = true,
+    this.opcional = false,
   });
 
   @override
@@ -32,6 +35,7 @@ class CampoDeData extends StatelessWidget {
           controller: controller,
           hintText: hintText,
           readOnly: true,
+          opcional: opcional,
           validator: obrigatorio ? Validator.obrigatorio : null,
         ),
       ),

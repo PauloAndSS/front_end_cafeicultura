@@ -27,7 +27,7 @@ class BotaoEncerrar extends StatelessWidget {
       icon: const Icon(Icons.archive_outlined, size: 20),
       label: Text(carregando ? rotuloCarregando : rotulo),
       style: OutlinedButton.styleFrom(
-        foregroundColor: AppCores.avisoTexto,
+        foregroundColor: AppCores.aviso,
         side: const BorderSide(color: AppCores.aviso),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),

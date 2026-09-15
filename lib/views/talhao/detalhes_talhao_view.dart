@@ -23,6 +23,7 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_selector
 import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/atividades_mudaram.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_data.dart';
@@ -124,7 +125,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     }
   }
 
-  void _carregarAtividades() {
+  Future<void> _carregarAtividades() async {
     final idPropriedade = context
         .read<PropriedadesUsuarioViewModel>()
         .idPropriedadeSelecionada;
@@ -132,7 +133,11 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
 
     if (idPropriedade == null || idTalhao == null) return;
 
-    _atividadesViewModel.carregar(idPropriedade, idTalhao);
+    await _atividadesViewModel.carregar(idPropriedade, idTalhao);
+
+    if (!mounted) return;
+
+    await _atividadesViewModel.conferirSeTemAtividades();
   }
 
   void _carregarRelatorio() {
@@ -145,12 +150,19 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
 
     final safraVM = context.read<SafraViewModel>();
 
-    if (!safraVM.dadosCarregados || safraVM.propriedadeIdAtual != idPropriedade) {
+    if (!safraVM.dadosCarregados ||
+        safraVM.propriedadeIdAtual != idPropriedade) {
       safraVM.carregarDadosDaPropriedade(idPropriedade);
       return;
     }
 
     _selecionarSafraDoRelatorio(safraVM.safraSelecionada);
+  }
+
+  void _escolherSafraDoRelatorio(Safra safra) {
+    context.read<SafraViewModel>().selecionarSafra(safra);
+
+    _selecionarSafraDoRelatorio(safra);
   }
 
   void _selecionarSafraDoRelatorio(Safra? safra) {
@@ -172,10 +184,8 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     final alterou = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => DetalhesTratoCulturalView(
-          trato: trato,
-          talhao: widget.talhao,
-        ),
+        builder: (_) =>
+            DetalhesTratoCulturalView(trato: trato, talhao: widget.talhao),
       ),
     );
 
@@ -208,12 +218,15 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
           'Deseja encerrar o talhão "${widget.talhao.nomeExibicao}" '
           'na data ${formatarDataBr(dataFimEscolhida)}?',
       rotuloConfirmar: 'Encerrar talhão',
-      corConfirmar: AppCores.avisoTexto,
+      corConfirmar: AppCores.aviso,
       complemento: const CaixaAvisoAtencao(
-        mensagem: 'O talhão sai da lista de Ativos e passa a aparecer na aba '
-            'Encerrados, com todo o histórico preservado. Você não poderá '
-            'mais registrar nem alterar atividades nele, e o aplicativo não '
-            'oferece como reativá-lo.',
+        mensagem: 'Encerrar não apaga nada, mas não tem volta pelo aplicativo.',
+        itens: [
+          'O talhão sai de Ativos e passa para a aba Encerrados, com todo o '
+              'histórico preservado.',
+          'Você não poderá mais registrar nem alterar atividades nele.',
+          'O aplicativo não oferece como reativá-lo.',
+        ],
       ),
     );
 
@@ -228,7 +241,10 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
       if (sucesso == true) {
         _onSucesso('Talhão encerrado. Ele agora está na aba "Encerrados".');
       } else {
-        mostrarErro(context, _viewModel.mensagemErro ?? 'Erro ao encerrar talhão.');
+        mostrarErro(
+          context,
+          _viewModel.mensagemErro ?? 'Erro ao encerrar talhão.',
+        );
       }
     }
   }
@@ -241,7 +257,10 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     if (sucesso == true) {
       _onSucesso('Talhão excluído com sucesso!');
     } else {
-      mostrarErro(context, _viewModel.mensagemErro ?? 'Erro ao excluir talhão.');
+      mostrarErro(
+        context,
+        _viewModel.mensagemErro ?? 'Erro ao excluir talhão.',
+      );
     }
   }
 
@@ -263,7 +282,10 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
             padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
             sliver: SliverToBoxAdapter(
               child: ListenableBuilder(
-                listenable: _viewModel,
+                listenable: Listenable.merge([
+                  _viewModel,
+                  _atividadesViewModel,
+                ]),
                 builder: (context, child) =>
                     _construirCabecalhoTalhao(estaEncerrado),
               ),
@@ -287,10 +309,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
         ],
         body: TabBarView(
           controller: _abas,
-          children: [
-            _construirAbaAtividades(),
-            _construirAbaRelatorio(),
-          ],
+          children: [_construirAbaAtividades(), _construirAbaRelatorio()],
         ),
       ),
     );
@@ -303,7 +322,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
         CartaoDetalhe(
           titulo: 'Informações do Talhão',
           selo: estaEncerrado
-              ? const BadgeTexto(texto: 'Encerrado', cor: Colors.red)
+              ? const BadgeTexto(texto: 'Encerrado', cor: AppCores.erro)
               : null,
           conteudo: [
             LinhaInfo(
@@ -356,9 +375,10 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
         if (estaEncerrado) ...[
           const CaixaAviso(
             icone: Icons.info_outline,
-            cor: Colors.orange,
-            corDoTexto: Colors.brown,
-            mensagem: 'Este talhão está encerrado. Não é possível '
+            cor: AppCores.aviso,
+            corDoTexto: AppCores.aviso,
+            mensagem:
+                'Este talhão está encerrado. Não é possível '
                 'registrar atividades nem alterá-lo — apenas '
                 'visualizar.',
           ),
@@ -366,6 +386,14 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
         ],
 
         const Divider(color: AppCores.borda),
+
+        if (_atividadesViewModel.temAtividades && !estaEncerrado) ...[
+          const CaixaAvisoAtencao(
+            mensagem:
+                'Use "Encerrar talhão" para tirá-lo de Ativos sem perder o histórico.',
+          ),
+          const SizedBox(height: 12),
+        ],
 
         Row(
           children: [
@@ -375,50 +403,59 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
                 carregando: _viewModel.isLoading,
                 aoTocar: _confirmarEncerramento,
               ),
-            Expanded(
-              child: BotaoExcluir(
-                titulo: 'Excluir Talhão?',
-                mensagem:
-                    'Tem certeza que deseja excluir permanentemente o '
-                    'talhão "${widget.talhao.nomeExibicao}"? '
-                    'Esta ação não poderá ser desfeita.',
-                bloqueado: _viewModel.isLoading,
-                aoConfirmar: _excluir,
+            if (!_atividadesViewModel.temAtividades &&
+                _atividadesViewModel.sabeSeTemAtividades)
+              Expanded(
+                child: BotaoExcluir(
+                  titulo: 'Excluir Talhão?',
+                  mensagem:
+                      'Tem certeza que deseja excluir permanentemente o '
+                      'talhão "${widget.talhao.nomeExibicao}"? '
+                      'Esta ação não poderá ser desfeita.',
+                  bloqueado: _viewModel.isLoading,
+                  aoConfirmar: _excluir,
+                ),
               ),
-            ),
           ],
         ),
       ],
     );
   }
+
   Widget _construirAbaAtividades() {
     return Builder(
       builder: (context) => NotificationListener<ScrollNotification>(
         onNotification: _onScroll,
-        child: CustomScrollView(
-          key: const PageStorageKey('atividades'),
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            SliverOverlapInjector(
-              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
-              sliver: SliverToBoxAdapter(
-                child: ListenableBuilder(
-                  listenable: _atividadesViewModel,
-                  builder: (context, child) => _construirCabecalhoAtividades(),
+        child: RefreshIndicator(
+          onRefresh: _carregarAtividades,
+          child: CustomScrollView(
+            key: const PageStorageKey('atividades'),
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              SliverOverlapInjector(
+                handle: NestedScrollView.sliverOverlapAbsorberHandleFor(
+                  context,
                 ),
               ),
-            ),
-            SliverPadding(
-              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-              sliver: ListenableBuilder(
-                listenable: _atividadesViewModel,
-                builder: (context, child) => _construirSliverAtividades(),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
+                sliver: SliverToBoxAdapter(
+                  child: ListenableBuilder(
+                    listenable: _atividadesViewModel,
+                    builder: (context, child) =>
+                        _construirCabecalhoAtividades(),
+                  ),
+                ),
               ),
-            ),
-          ],
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+                sliver: ListenableBuilder(
+                  listenable: _atividadesViewModel,
+                  builder: (context, child) => _construirSliverAtividades(),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -426,23 +463,27 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
 
   Widget _construirAbaRelatorio() {
     return Builder(
-      builder: (context) => CustomScrollView(
-        key: const PageStorageKey('relatorio'),
-        physics: const AlwaysScrollableScrollPhysics(),
-        slivers: [
-          SliverOverlapInjector(
-            handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-            sliver: SliverToBoxAdapter(
-              child: ListenableBuilder(
-                listenable: _relatorioViewModel,
-                builder: (context, child) => _construirSecaoRelatorio(context),
+      builder: (context) => RefreshIndicator(
+        onRefresh: _relatorioViewModel.recarregar,
+        child: CustomScrollView(
+          key: const PageStorageKey('relatorio'),
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            SliverOverlapInjector(
+              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+              sliver: SliverToBoxAdapter(
+                child: ListenableBuilder(
+                  listenable: _relatorioViewModel,
+                  builder: (context, child) =>
+                      _construirSecaoRelatorio(context),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -462,15 +503,19 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     if (safraVM.isLoading) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator(color: AppCores.verdePrimario)),
+        child: Center(child: CircularProgressIndicator()),
       );
     }
 
     if (safraVM.safras.isEmpty) {
-      return _construirCaixaAviso('Nenhuma safra cadastrada nesta propriedade.');
+      return _construirCaixaAviso(
+        'Nenhuma safra cadastrada nesta propriedade.',
+      );
     }
 
-    if (_relatorioViewModel.safraSelecionada == null && safraVM.safraSelecionada != null) {
+    if (safraVM.safraSelecionada != null &&
+        _relatorioViewModel.safraSelecionada?.id !=
+            safraVM.safraSelecionada!.id) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _selecionarSafraDoRelatorio(safraVM.safraSelecionada);
       });
@@ -484,7 +529,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
           safraSelecionada: _relatorioViewModel.safraSelecionada,
           mostrarAcoes: false,
           isLoading: _relatorioViewModel.isLoading,
-          onSelecionar: _selecionarSafraDoRelatorio,
+          onSelecionar: _escolherSafraDoRelatorio,
         ),
         const SizedBox(height: 12),
         RelatorioTalhaoWidget(
@@ -531,9 +576,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
       return const SliverToBoxAdapter(
         child: Padding(
           padding: EdgeInsets.symmetric(vertical: 24),
-          child: Center(
-            child: CircularProgressIndicator(color: AppCores.verdePrimario),
-          ),
+          child: Center(child: CircularProgressIndicator()),
         ),
       );
     }
@@ -590,24 +633,18 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
       StatusEvento.finalizado => ' finalizada',
     };
 
-    return _construirCaixaAviso(
-      'Nenhuma atividade$statusTexto neste talhão.',
-    );
+    return _construirCaixaAviso('Nenhuma atividade$statusTexto neste talhão.');
   }
 
   Widget _construirCaixaAviso(String mensagem) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.black12),
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppEstilos.cartao(),
       child: Center(
         child: Text(
           mensagem,
-          style: const TextStyle(fontSize: 14, color: Colors.black45),
+          style: const TextStyle(fontSize: 14, color: AppCores.textoSecundario),
           textAlign: TextAlign.center,
         ),
       ),
@@ -627,11 +664,12 @@ class _CabecalhoAbas extends SliverPersistentHeaderDelegate {
   double get maxExtent => alturaDaFaixaDeAbas;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return DecoratedBox(
-      decoration: decoracaoDaFaixaDeAbas(AppCores.fundo),
-      child: abas,
-    );
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return FaixaDeAbas(corDeFundo: AppCores.fundo, abas: abas);
   }
 
   @override

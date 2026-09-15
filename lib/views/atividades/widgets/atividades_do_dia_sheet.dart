@@ -72,7 +72,7 @@ class _PainelAtividadesDoDia<T extends EventoAgricola> extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
       child: Row(
         children: [
-          const Icon(Icons.event, color: AppCores.verdeSecundario, size: 24),
+          const Icon(Icons.event, color: AppCores.acao, size: 24),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -80,7 +80,7 @@ class _PainelAtividadesDoDia<T extends EventoAgricola> extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: AppCores.textoPrimario,
               ),
             ),
           ),
@@ -89,7 +89,7 @@ class _PainelAtividadesDoDia<T extends EventoAgricola> extends StatelessWidget {
               atividades.length == 1
                   ? '1 atividade'
                   : '${atividades.length} atividades',
-              style: const TextStyle(fontSize: 13, color: Colors.black54),
+              style: const TextStyle(fontSize: 13, color: AppCores.textoSecundario),
             ),
         ],
       ),
@@ -140,12 +140,12 @@ class _DiaSemAtividades extends StatelessWidget {
       padding: EdgeInsets.symmetric(horizontal: 24, vertical: 16),
       child: Column(
         children: [
-          Icon(Icons.event_busy, size: 48, color: AppCores.verdeSecundario),
+          Icon(Icons.event_busy, size: 48, color: AppCores.acao),
           SizedBox(height: 12),
           Text(
             'Nenhuma atividade neste dia.',
             textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 15, color: Colors.black54),
+            style: TextStyle(fontSize: 15, color: AppCores.textoSecundario),
           ),
         ],
       ),

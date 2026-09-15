@@ -4,8 +4,12 @@ import 'package:intl/intl.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/clima/weather_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/model/clima/weather_model.dart';
+import 'package:frond_end_cafeicultura_mobile/model/propriedade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/corpo_com_estado.dart';
+import 'package:geolocator/geolocator.dart';
 
 class WeatherWidget extends StatefulWidget {
   const WeatherWidget({super.key});
@@ -15,27 +19,34 @@ class WeatherWidget extends StatefulWidget {
 }
 
 class _WeatherWidgetState extends State<WeatherWidget> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final vm = context.read<WeatherViewModel>();
-      if (vm.allWeatherTimeline.isEmpty && !vm.isLoading) {
-        // Agora busca via GPS
-        vm.fetchWeatherForCurrentLocation();
-      }
-    });
+  void _carregar(Propriedade? propriedade, {bool forcar = false}) {
+    context.read<WeatherViewModel>().carregarPrevisao(
+      propriedade,
+      forcar: forcar,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final vm = context.watch<WeatherViewModel>();
+    final propriedade = context
+        .watch<PropriedadesUsuarioViewModel>()
+        .propriedadeSelecionada;
+
+    if (vm.precisaCarregarPara(propriedade)) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _carregar(propriedade);
+      });
+    }
 
     return CorpoComEstado(
       isLoading: vm.isLoading,
       mensagemErro: vm.errorMessage,
-      aoTentarNovamente: () => vm.fetchWeatherForCurrentLocation(),
-      vazio: vm.allWeatherTimeline.isEmpty && !vm.isLoading,
+      aoTentarNovamente: vm.permissaoDeLocalizacaoNegada
+          ? Geolocator.openAppSettings
+          : () => _carregar(propriedade, forcar: true),
+      vazio: vm.allWeatherTimeline.isEmpty,
+      manterConteudoAoRecarregar: true,
       construirVazio: (_) => _buildCard(child: _buildIndisponivelGeral()),
       construirConteudo: (_) => _buildCard(child: _buildConteudo(vm)),
     );
@@ -45,15 +56,8 @@ class _WeatherWidgetState extends State<WeatherWidget> {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.black12),
-      ),
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 250),
-        child: child,
-      ),
+      decoration: AppEstilos.cartao(),
+      child: child,
     );
   }
 
@@ -64,7 +68,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
       key: const ValueKey('conteudo'),
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildCabecalho(),
+        _buildCabecalho(vm),
         const SizedBox(height: 16),
         SizedBox(
           height: 125,
@@ -84,41 +88,60 @@ class _WeatherWidgetState extends State<WeatherWidget> {
     );
   }
 
-  Widget _buildCabecalho() {
+  Widget _buildCabecalho(WeatherViewModel vm) {
     return Row(
       children: [
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: AppCores.verdePrimario.withValues(alpha: 0.12),
+            color: AppCores.acao.withValues(alpha: 0.12),
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Icon(
             Icons.cloud_rounded,
             size: 20,
-            color: AppCores.verdePrimario,
+            color: AppCores.acao,
           ),
         ),
         const SizedBox(width: 12),
-        const Expanded(
+        Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'Previsão do Tempo',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: AppCores.verdePrimario,
+                  color: AppCores.acao,
                 ),
               ),
               Text(
-                'Próximos dias',
-                style: TextStyle(fontSize: 12, color: Colors.black54),
+                vm.localidade ?? 'Localização do aparelho',
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppCores.textoSecundario,
+                ),
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
         ),
+        if (!vm.previsaoEhDaPropriedade)
+          const Tooltip(
+            message:
+                'Previsão do aparelho, não da propriedade. Cadastre a cidade '
+                'da propriedade para a previsão certa.',
+            triggerMode: TooltipTriggerMode.tap,
+            child: Padding(
+              padding: EdgeInsets.only(left: 8),
+              child: Icon(
+                Icons.my_location_outlined,
+                size: 18,
+                color: AppCores.aviso,
+              ),
+            ),
+          ),
       ],
     );
   }
@@ -134,13 +157,13 @@ class _WeatherWidgetState extends State<WeatherWidget> {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.redAccent.withValues(alpha: 0.1),
+                color: AppCores.erro.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
                 Icons.cloud_off_rounded,
                 size: 20,
-                color: Colors.redAccent,
+                color: AppCores.erro,
               ),
             ),
             const SizedBox(width: 12),
@@ -149,7 +172,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
-                color: AppCores.verdePrimario,
+                color: AppCores.acao,
               ),
             ),
           ],
@@ -157,11 +180,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
         const SizedBox(height: 14),
         const Row(
           children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 20,
-              color: Colors.redAccent,
-            ),
+            Icon(Icons.error_outline_rounded, size: 20, color: AppCores.erro),
             SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -169,7 +188,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                  color: AppCores.textoPrimario,
                 ),
               ),
             ),
@@ -238,13 +257,11 @@ class _WeatherDayCard extends StatelessWidget {
     final dayOfWeekFormatter = DateFormat('E', 'pt_BR');
     final dateFormatter = DateFormat('dd/MM');
 
-    final backgroundColor = isToday
-        ? AppCores.verdePrimario
-        : Colors.transparent;
-    final textColor = isToday ? Colors.white : Colors.black87;
+    final backgroundColor = isToday ? AppCores.acao : Colors.transparent;
+    final textColor = isToday ? AppCores.sobreAcao : AppCores.textoPrimario;
     final secondaryTextColor = isToday
-        ? Colors.white.withValues(alpha: 0.8)
-        : Colors.black54;
+        ? AppCores.sobreAcao.withValues(alpha: 0.8)
+        : AppCores.textoSecundario;
 
     return Container(
       width: 76,
@@ -252,7 +269,6 @@ class _WeatherDayCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(12.0),
-        border: isToday ? null : Border.all(color: Colors.black12),
       ),
       padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
       child: Column(

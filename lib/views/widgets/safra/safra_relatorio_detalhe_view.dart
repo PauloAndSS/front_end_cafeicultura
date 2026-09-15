@@ -30,8 +30,7 @@ class SafraRelatorioDetalheView extends StatelessWidget {
       backgroundColor: AppCores.fundo,
       appBar: AppBar(
         title: const Text('Relatório da safra'),
-        backgroundColor: AppCores.verdeSecundario,
-        foregroundColor: Colors.white,
+        foregroundColor: AppCores.sobreCasca,
         elevation: 0,
       ),
       body: SingleChildScrollView(

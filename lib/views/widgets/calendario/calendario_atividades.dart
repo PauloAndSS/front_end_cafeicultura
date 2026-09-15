@@ -5,6 +5,7 @@ import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/calendario/seletor_mes_ano.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
 
 const _anosDeMargem = 5;
 
@@ -105,17 +106,7 @@ class _CalendarioAtividadesState<T extends Evento>
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: AppEstilos.cartao(),
       padding: const EdgeInsets.fromLTRB(4, 8, 4, 8),
       child: _construirCalendario(),
     );
@@ -141,16 +132,16 @@ class _CalendarioAtividadesState<T extends Evento>
       headerStyle: const HeaderStyle(
         formatButtonVisible: false,
         headerPadding: EdgeInsets.symmetric(vertical: 12),
-        leftChevronIcon: Icon(Icons.chevron_left, color: AppCores.verdePrimario),
-        rightChevronIcon: Icon(Icons.chevron_right, color: AppCores.verdePrimario),
+        leftChevronIcon: Icon(Icons.chevron_left, color: AppCores.acao),
+        rightChevronIcon: Icon(Icons.chevron_right, color: AppCores.acao),
       ),
       calendarBuilders: CalendarBuilders<T>(
         headerTitleBuilder: _construirTitulo,
         singleMarkerBuilder: _construirMarcador,
       ),
       daysOfWeekStyle: const DaysOfWeekStyle(
-        weekdayStyle: TextStyle(color: Colors.black54, fontSize: 12),
-        weekendStyle: TextStyle(color: Colors.black38, fontSize: 12),
+        weekdayStyle: TextStyle(color: AppCores.textoSecundario, fontSize: 12),
+        weekendStyle: TextStyle(color: AppCores.textoTerciario, fontSize: 12),
       ),
       calendarStyle: CalendarStyle(
         outsideDaysVisible: false,
@@ -158,14 +149,20 @@ class _CalendarioAtividadesState<T extends Evento>
         markerSize: 6,
         markerMargin: const EdgeInsets.symmetric(horizontal: 1),
         todayDecoration: const BoxDecoration(
-          color: AppCores.verdeSecundario,
           shape: BoxShape.circle,
+          border: Border.fromBorderSide(
+            BorderSide(color: AppCores.acento, width: 1.5),
+          ),
+        ),
+        todayTextStyle: const TextStyle(
+          color: AppCores.acento,
+          fontWeight: FontWeight.w700,
         ),
         selectedDecoration: const BoxDecoration(
-          color: AppCores.verdePrimario,
+          color: AppCores.acao,
           shape: BoxShape.circle,
         ),
-        weekendTextStyle: const TextStyle(color: Colors.black54),
+        weekendTextStyle: const TextStyle(color: AppCores.textoSecundario),
       ),
     );
   }
@@ -179,10 +176,10 @@ class _CalendarioAtividadesState<T extends Evento>
           style: const TextStyle(
             fontSize: 17,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: AppCores.textoPrimario,
           ),
         ),
-        const Icon(Icons.arrow_drop_down, color: AppCores.verdePrimario),
+        const Icon(Icons.arrow_drop_down, color: AppCores.acao),
         if (widget.carregando) ...[
           const SizedBox(width: 8),
           const SizedBox(
@@ -190,7 +187,7 @@ class _CalendarioAtividadesState<T extends Evento>
             height: 14,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: AppCores.verdePrimario,
+              color: AppCores.acao,
             ),
           ),
         ],
@@ -210,7 +207,7 @@ class _CalendarioAtividadesState<T extends Evento>
   }
 
   Widget? _construirMarcador(BuildContext context, DateTime dia, T atividade) {
-    final cor = widget.corDoMarcador?.call(atividade) ?? AppCores.verdePrimario;
+    final cor = widget.corDoMarcador?.call(atividade) ?? AppCores.acao;
 
     return Container(
       width: 6,

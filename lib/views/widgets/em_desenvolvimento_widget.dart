@@ -12,20 +12,20 @@ class EmDesenvolvimentoWidget extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.construction, size: 64, color: AppCores.verdeSecundario),
+          const Icon(Icons.construction, size: 64, color: AppCores.acao),
           const SizedBox(height: 16),
           Text(
             titulo,
             style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: AppCores.verdePrimario,
+              color: AppCores.acao,
             ),
           ),
           const SizedBox(height: 8),
           const Text(
             'Em desenvolvimento...',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
+            style: TextStyle(fontSize: 16, color: AppCores.textoSecundario),
           ),
         ],
       ),

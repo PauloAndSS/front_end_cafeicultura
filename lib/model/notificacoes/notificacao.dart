@@ -16,11 +16,27 @@ String rotuloDeHorizonte(DateTime dia) {
 String textoDeQuando(DateTime dia) =>
     '${rotuloDeHorizonte(dia)} · ${formatarDataComDiaDaSemana(dia)}';
 
+enum HorizonteDaNotificacao {
+  vencido,
+  hoje,
+  amanha,
+  proximos;
+
+  static HorizonteDaNotificacao de(DateTime dia) =>
+      switch (diasAPartirDeHoje(dia)) {
+        < 0 => vencido,
+        0 => hoje,
+        1 => amanha,
+        _ => proximos,
+      };
+}
+
 enum TipoNotificacao {
   futuroSete('FUTURO_SETE', 7),
   futuroTres('FUTURO_TRES', 3),
   futuroDois('FUTURO_DOIS', 2),
   futuroUm('FUTURO_UM', 1),
+  presente('PRESENTE', 0),
   passado('PASSADO', -1);
 
   const TipoNotificacao(this.codigoApi, this.diasAteEvento);
@@ -30,12 +46,6 @@ enum TipoNotificacao {
   final int diasAteEvento;
 
   bool get ehConfirmacao => this == TipoNotificacao.passado;
-
-  String get rotulo => switch (this) {
-        TipoNotificacao.passado => 'Ocorreu?',
-        TipoNotificacao.futuroUm => 'Amanhã',
-        _ => 'Em $diasAteEvento dias',
-      };
 
   static TipoNotificacao? deCodigo(String? codigo) {
     for (final tipo in values) {

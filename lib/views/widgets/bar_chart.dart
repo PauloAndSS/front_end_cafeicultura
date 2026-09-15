@@ -14,8 +14,8 @@ class BarChartCard extends StatelessWidget {
     required this.titulo,
     required this.icone,
     required this.valores,
-    this.cor = AppCores.verdePrimario,
-    this.corTitulo = AppCores.verdePrimario,
+    this.cor = AppCores.acao,
+    this.corTitulo = AppCores.acao,
   });
 
   @override
@@ -101,7 +101,7 @@ class BarChartPainter extends CustomPainter {
           centroX,
           topoBarra - _alturaValor,
           larguraFatia,
-          const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: Colors.black87),
+          const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppCores.textoPrimario),
         );
       }
 
@@ -111,7 +111,7 @@ class BarChartPainter extends CustomPainter {
         centroX,
         size.height - _alturaRotulo + 4,
         larguraFatia,
-        TextStyle(fontSize: 11, color: Colors.grey.shade600),
+        TextStyle(fontSize: 11, color: AppCores.textoSecundario),
       );
     }
   }

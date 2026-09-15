@@ -4,9 +4,9 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 Color corDoStatus(StatusEvento status) => switch (status) {
-      StatusEvento.agendado => AppCores.verdeSecundario,
-      StatusEvento.emAndamento => AppCores.verdePrimario,
-      StatusEvento.finalizado => Colors.black54,
+      StatusEvento.agendado => AppCores.acao,
+      StatusEvento.emAndamento => AppCores.acao,
+      StatusEvento.finalizado => AppCores.textoSecundario,
     };
 
 class BadgeStatusAtividade extends StatelessWidget {
@@ -41,8 +41,8 @@ class AvisoAtividadeFinalizada extends StatelessWidget {
   Widget build(BuildContext context) {
     return CaixaAviso(
       icone: Icons.info_outline,
-      cor: Colors.orange,
-      corDoTexto: Colors.brown,
+      cor: AppCores.aviso,
+      corDoTexto: AppCores.aviso,
       mensagem: mensagem,
     );
   }
@@ -60,8 +60,8 @@ class AvisoAtividadeAgendada extends StatelessWidget {
   Widget build(BuildContext context) {
     return CaixaAviso(
       icone: Icons.event_available,
-      cor: AppCores.verdePrimario,
-      corDoTexto: Colors.black87,
+      cor: AppCores.acao,
+      corDoTexto: AppCores.textoPrimario,
       mensagem: 'Atividade agendada. Poderá ser confirmada a partir de '
           '$dataInicioFormatada.',
     );

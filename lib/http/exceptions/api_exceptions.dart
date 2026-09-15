@@ -23,6 +23,14 @@ class ApiException implements Exception {
   String toString() => mensagem;
 }
 
+class SemConexaoException extends ApiException {
+  SemConexaoException(super.mensagem);
+}
+
+class ErroDoServidorException extends ApiException {
+  ErroDoServidorException(super.mensagem);
+}
+
 class ApiValidationException extends ApiException {
   final List<String> mensagens;
 

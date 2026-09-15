@@ -44,7 +44,7 @@ class _DetalhesDespesaDialog extends StatelessWidget {
       title: const Text(
         'Despesa',
         style: TextStyle(
-          color: AppCores.verdePrimario,
+          color: AppCores.acao,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -90,7 +90,7 @@ class _DetalhesDespesaDialog extends StatelessWidget {
                 onPressed: () => Navigator.of(context).pop(false),
                 child: const Text(
                   'Fechar',
-                  style: TextStyle(color: Colors.grey),
+                  style: TextStyle(color: AppCores.textoSecundario),
                 ),
               ),
             ],

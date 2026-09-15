@@ -7,8 +7,9 @@ import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/views/pessoas/selecionar_beneficiado_modal.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_selecao_unica.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_suspenso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class BlocoTransacaoFinanceira extends StatelessWidget {
   final TipoOperacao? tipoOperacao;
@@ -16,7 +17,6 @@ class BlocoTransacaoFinanceira extends StatelessWidget {
   final Pessoa? beneficiado;
 
   final TextEditingController controllerValor;
-  final TextEditingController? controllerDescricao;
 
   final List<Pessoa> responsaveisSugeridos;
 
@@ -31,7 +31,6 @@ class BlocoTransacaoFinanceira extends StatelessWidget {
   final ValueChanged<Pessoa?> aoSelecionarBeneficiado;
 
   final bool habilitado;
-  final String dicaDescricao;
   final String rotuloBeneficiado;
 
   const BlocoTransacaoFinanceira({
@@ -40,7 +39,6 @@ class BlocoTransacaoFinanceira extends StatelessWidget {
     required this.formaPagamento,
     required this.beneficiado,
     required this.controllerValor,
-    this.controllerDescricao,
     required this.aoSelecionarTipoOperacao,
     required this.aoSelecionarFormaPagamento,
     required this.aoSelecionarBeneficiado,
@@ -48,7 +46,6 @@ class BlocoTransacaoFinanceira extends StatelessWidget {
     required this.categoriasBeneficiado,
     this.responsaveisSugeridos = const [],
     this.habilitado = true,
-    this.dicaDescricao = 'Ex: Pagamento de diária do tratorista',
     this.rotuloBeneficiado = 'Beneficiado',
   });
 
@@ -67,60 +64,43 @@ class BlocoTransacaoFinanceira extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final descricao = controllerDescricao;
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (_escolheOperacao) ...[
-          rotuloDeCampo('Tipo de operação'),
-          DropdownButtonFormField<TipoOperacao>(
-            initialValue: tipoOperacao,
-            isExpanded: true,
-            decoration: decoracaoDeSeletor(),
-            hint: dicaDeSeletor('Selecione o tipo'),
-            items: TransacaoFinanceira.operacoesHabilitadas
-                .map((operacao) => DropdownMenuItem(
-                      value: operacao,
-                      child:
-                          Text(operacao.rotulo, overflow: TextOverflow.ellipsis),
-                    ))
-                .toList(),
-            onChanged: habilitado ? _selecionarTipoOperacao : null,
-            validator: (valor) => valor == null ? 'Obrigatório' : null,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
+          CampoSuspenso<TipoOperacao>(
+            rotulo: 'Tipo de operação',
+            valor: tipoOperacao,
+            itens: TransacaoFinanceira.operacoesHabilitadas,
+            rotuloItem: (operacao) => operacao.rotulo,
+            dica: 'Selecione o tipo',
+            aoSelecionar: habilitado ? _selecionarTipoOperacao : null,
+            validador: (valor) => valor == null ? 'Obrigatório' : null,
           ),
           const SizedBox(height: 16),
         ],
         if (_escolheForma) ...[
-          rotuloDeCampo('Forma de pagamento'),
-          DropdownButtonFormField<FormaPagamento>(
-            initialValue: formaPagamento,
-            isExpanded: true,
-            decoration: decoracaoDeSeletor(),
-            hint: dicaDeSeletor('Selecione a forma'),
-            items: _formasDisponiveis
-                .map((forma) => DropdownMenuItem(
-                      value: forma,
-                      child: Text(forma.rotulo, overflow: TextOverflow.ellipsis),
-                    ))
-                .toList(),
-            onChanged: habilitado ? aoSelecionarFormaPagamento : null,
-            validator: (valor) =>
+          CampoSuspenso<FormaPagamento>(
+            rotulo: 'Forma de pagamento',
+            valor: formaPagamento,
+            itens: _formasDisponiveis,
+            rotuloItem: (forma) => forma.rotulo,
+            dica: 'Selecione a forma',
+            aoSelecionar: habilitado ? aoSelecionarFormaPagamento : null,
+            validador: (valor) =>
                 Validator.validarFormaPagamento(valor, tipoOperacao),
-            autovalidateMode: AutovalidateMode.onUserInteraction,
           ),
           const SizedBox(height: 16),
         ],
-        rotuloDeCampo(_emSacas ? 'Quantidade de sacas' : 'Valor'),
+        rotuloDeCampo(context, _emSacas ? 'Quantidade de sacas' : 'Valor'),
         TextFormField(
           controller: controllerValor,
           enabled: habilitado,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [AppMasks.decimal],
-          decoration: decoracaoDeSeletor().copyWith(
+          decoration: InputDecoration(
             hintText: '0,00',
-            hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
+            hintStyle: const TextStyle(color: AppCores.textoTerciario, fontSize: 14),
             prefixText: _emSacas ? null : r'R$ ',
             suffixText: _emSacas ? 'sacas' : null,
           ),
@@ -128,7 +108,7 @@ class BlocoTransacaoFinanceira extends StatelessWidget {
           autovalidateMode: AutovalidateMode.onUserInteraction,
         ),
         const SizedBox(height: 16),
-        rotuloDeCampo(rotuloBeneficiado),
+        rotuloDeCampo(context, rotuloBeneficiado),
         CampoSelecaoUnica<Pessoa>(
           valor: beneficiado,
           icone: Icons.person_outline,
@@ -139,15 +119,6 @@ class BlocoTransacaoFinanceira extends StatelessWidget {
           aoAbrir: () => _abrirSelecaoDeBeneficiado(context),
           aoSelecionar: aoSelecionarBeneficiado,
         ),
-        if (descricao != null) ...[
-          const SizedBox(height: 16),
-          CustomTextField(
-            label: 'Descrição',
-            controller: descricao,
-            hintText: dicaDescricao,
-            validator: Validator.descricaoDeTransacao,
-          ),
-        ],
       ],
     );
   }

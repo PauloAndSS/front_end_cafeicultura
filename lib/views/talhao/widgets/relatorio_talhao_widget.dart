@@ -5,6 +5,7 @@ import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/bar_chart.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/pie_chart.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_grafico.dart';
 
 class RelatorioTalhaoWidget extends StatelessWidget {
@@ -21,7 +22,7 @@ class RelatorioTalhaoWidget extends StatelessWidget {
     this.onTentarNovamente,
   });
 
-  static const List<Color> _paletaInsumos = AppCores.paletaTerrosa;
+  static const List<Color> _paletaInsumos = AppCores.paletaGrafico;
 
   static const int _maximoDeInsumosNomeados = 5;
 
@@ -32,7 +33,7 @@ class RelatorioTalhaoWidget extends StatelessWidget {
     if (isLoading) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 24),
-        child: Center(child: CircularProgressIndicator(color: AppCores.verdePrimario)),
+        child: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -75,7 +76,7 @@ class RelatorioTalhaoWidget extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: Text(
         mensagem,
-        style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+        style: TextStyle(fontSize: 13, color: AppCores.textoSecundario, fontStyle: FontStyle.italic),
       ),
     );
   }
@@ -96,7 +97,7 @@ class RelatorioTalhaoWidget extends StatelessWidget {
                     rotulo: 'Agendados',
                     valor: '${porStatus[StatusEvento.agendado]}',
                     icone: Icons.event_available,
-                    cor: AppCores.verdeSecundario,
+                    cor: AppCores.acao,
                   ),
         ),
         const SizedBox(width: 10),
@@ -105,7 +106,7 @@ class RelatorioTalhaoWidget extends StatelessWidget {
                     rotulo: 'Em andamento',
                     valor: '${porStatus[StatusEvento.emAndamento]}',
                     icone: Icons.hourglass_empty,
-                    cor: Colors.orange.shade700,
+                    cor: AppCores.aviso,
                   ),
         ),
         const SizedBox(width: 10),
@@ -114,7 +115,7 @@ class RelatorioTalhaoWidget extends StatelessWidget {
                     rotulo: 'Finalizados',
                     valor: '${porStatus[StatusEvento.finalizado]}',
                     icone: Icons.check_circle_outline,
-                    cor: Colors.green.shade700,
+                    cor: AppCores.sucesso,
                   ),
         ),
       ],
@@ -207,7 +208,7 @@ class RelatorioTalhaoWidget extends StatelessWidget {
         children: [
           Text(
             mensagem,
-            style: const TextStyle(color: Colors.red),
+            style: const TextStyle(color: AppCores.erro),
             textAlign: TextAlign.center,
           ),
           if (onTentarNovamente != null) ...[
@@ -216,7 +217,7 @@ class RelatorioTalhaoWidget extends StatelessWidget {
               onPressed: onTentarNovamente,
               child: const Text(
                 'Tentar novamente',
-                style: TextStyle(color: AppCores.verdePrimario),
+                style: TextStyle(color: AppCores.acao),
               ),
             ),
           ],
@@ -229,15 +230,11 @@ class RelatorioTalhaoWidget extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: Colors.black12),
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: AppEstilos.cartao(),
       child: const Center(
         child: Text(
           'Nenhum evento registrado neste talhão nesta safra.',
-          style: TextStyle(fontSize: 14, color: Colors.black45),
+          style: TextStyle(fontSize: 14, color: AppCores.textoSecundario),
           textAlign: TextAlign.center,
         ),
       ),

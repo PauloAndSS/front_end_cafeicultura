@@ -67,6 +67,25 @@ abstract class ListaAtividadesPaginadaViewModel<T extends EventoAgricola,
 
   _PaginasDoStatus<T> get _paginasAtuais => _porStatus[_statusAtual]!;
 
+  bool get temAtividades =>
+      _porStatus.values.any((paginas) => paginas.itens.isNotEmpty);
+
+  bool get sabeSeTemAtividades =>
+      temAtividades || _porStatus.values.every((paginas) => !paginas.vazio);
+
+  Future<void> conferirSeTemAtividades() async {
+    if (_escopo == null) return;
+
+    for (final status in StatusEvento.values) {
+      if (temAtividades) return;
+
+      final paginas = _porStatus[status]!;
+      if (!paginas.vazio || paginas.mensagemErro != null) continue;
+
+      await _carregarProximaPagina(primeira: true, status: status);
+    }
+  }
+
   @protected
   Future<ResultadoPaginadoDTO<T>> buscarPagina(
     E escopo,
@@ -131,12 +150,15 @@ abstract class ListaAtividadesPaginadaViewModel<T extends EventoAgricola,
     recarregar();
   }
 
-  Future<void> _carregarProximaPagina({required bool primeira}) {
+  Future<void> _carregarProximaPagina({
+    required bool primeira,
+    StatusEvento? status,
+  }) {
     final escopo = _escopo;
     if (escopo == null) return Future.value();
 
-    final status = _statusAtual;
-    final paginas = _porStatus[status]!;
+    final statusAlvo = status ?? _statusAtual;
+    final paginas = _porStatus[statusAlvo]!;
 
     if (paginas.ocupado) return Future.value();
 
@@ -149,7 +171,7 @@ abstract class ListaAtividadesPaginadaViewModel<T extends EventoAgricola,
 
     return carga.executar(
       chamada: () async {
-        final resultado = await buscarPagina(escopo, status, pagina);
+        final resultado = await buscarPagina(escopo, statusAlvo, pagina);
 
         if (geracao == _geracao) {
           paginas.itens.addAll(resultado.data);

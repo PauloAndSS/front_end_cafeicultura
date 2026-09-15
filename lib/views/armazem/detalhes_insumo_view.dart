@@ -40,9 +40,17 @@ class _DetalhesInsumoViewState extends State<DetalhesInsumoView> {
     });
   }
 
+  Future<void> _recarregar() => widget.viewModel.abrirDetalhe(
+    widget.idInsumo,
+    idPropriedade: widget.idPropriedade,
+  );
+
   Future<void> _comprar(Insumo insumo) async {
-    final atualizado =
-        await abrirRegistroDeCompra(context, widget.viewModel, insumo);
+    final atualizado = await abrirRegistroDeCompra(
+      context,
+      widget.viewModel,
+      insumo,
+    );
 
     if (atualizado == null || !mounted) return;
 
@@ -59,19 +67,21 @@ class _DetalhesInsumoViewState extends State<DetalhesInsumoView> {
         builder: (context, child) {
           final vm = widget.viewModel;
 
-          return CorpoComEstado(
-            isLoading: vm.isCarregandoDetalhe,
-            mensagemErro: vm.mensagemErroDetalhe,
-            vazio: vm.insumoDetalhe == null,
-            aoTentarNovamente: () => vm.abrirDetalhe(
-              widget.idInsumo,
-              idPropriedade: widget.idPropriedade,
+          return RefreshIndicator(
+            onRefresh: _recarregar,
+            child: CorpoComEstado(
+              isLoading: vm.isCarregandoDetalhe,
+              mensagemErro: vm.mensagemErroDetalhe,
+              vazio: vm.insumoDetalhe == null,
+              aoTentarNovamente: _recarregar,
+              manterConteudoAoRecarregar: true,
+              construirVazio: (context) => const EstadoVazio(
+                icone: Icons.inventory_2_outlined,
+                mensagem: 'Os dados deste insumo não estão disponíveis.',
+              ),
+              construirConteudo: (context) =>
+                  _construirDetalhe(vm.insumoDetalhe!),
             ),
-            construirVazio: (context) => const EstadoVazio(
-              icone: Icons.inventory_2_outlined,
-              mensagem: 'Os dados deste insumo não estão disponíveis.',
-            ),
-            construirConteudo: (context) => _construirDetalhe(vm.insumoDetalhe!),
           );
         },
       ),
@@ -80,6 +90,7 @@ class _DetalhesInsumoViewState extends State<DetalhesInsumoView> {
 
   Widget _construirDetalhe(Insumo insumo) {
     return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,

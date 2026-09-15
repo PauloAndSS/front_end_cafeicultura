@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
 
 class CustomTextField extends StatelessWidget {
   final String label;
@@ -11,6 +11,8 @@ class CustomTextField extends StatelessWidget {
   final String? hintText;
   final List<TextInputFormatter>? inputFormatters;
   final bool readOnly;
+  final bool opcional;
+  final bool habilitado;
 
   const CustomTextField({
     super.key,
@@ -22,6 +24,8 @@ class CustomTextField extends StatelessWidget {
     this.keyboardType = TextInputType.text,
     this.inputFormatters,
     this.readOnly = false,
+    this.opcional = false,
+    this.habilitado = true,
   });
 
   @override
@@ -29,17 +33,10 @@ class CustomTextField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-        const SizedBox(height: 8),
+        rotuloDeCampo(context, label, opcional: opcional),
         TextFormField(
           controller: controller,
+          enabled: habilitado,
           obscureText: isPassword,
           keyboardType: keyboardType,
           validator: validator,
@@ -48,26 +45,7 @@ class CustomTextField extends StatelessWidget {
           inputFormatters: inputFormatters,
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
-            filled: readOnly,
-            fillColor: readOnly ? Colors.grey.shade200 : Colors.transparent,
-
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 12,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppCores.borda),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppCores.borda),
-            ),
-            disabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: Colors.grey.shade300),
-            ),
+            filled: readOnly || !habilitado,
           ),
         ),
         const SizedBox(height: 16),

@@ -10,7 +10,7 @@ Future<T?> mostrarPainelModal<T>({
   return showModalBottomSheet<T>(
     context: context,
     isScrollControlled: alturaLivre,
-    backgroundColor: Colors.white,
+    backgroundColor: AppCores.superficie,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
@@ -52,7 +52,7 @@ class CabecalhoModal extends StatelessWidget {
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppCores.verdePrimario,
+                color: AppCores.acao,
               ),
             ),
           ),
@@ -81,7 +81,7 @@ class CampoBuscaModal extends StatelessWidget {
   Widget build(BuildContext context) {
     const borda = OutlineInputBorder(
       borderRadius: BorderRadius.all(Radius.circular(8)),
-      borderSide: BorderSide(color: AppCores.borda),
+      borderSide: BorderSide(color: AppCores.bordaCampo),
     );
 
     return Padding(

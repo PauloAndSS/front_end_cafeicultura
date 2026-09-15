@@ -363,7 +363,7 @@ class _AlterarDescricaoDialogState extends State<_AlterarDescricaoDialog> {
           hintText: 'O que foi feito no talhão',
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(8),
-            borderSide: const BorderSide(color: AppCores.borda),
+            borderSide: const BorderSide(color: AppCores.bordaCampo),
           ),
         ),
       ),

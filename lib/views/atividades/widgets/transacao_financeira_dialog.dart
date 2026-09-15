@@ -4,9 +4,11 @@ import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_pessoas_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_transacao_financeira.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 
 Future<Despesa?> mostrarCadastroTransacao({
   required BuildContext context,
@@ -64,28 +66,39 @@ class _TransacaoFinanceiraDialogState
       title: const Text(
         'Nova Despesa',
         style: TextStyle(
-          color: AppCores.verdePrimario,
+          color: AppCores.acao,
           fontWeight: FontWeight.bold,
         ),
       ),
       content: SingleChildScrollView(
         child: Form(
           key: _formKey,
-          child: BlocoTransacaoFinanceira(
-            tipoOperacao: _tipoOperacao,
-            formaPagamento: _formaPagamento,
-            beneficiado: _beneficiado,
-            controllerValor: _valorController,
-            controllerDescricao: _descricaoController,
-            responsaveisSugeridos: widget.responsaveis,
-            catalogoDePessoas: widget.catalogoDePessoas,
-            categoriasBeneficiado: TipoPapel.values,
-            aoSelecionarTipoOperacao: (valor) =>
-                setState(() => _tipoOperacao = valor),
-            aoSelecionarFormaPagamento: (valor) =>
-                setState(() => _formaPagamento = valor),
-            aoSelecionarBeneficiado: (valor) =>
-                setState(() => _beneficiado = valor),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              CustomTextField(
+                label: 'Descrição',
+                controller: _descricaoController,
+                hintText: 'Ex: Pagamento de diária do tratorista',
+                validator: Validator.descricaoDeTransacao,
+              ),
+              BlocoTransacaoFinanceira(
+                tipoOperacao: _tipoOperacao,
+                formaPagamento: _formaPagamento,
+                beneficiado: _beneficiado,
+                controllerValor: _valorController,
+                responsaveisSugeridos: widget.responsaveis,
+                catalogoDePessoas: widget.catalogoDePessoas,
+                categoriasBeneficiado: TipoPapel.values,
+                aoSelecionarTipoOperacao: (valor) =>
+                    setState(() => _tipoOperacao = valor),
+                aoSelecionarFormaPagamento: (valor) =>
+                    setState(() => _formaPagamento = valor),
+                aoSelecionarBeneficiado: (valor) =>
+                    setState(() => _beneficiado = valor),
+              ),
+            ],
           ),
         ),
       ),

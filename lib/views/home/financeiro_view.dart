@@ -8,10 +8,15 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedad
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/detalhes_despesa_dialog.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/transacao_financeira_dialog.dart';
+import 'package:frond_end_cafeicultura_mobile/views/propriedade/acoes_propriedade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/safra/acoes_safra.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/botao_cadastro_flutuante.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_entidade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/corpo_com_estado.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/reinicio_de_secao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/relatorio_financeiro_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_selector.dart';
@@ -25,7 +30,10 @@ class FinanceiroView extends StatefulWidget {
 }
 
 class _FinanceiroViewState extends State<FinanceiroView>
-    with AutomaticKeepAliveClientMixin, ReinicioDeSecaoMixin {
+    with
+        AutomaticKeepAliveClientMixin,
+        ReinicioDeSecaoMixin,
+        RolagemEstendeCadastroMixin {
   static const int _incrementoExibicao = 3;
 
   int _quantidadeDespesasExibidas = _incrementoExibicao;
@@ -55,7 +63,7 @@ class _FinanceiroViewState extends State<FinanceiroView>
     super.dispose();
   }
 
-  void _sincronizarDados() {
+  Future<void> _sincronizarDados({bool forcarAtualizacao = false}) async {
     final propriedadesVM = context.read<PropriedadesUsuarioViewModel>();
     final safraVM = context.read<SafraViewModel>();
     final financeiroVM = context.read<FinanceiroViewModel>();
@@ -63,15 +71,18 @@ class _FinanceiroViewState extends State<FinanceiroView>
     final idPropriedade = propriedadesVM.idPropriedadeSelecionada;
     if (idPropriedade == null) return;
 
-    safraVM.carregarDadosDaPropriedade(idPropriedade).then((_) {
-      final idSafra = safraVM.safraSelecionada?.id;
-      if (idSafra != null) {
-        financeiroVM.carregarRelatorio(
-          idPropriedade: idPropriedade,
-          idSafra: idSafra,
-        );
-      }
-    });
+    await safraVM.carregarDadosDaPropriedade(
+      idPropriedade,
+      forcarAtualizacao: forcarAtualizacao,
+    );
+
+    final idSafra = safraVM.safraSelecionada?.id;
+    if (idSafra == null) return;
+
+    await financeiroVM.carregarRelatorio(
+      idPropriedade: idPropriedade,
+      idSafra: idSafra,
+    );
   }
 
   Future<void> _lancarDespesa() async {
@@ -144,7 +155,7 @@ class _FinanceiroViewState extends State<FinanceiroView>
         titulo: despesa.descricaoTexto,
         acao: BadgeTexto(
           texto: despesa.formaPagamento.rotulo,
-          cor: AppCores.verdeSecundario,
+          cor: AppCores.acao,
         ),
         corpo: [
           LinhaCartao(
@@ -179,25 +190,17 @@ class _FinanceiroViewState extends State<FinanceiroView>
   List<Widget> _buildFilhosHistorico(FinanceiroViewModel financeiroVM) {
     final despesas = financeiroVM.despesas;
 
-    if (despesas.isEmpty && !financeiroVM.isLoading) {
-      return const [
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: 16),
-          child: Text(
-            'Nenhuma despesa encontrada.',
-            style: TextStyle(color: Colors.grey),
-          ),
-        ),
-      ];
-    }
-
-    final quantidadeExibida = _quantidadeDespesasExibidas.clamp(0, despesas.length);
+    final quantidadeExibida = _quantidadeDespesasExibidas.clamp(
+      0,
+      despesas.length,
+    );
     final despesasExibidas = despesas.take(quantidadeExibida);
     final temMaisParaExibir = quantidadeExibida < despesas.length;
 
     return [
       ...despesasExibidas.map(_buildDespesaCard),
-      if (temMaisParaExibir) _buildBotaoExibirMais(despesas.length - quantidadeExibida),
+      if (temMaisParaExibir)
+        _buildBotaoExibirMais(despesas.length - quantidadeExibida),
     ];
   }
 
@@ -213,10 +216,10 @@ class _FinanceiroViewState extends State<FinanceiroView>
             _quantidadeDespesasExibidas += _incrementoExibicao;
           });
         },
-        icon: const Icon(Icons.expand_more, color: AppCores.verdePrimario),
+        icon: const Icon(Icons.expand_more, color: AppCores.acao),
         label: Text(
           'Exibir mais $proximoIncremento',
-          style: const TextStyle(color: AppCores.verdePrimario),
+          style: const TextStyle(color: AppCores.acao),
         ),
       ),
     );
@@ -245,101 +248,123 @@ class _FinanceiroViewState extends State<FinanceiroView>
     final safraSelecionada = safraVM.safraSelecionada;
 
     return Scaffold(
-      body: CorpoComEstado(
-        isLoading: propriedadesVM.isLoading || safraVM.isLoading,
-        mensagemErro: propriedadesVM.mensagemErro ?? safraVM.mensagemErro,
-        vazio: false,
-        construirVazio: (context) => const SizedBox.shrink(),
-        aoTentarNovamente: _sincronizarDados,
-        construirConteudo: (context) {
-          return RefreshIndicator(
-            onRefresh: () async => _sincronizarDados(),
-            child: CustomScrollView(
-              controller: _controladorDeRolagem,
-              slivers: [
-                if (idPropriedade != null)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                      child: SafraSelectorWidget(
-                        safras: safraVM.safras,
-                        safraSelecionada: safraSelecionada,
-                        // Desabilita botões de ação para evitar o erro de asserção
-                        mostrarAcoes: false,
-                        onSelecionar: (safra) {
-                          if (safra.id != null) {
-                            setState(() {
-                              _quantidadeDespesasExibidas = _incrementoExibicao;
-                            });
-                            financeiroVM.carregarRelatorio(
-                              idPropriedade: idPropriedade,
-                              idSafra: safra.id!,
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                  ),
-                if (safraSelecionada != null) ...[
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: RelatorioFinanceiroWidget(
-                        relatorio: financeiroVM.relatorio,
-                        isLoading: financeiroVM.isLoading,
-                        mensagemErro: financeiroVM.mensagemErro,
-                        mostrarTitulo: true,
-                        mostrarListaDespesas: false,
-                      ),
-                    ),
-                  ),
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-                      child: Theme(
-                        data: Theme.of(context).copyWith(
-                          dividerColor: Colors.transparent,
+      body: observarRolagemDoCadastro(
+        CorpoComEstado(
+          isLoading: propriedadesVM.isLoading || safraVM.isLoading,
+          mensagemErro: propriedadesVM.propriedades.isEmpty
+              ? propriedadesVM.mensagemErro
+              : (safraVM.safras.isEmpty ? safraVM.mensagemErro : null),
+          vazio: idPropriedade == null,
+          construirVazio: (context) => propriedadesVM.propriedades.isEmpty
+              ? const EstadoSemPropriedade()
+              : const EstadoPropriedadeNaoSelecionada(
+                  mensagem:
+                      'Selecione uma propriedade no topo da tela para ver o financeiro.',
+                ),
+          aoTentarNovamente: () => _sincronizarDados(forcarAtualizacao: true),
+          construirConteudo: (context) {
+            return RefreshIndicator(
+              onRefresh: () => _sincronizarDados(forcarAtualizacao: true),
+              child: CustomScrollView(
+                controller: _controladorDeRolagem,
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  if (idPropriedade != null)
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                        child: SafraSelectorWidget(
+                          safras: safraVM.safras,
+                          safraSelecionada: safraSelecionada,
+                          // Desabilita botões de ação para evitar o erro de asserção
+                          mostrarAcoes: false,
+                          onSelecionar: (safra) {
+                            if (safra.id != null) {
+                              setState(() {
+                                _quantidadeDespesasExibidas =
+                                    _incrementoExibicao;
+                              });
+                              safraVM.selecionarSafra(safra);
+                              financeiroVM.carregarRelatorio(
+                                idPropriedade: idPropriedade,
+                                idSafra: safra.id!,
+                              );
+                            }
+                          },
                         ),
-                        child: ExpansionTile(
-                          key: const PageStorageKey('historico_despesas'),
-                          initiallyExpanded: true,
-                          tilePadding: EdgeInsets.zero,
-                          childrenPadding: const EdgeInsets.only(top: 8),
-                          iconColor: AppCores.verdePrimario,
-                          collapsedIconColor: AppCores.verdePrimario,
-                          title: const Text(
-                            'Histórico de Despesas',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                      ),
+                    ),
+                  if (safraSelecionada != null) ...[
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: RelatorioFinanceiroWidget(
+                          relatorio: financeiroVM.relatorio,
+                          isLoading: financeiroVM.isLoading,
+                          mensagemErro: financeiroVM.mensagemErro,
+                          mostrarTitulo: true,
+                          mostrarListaDespesas: false,
+                          acaoVazio: SizedBox(
+                            width: 220,
+                            child: CustomButton(
+                              text: 'Lançar despesa',
+                              onPressed: _lancarDespesa,
                             ),
                           ),
-                          children: _buildFilhosHistorico(financeiroVM),
                         ),
                       ),
                     ),
-                  ),
-                ] else if (idPropriedade != null && !safraVM.isLoading)
-                  const SliverFillRemaining(
-                    hasScrollBody: false,
-                    child: Center(
-                      child: Text(
-                        'Cadastre uma safra para gerenciar o financeiro.',
-                        textAlign: TextAlign.center,
+                    if (financeiroVM.despesas.isNotEmpty)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                          child: ExpansionTile(
+                            key: const PageStorageKey('historico_despesas'),
+                            initiallyExpanded: true,
+                            tilePadding: EdgeInsets.zero,
+                            childrenPadding: const EdgeInsets.only(top: 8),
+                            iconColor: AppCores.acao,
+                            collapsedIconColor: AppCores.acao,
+                            title: const Text(
+                              'Histórico de Despesas',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: AppCores.textoPrimario,
+                              ),
+                            ),
+                            children: _buildFilhosHistorico(financeiroVM),
+                          ),
+                        ),
+                      ),
+                  ] else if (idPropriedade != null && !safraVM.isLoading)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: EstadoVazio(
+                        icone: Icons.grass,
+                        mensagem:
+                            'Nenhuma safra cadastrada nesta propriedade.\n'
+                            'Abra a primeira para acompanhar o financeiro.',
+                        acao: SizedBox(
+                          width: 220,
+                          child: CustomButton(
+                            text: 'Nova safra',
+                            onPressed: () => abrirNovaSafra(context),
+                          ),
+                        ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-          );
-        },
+                ],
+              ),
+            );
+          },
+        ),
       ),
       floatingActionButton: idPropriedade != null && safraSelecionada != null
-          ? FloatingActionButton(
-              onPressed: _lancarDespesa,
-              backgroundColor: AppCores.verdePrimario,
-              child: const Icon(Icons.add, color: Colors.white),
+          ? BotaoCadastroFlutuante(
+              rotulo: 'Nova Despesa',
+              aoTocar: _lancarDespesa,
+              estendido: cadastroEstendido,
             )
           : null,
     );

@@ -36,7 +36,7 @@ class InsumoCard extends StatelessWidget {
             icon: const Icon(Icons.add_shopping_cart, size: 18),
             label: const Text('Registrar compra'),
             style: TextButton.styleFrom(
-              foregroundColor: AppCores.verdeSecundario,
+              foregroundColor: AppCores.acao,
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             ),
           ),

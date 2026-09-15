@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/views/propriedade/acoes_propriedade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/tipo_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/registro_atividades.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/abas_padrao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/reinicio_de_secao.dart';
+import 'package:provider/provider.dart';
 
 class AtividadesView extends StatefulWidget {
   const AtividadesView({super.key});
@@ -47,6 +50,16 @@ class _AtividadesViewState extends State<AtividadesView>
     super.build(context);
 
     observarReinicioDeSecao(context);
+
+    final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
+
+    if (propriedadesVM.isLoading && propriedadesVM.propriedades.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (propriedadesVM.propriedades.isEmpty) {
+      return const EstadoSemPropriedade();
+    }
 
     return Column(
       children: [

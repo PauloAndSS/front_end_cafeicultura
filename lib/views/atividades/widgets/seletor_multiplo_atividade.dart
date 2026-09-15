@@ -43,11 +43,11 @@ class SeletorMultiploAtividade<T> extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppCores.borda),
+              border: Border.all(color: AppCores.bordaCampo),
             ),
             child: Row(
               children: [
-                Icon(icone, color: AppCores.verdePrimario),
+                Icon(icone, color: AppCores.acao),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
@@ -56,11 +56,11 @@ class SeletorMultiploAtividade<T> extends StatelessWidget {
                         : rotuloContagem ?? '$quantidade selecionado(s)',
                     style: TextStyle(
                       fontSize: 14,
-                      color: quantidade == 0 ? Colors.black26 : Colors.black87,
+                      color: quantidade == 0 ? AppCores.textoTerciario : AppCores.textoPrimario,
                     ),
                   ),
                 ),
-                const Icon(Icons.chevron_right, color: Colors.black38),
+                const Icon(Icons.chevron_right, color: AppCores.textoTerciario),
               ],
             ),
           ),

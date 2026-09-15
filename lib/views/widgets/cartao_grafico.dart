@@ -17,7 +17,7 @@ class CartaoGrafico extends StatelessWidget {
     required this.icone,
     required this.valores,
     required this.construirGrafico,
-    this.corTitulo = AppCores.verdePrimario,
+    this.corTitulo = AppCores.acao,
     this.mostrarTitulo = true,
   });
 
@@ -96,7 +96,7 @@ class CartaoIndicador extends StatelessWidget {
             Text(
               rotulo,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              style: const TextStyle(fontSize: 12, color: AppCores.textoSecundario),
             ),
           ],
         ),

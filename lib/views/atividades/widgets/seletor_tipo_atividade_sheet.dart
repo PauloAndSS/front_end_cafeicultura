@@ -33,19 +33,19 @@ class _PainelTiposDeCadastro extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: AppCores.textoPrimario,
                 ),
               ),
             ),
           ),
           ...tiposComCadastro.map(
             (tipo) => ListTile(
-              leading: Icon(tipo.icone, color: AppCores.verdePrimario),
+              leading: Icon(tipo.icone, color: AppCores.acao),
               title: Text(
                 tipo.rotuloSingular,
-                style: const TextStyle(fontSize: 16, color: Colors.black87),
+                style: const TextStyle(fontSize: 16, color: AppCores.textoPrimario),
               ),
-              trailing: const Icon(Icons.chevron_right, color: Colors.black26),
+              trailing: const Icon(Icons.chevron_right, color: AppCores.textoTerciario),
               onTap: () => Navigator.pop(context, tipo),
             ),
           ),

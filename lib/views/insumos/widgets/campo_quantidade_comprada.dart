@@ -3,6 +3,7 @@ import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class CampoQuantidadeComprada extends StatelessWidget {
   final TextEditingController controller;
@@ -21,15 +22,15 @@ class CampoQuantidadeComprada extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        rotuloDeCampo('Quantidade comprada'),
+        rotuloDeCampo(context, 'Quantidade comprada'),
         TextFormField(
           controller: controller,
           enabled: habilitado,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           inputFormatters: [AppMasks.decimal],
-          decoration: decoracaoDeSeletor().copyWith(
+          decoration: InputDecoration(
             hintText: '0,00',
-            hintStyle: const TextStyle(color: Colors.black26, fontSize: 14),
+            hintStyle: const TextStyle(color: AppCores.textoTerciario, fontSize: 14),
             suffixText: medida?.sigla,
           ),
           validator: Validator.valorPositivo,

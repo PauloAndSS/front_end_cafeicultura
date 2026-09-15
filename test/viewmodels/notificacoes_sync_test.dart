@@ -11,6 +11,12 @@ import '../http/mock_http.dart';
 
 const int idPropriedade = 5;
 
+String dataCriacaoDeHoje() {
+  final agora = DateTime.now();
+
+  return DateTime(agora.year, agora.month, agora.day, 7).toIso8601String();
+}
+
 Map<String, dynamic> notificacaoJson({
   required int id,
   required int idEvento,
@@ -24,7 +30,7 @@ Map<String, dynamic> notificacaoJson({
     'idEvento': idEvento,
     'tipoEvento': 'tratosculturais',
     'tipoNotificacao': tipoNotificacao,
-    'dataCriacao': '2026-08-27T07:00:00',
+    'dataCriacao': dataCriacaoDeHoje(),
     'lida': lida,
   };
 }

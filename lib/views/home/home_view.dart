@@ -3,6 +3,7 @@ import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/ev
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/agenda_propriedade_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/model/propriedade.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/clima/weather_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/cotacao_cafe_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
@@ -15,26 +16,24 @@ import 'package:frond_end_cafeicultura_mobile/views/home/widgets/weather_widget.
 import 'package:frond_end_cafeicultura_mobile/views/widgets/corpo_com_estado.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_tipo_atividade_sheet.dart';
 import 'package:frond_end_cafeicultura_mobile/views/home/widgets/resumo_propriedade.dart';
-import 'package:frond_end_cafeicultura_mobile/views/talhao/cadastrar_talhao_view.dart';
+import 'package:frond_end_cafeicultura_mobile/views/talhao/acoes_talhao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/calendario/calendario_atividades.dart';
 import 'package:provider/provider.dart';
 
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_selector.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_summary.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/safra_relatorio.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/atividades_mudaram.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/financeiro/financeiro_mudou.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/reinicio_de_secao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/safra/acoes_safra.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/abas_padrao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/registro_atividades.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_data_em_bloco.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_data.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
+import 'package:frond_end_cafeicultura_mobile/views/propriedade/acoes_propriedade.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -173,19 +172,16 @@ class _HomeViewState extends State<HomeView>
     BuildContext context,
   ) {
     if (propriedadesVM.isLoading && propriedadesVM.propriedades.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppCores.verdePrimario),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
-    if (propriedadesVM.idPropriedadeSelecionada == null ||
-        propriedadesVM.propriedades.isEmpty) {
-      return const Center(
-        child: Text(
-          'Nenhuma propriedade cadastrada ou selecionada.\nUse o menu superior para adicionar uma.',
-          style: TextStyle(color: Colors.black54, fontSize: 16),
-          textAlign: TextAlign.center,
-        ),
+    if (propriedadesVM.propriedades.isEmpty) {
+      return const EstadoSemPropriedade();
+    }
+
+    if (propriedadesVM.idPropriedadeSelecionada == null) {
+      return const EstadoPropriedadeNaoSelecionada(
+        mensagem: 'Selecione uma propriedade no seletor do topo da tela.',
       );
     }
 
@@ -195,8 +191,8 @@ class _HomeViewState extends State<HomeView>
     );
 
     return RefreshIndicator(
-      color: AppCores.verdePrimario,
-      onRefresh: () => _recarregarTudo(propriedadeSelecionada.id),
+      color: AppCores.acao,
+      onRefresh: () => _recarregarTudo(propriedadeSelecionada),
       child: SingleChildScrollView(
         controller: _rolagemVisaoGeral,
         physics: const AlwaysScrollableScrollPhysics(),
@@ -213,7 +209,7 @@ class _HomeViewState extends State<HomeView>
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppCores.verdePrimario,
+                color: AppCores.acao,
               ),
             ),
             const SizedBox(height: 12),
@@ -243,9 +239,7 @@ class _HomeViewState extends State<HomeView>
         if (talhoesVM.isLoading && talhoesVM.talhoes.isEmpty) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 48),
-            child: Center(
-              child: CircularProgressIndicator(color: AppCores.verdePrimario),
-            ),
+            child: Center(child: CircularProgressIndicator()),
           );
         }
 
@@ -266,22 +260,15 @@ class _HomeViewState extends State<HomeView>
               icon: const Icon(
                 Icons.add_circle_outline,
                 size: 64,
-                color: AppCores.verdePrimario,
+                color: AppCores.acao,
               ),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const CadastrarTalhaoView(),
-                  ),
-                );
-              },
+              onPressed: () => abrirCadastroDeTalhao(context),
             ),
             const SizedBox(height: 8),
             const Text(
               'Cadastrar Novo Talhão',
               style: TextStyle(
-                color: AppCores.verdePrimario,
+                color: AppCores.acao,
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
               ),
@@ -386,343 +373,99 @@ class _HomeViewState extends State<HomeView>
     }
   }
 
-  Future<void> _recarregarTudo(int? idPropriedade) async {
+  Future<void> _recarregarTudo(Propriedade propriedade) async {
+    final idPropriedade = propriedade.id;
     if (idPropriedade == null) return;
 
     await Future.wait([
       _agendaViewModel.recarregarMesVisivel(),
       context.read<TalhoesViewModel>().carregarTalhoes(idPropriedade),
+      _weatherViewModel.carregarPrevisao(propriedade, forcar: true),
     ]);
   }
 
-  static DateTime get _pisoDeSafra => DateTime(DateTime.now().year - 1);
-  static DateTime get _tetoDeSafra => DateTime(DateTime.now().year + 5, 12, 31);
+  Future<void> _recarregarSafra() async {
+    final idPropriedade = context
+        .read<PropriedadesUsuarioViewModel>()
+        .idPropriedadeSelecionada;
 
-  Future<void> _mostrarDialogoNovaSafra() async {
-    final hoje = DateTime.now();
-    DateTime dataInicioSelecionada = DateTime(hoje.year, hoje.month, hoje.day);
+    if (idPropriedade == null) return;
 
-    final confirmado = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setStateDialogo) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              title: const Text('Nova safra'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Defina a data de início da safra para registrar o ciclo.',
-                  ),
-                  const SizedBox(height: 12),
-                  SeletorDataEmBloco(
-                    data: dataInicioSelecionada,
-                    aoTocar: () async {
-                      final selecionada = await selecionarData(
-                        context: dialogContext,
-                        ajuda: 'Selecione a data de início da safra',
-                        inicial: dataInicioSelecionada,
-                        minima: _pisoDeSafra,
-                        maxima: _tetoDeSafra,
-                      );
-                      if (selecionada != null) {
-                        setStateDialogo(
-                          () => dataInicioSelecionada = selecionada,
-                        );
-                      }
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('Cancelar'),
-                ),
-                FilledButton.icon(
-                  onPressed: () => Navigator.of(dialogContext).pop(true),
-                  icon: const Icon(Icons.save_outlined),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppCores.verdeSecundario,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  label: const Text('Salvar'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (confirmado != true || !mounted) {
-      return;
-    }
-
-    final propriedadesVm = context.read<PropriedadesUsuarioViewModel>();
-    final idPropriedade = propriedadesVm.idPropriedadeSelecionada;
-
-    if (idPropriedade == null) {
-      mostrarAviso(
-        context,
-        'Selecione uma propriedade antes de cadastrar uma safra.',
-      );
-      return;
-    }
-
-    final viewModel = context.read<SafraViewModel>();
-    final sucesso = await viewModel.criarSafra(
-      idPropriedade: idPropriedade,
-      dataInicio: dataInicioSelecionada,
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    mostrarResultado(
-      context,
-      sucesso
-          ? 'Safra cadastrada com sucesso.'
-          : viewModel.mensagemErro ?? 'Não foi possível cadastrar a safra.',
-      sucesso: sucesso,
-    );
-  }
-
-  Future<void> _encerrarSafraSelecionada() async {
-    final viewModel = context.read<SafraViewModel>();
-    final safra = viewModel.safraSelecionada;
-
-    if (safra == null) {
-      mostrarAviso(context, 'Selecione uma safra para encerrá-la.');
-      return;
-    }
-
-    if (safra.encerrada) {
-      mostrarAviso(context, 'Esta safra já está encerrada.');
-      return;
-    }
-
-    DateTime? dataFimSelecionada = DateTime.now();
-    final nomeSafraDialogo = safra.nomeExibicao;
-
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              title: const Text('Encerrar safra'),
-              content: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text('Deseja encerrar a $nomeSafraDialogo?'),
-                  const SizedBox(height: 12),
-                  const CaixaAvisoAtencao(
-                    mensagem:
-                        'Após o encerramento, nenhum dado dessa safra poderá '
-                        'ser alterado. Ela ficará "congelada" até que seja '
-                        'reativada.',
-                  ),
-                  const SizedBox(height: 12),
-                  const Text('Data de fim da safra'),
-                  const SizedBox(height: 8),
-                  SeletorDataEmBloco(
-                    data: dataFimSelecionada!,
-                    aoTocar: () async {
-                      final selecionada = await selecionarData(
-                        context: dialogContext,
-                        ajuda: 'Selecione a data de fim da safra',
-                        inicial: dataFimSelecionada,
-                        minima: _pisoDeSafra,
-                        maxima: _tetoDeSafra,
-                      );
-                      if (selecionada != null) {
-                        dataFimSelecionada = selecionada;
-                        setState(() {});
-                      }
-                    },
-                  ),
-                ],
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('Cancelar'),
-                ),
-                FilledButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(true),
-                  style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                  child: const Text('Encerrar'),
-                ),
-              ],
-            );
-          },
-        );
-      },
-    );
-
-    if (confirmar != true || !mounted) {
-      return;
-    }
-
-    final propriedadesVm = context.read<PropriedadesUsuarioViewModel>();
-    final idPropriedade = propriedadesVm.idPropriedadeSelecionada;
-
-    if (idPropriedade == null) {
-      mostrarErro(context, 'Não foi possível localizar a propriedade atual.');
-      return;
-    }
-
-    final sucesso = await viewModel.encerrarSafra(
-      idPropriedade: idPropriedade,
-      idSafra: safra.id ?? 0,
-      dataFim: dataFimSelecionada,
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    mostrarResultado(
-      context,
-      sucesso
-          ? 'Safra encerrada com sucesso.'
-          : viewModel.mensagemErro ?? 'Não foi possível encerrar a safra.',
-      sucesso: sucesso,
-    );
-  }
-
-  Future<void> _reativarSafraSelecionada() async {
-    final viewModel = context.read<SafraViewModel>();
-    final safra = viewModel.safraSelecionada;
-
-    if (safra == null) {
-      mostrarAviso(context, 'Selecione uma safra para reativá-la.');
-      return;
-    }
-
-    if (!safra.encerrada) {
-      mostrarAviso(context, 'Esta safra já está ativa.');
-      return;
-    }
-
-    final nomeSafraDialogo = safra.nomeExibicao;
-
-    final confirmar = await confirmarAcao(
-      context,
-      titulo: 'Reativar safra',
-      mensagem:
-          'Deseja reativar a $nomeSafraDialogo? Os dados voltarão a poder ser '
-          'editados normalmente.',
-      rotuloConfirmar: 'Reativar',
-      corConfirmar: AppCores.verdeSecundario,
-    );
-
-    if (!confirmar || !mounted) {
-      return;
-    }
-
-    final propriedadesVm = context.read<PropriedadesUsuarioViewModel>();
-    final idPropriedade = propriedadesVm.idPropriedadeSelecionada;
-
-    if (idPropriedade == null) {
-      mostrarErro(context, 'Não foi possível localizar a propriedade atual.');
-      return;
-    }
-
-    final sucesso = await viewModel.reativarSafra(
-      idPropriedade: idPropriedade,
-      idSafra: safra.id ?? 0,
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    mostrarResultado(
-      context,
-      sucesso
-          ? 'Safra reativada com sucesso.'
-          : viewModel.mensagemErro ?? 'Não foi possível reativar a safra.',
-      sucesso: sucesso,
+    await context.read<SafraViewModel>().carregarDadosDaPropriedade(
+      idPropriedade,
+      forcarAtualizacao: true,
     );
   }
 
   Widget _buildSafraTab(BuildContext context) {
     final safraVM = context.watch<SafraViewModel>();
+    final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
+
+    if (propriedadesVM.propriedades.isEmpty) {
+      return const EstadoSemPropriedade();
+    }
 
     if (safraVM.isLoading && safraVM.safras.isEmpty) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppCores.verdePrimario),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
-    if (safraVM.mensagemErro != null && safraVM.safras.isEmpty) {
-      return Center(
-        child: Text(
-          safraVM.mensagemErro!,
-          style: const TextStyle(color: AppCores.erro),
-          textAlign: TextAlign.center,
-        ),
-      );
-    }
-
-    return SingleChildScrollView(
-      controller: _rolagemSafra,
-      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SafraSelectorWidget(
-            safras: safraVM.safras,
-            safraSelecionada: safraVM.safraSelecionada,
-            onSelecionar: (safra) {
-              safraVM.selecionarSafra(safra);
-            },
-            mostrarAcoes: true,
-            isLoading: safraVM.isLoading,
-            onNovaSafra: _mostrarDialogoNovaSafra,
-            onEncerrarSafra: _encerrarSafraSelecionada,
-            onReativarSafra: _reativarSafraSelecionada,
-          ),
-
-          const SizedBox(height: 16),
-
-          if (safraVM.safraSelecionada != null) ...[
-            SafraSummaryCard(safra: safraVM.safraSelecionada!),
-            const SizedBox(height: 16),
-          ],
-
-          ListenableBuilder(
-            listenable: _agendaViewModel,
-            builder: (context, _) => SafraRelatorioWidget(
-              eventos: safraVM.relatorio,
-              relatorioFinanceiro: safraVM.relatorioFinanceiro,
-              isLoading: safraVM.isLoadingRelatorio,
-              mostrarTitulo: false,
-              idPropriedade: safraVM.propriedadeIdAtual,
-              idSafra: safraVM.safraSelecionada?.id,
-              nomeDoTalhao: _agendaViewModel.nomeDoTalhao,
+    return RefreshIndicator(
+      onRefresh: _recarregarSafra,
+      child: SingleChildScrollView(
+        controller: _rolagemSafra,
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SafraSelectorWidget(
+              safras: safraVM.safras,
+              safraSelecionada: safraVM.safraSelecionada,
+              onSelecionar: (safra) {
+                safraVM.selecionarSafra(safra);
+              },
+              mostrarAcoes: true,
+              isLoading: safraVM.isLoading,
+              onNovaSafra: () => abrirNovaSafra(context),
+              onEncerrarSafra: () => encerrarSafraSelecionada(context),
+              onReativarSafra: () => reativarSafraSelecionada(context),
             ),
-          ),
-        ],
+
+            const SizedBox(height: 16),
+
+            if (safraVM.mensagemErro != null && safraVM.safras.isEmpty) ...[
+              CartaoDeErro(mensagem: safraVM.mensagemErro!),
+              const SizedBox(height: 12),
+              Center(
+                child: TextButton.icon(
+                  onPressed: _recarregarSafra,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Tentar novamente'),
+                ),
+              ),
+            ] else if (safraVM.safras.isEmpty) ...[
+              const CartaoVazio(
+                icone: Icons.grass,
+                mensagem:
+                    'Nenhuma safra cadastrada para esta propriedade. '
+                    'Crie a primeira para começar a registrar o ciclo.',
+              ),
+            ] else ...[
+              ListenableBuilder(
+                listenable: _agendaViewModel,
+                builder: (context, _) => SafraRelatorioWidget(
+                  eventos: safraVM.relatorio,
+                  relatorioFinanceiro: safraVM.relatorioFinanceiro,
+                  isLoading: safraVM.isLoadingRelatorio,
+                  mostrarTitulo: false,
+                  idPropriedade: safraVM.propriedadeIdAtual,
+                  idSafra: safraVM.safraSelecionada?.id,
+                  nomeDoTalhao: _agendaViewModel.nomeDoTalhao,
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

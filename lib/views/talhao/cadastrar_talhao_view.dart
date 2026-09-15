@@ -12,8 +12,10 @@ import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_data.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_de_data.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_suspenso.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
 
 class CadastrarTalhaoView extends StatefulWidget {
   const CadastrarTalhaoView({super.key});
@@ -133,20 +135,6 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
     }
   }
 
-  InputDecoration _dropdownDecoration() {
-    return InputDecoration(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppCores.borda),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(8),
-        borderSide: const BorderSide(color: AppCores.borda),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -160,15 +148,9 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
             child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppCores.superficie,
                 borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
-                    blurRadius: 10,
-                    offset: const Offset(0, 4),
-                  ),
-                ],
+                boxShadow: AppEstilos.sombraCartao,
               ),
               child: Form(
                 key: _formKey,
@@ -185,7 +167,6 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          flex: 3,
                           child: CustomTextField(
                             label: 'Tamanho',
                             controller: _tamanhoController,
@@ -198,40 +179,16 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                         ),
                         const SizedBox(width: 12),
                         Expanded(
-                          flex: 2,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                'Medida',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              DropdownButtonFormField<Medida>(
-                                initialValue: _tamanhoMedida,
-                                isExpanded: true,
-                                decoration: _dropdownDecoration(),
-                                items: Medida.values.map((medida) {
-                                  return DropdownMenuItem(
-                                    value: medida,
-                                    child: Text(
-                                      medida.name,
-                                      style: const TextStyle(fontSize: 14),
-                                    ),
-                                  );
-                                }).toList(),
-                                onChanged: (val) {
-                                  if (val != null) {
-                                    setState(() => _tamanhoMedida = val);
-                                  }
-                                },
-                              ),
-                              const SizedBox(height: 16),
-                            ],
+                          child: CampoSuspenso<Medida>(
+                            rotulo: 'Medida',
+                            valor: _tamanhoMedida,
+                            itens: Medida.values,
+                            rotuloItem: (medida) => medida.nomeExibicao,
+                            aoSelecionar: (val) {
+                              if (val != null) {
+                                setState(() => _tamanhoMedida = val);
+                              }
+                            },
                           ),
                         ),
                       ],
@@ -254,36 +211,19 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                     const Divider(),
                     const SizedBox(height: 16),
 
-                    const Text(
-                      'Espécie',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      initialValue: _especieSelecionada,
-                      decoration: _dropdownDecoration(),
-                      hint: const Text(
-                        'Selecione',
-                        style: TextStyle(color: Colors.black26, fontSize: 14),
-                      ),
-                      items: _opcoesEspecie.map((especie) {
-                        return DropdownMenuItem(
-                          value: especie,
-                          child: Text(especie),
-                        );
-                      }).toList(),
-                      onChanged: (val) {
+                    CampoSuspenso<String>(
+                      rotulo: 'Espécie',
+                      valor: _especieSelecionada,
+                      itens: _opcoesEspecie,
+                      rotuloItem: (especie) => especie,
+                      dica: 'Selecione',
+                      aoSelecionar: (val) {
                         setState(() {
                           _especieSelecionada = val;
                           _variedadesSelecionadas.clear();
                         });
                       },
-                      validator: (val) => val == null ? 'Obrigatório' : null,
-                      autovalidateMode: AutovalidateMode.onUserInteraction,
+                      validador: (val) => val == null ? 'Obrigatório' : null,
                     ),
                     const SizedBox(height: 16),
 
@@ -291,7 +231,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                       'Variedades',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: AppCores.verdePrimario,
+                        color: AppCores.acao,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -300,9 +240,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                         ? const Center(
                             child: Padding(
                               padding: EdgeInsets.all(12.0),
-                              child: CircularProgressIndicator(
-                                color: AppCores.verdePrimario,
-                              ),
+                              child: CircularProgressIndicator(),
                             ),
                           )
                         : _especieSelecionada == null
@@ -310,12 +248,12 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                             width: double.infinity,
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade100,
+                              color: AppCores.fundo,
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Text(
                               'Selecione a espécie primeiro.',
-                              style: TextStyle(color: Colors.grey),
+                              style: TextStyle(color: AppCores.textoSecundario),
                             ),
                           )
                         : Wrap(
@@ -341,12 +279,12 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                                       variedade.descricao,
                                       style: TextStyle(
                                         color: isSelected
-                                            ? Colors.white
-                                            : Colors.black87,
+                                            ? AppCores.sobreAcao
+                                            : AppCores.textoPrimario,
                                       ),
                                     ),
                                     selected: isSelected,
-                                    selectedColor: AppCores.verdeSecundario,
+                                    selectedColor: AppCores.acao,
                                     onSelected: (bool selected) {
                                       setState(() {
                                         if (selected) {

@@ -1,8 +1,18 @@
+import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
+
+double? _valorDeTexto(String bruto) {
+  final digitos = bruto.replaceAll(RegExp(r'[^0-9,.]'), '');
+  if (digitos.isEmpty) return null;
+  return double.tryParse(digitos.replaceAll('.', '').replaceAll(',', '.'));
+}
+
 class ItemCotacaoCafe {
   final String nome;
   final double valor;
 
   const ItemCotacaoCafe({required this.nome, required this.valor});
+
+  String get valorFormatado => formatarMoeda(valor);
 
   factory ItemCotacaoCafe.fromJson(Map<String, dynamic> json) {
     return ItemCotacaoCafe(
@@ -25,6 +35,16 @@ class ItemCooabriel {
     required this.preco,
   });
 
+  String get precoFormatado {
+    final valor = _valorDeTexto(preco);
+    return valor == null ? preco : formatarMoeda(valor);
+  }
+
+  String? get publicadoEm {
+    if (data.isEmpty) return null;
+    return hora.isEmpty ? data : '$data às $hora';
+  }
+
   factory ItemCooabriel.fromJson(Map<String, dynamic> json) {
     return ItemCooabriel(
       tipo: (json['Tipo'] as String?) ?? '—',
@@ -46,6 +66,13 @@ class RespostaCotacaoCafe {
     this.painelDoCafe = const [],
     this.erros = const [],
   });
+
+  String? get coletadoEmFormatado {
+    if (dataColeta == null) return null;
+    final local = dataColeta!.toLocal();
+    String dois(int n) => n.toString().padLeft(2, '0');
+    return '${formatarDataBr(local)} às ${dois(local.hour)}:${dois(local.minute)}';
+  }
 
   bool get temDadosDoPainel => painelDoCafe.isNotEmpty;
   bool get temDadosDaCooabriel => cooabriel != null && cooabriel!.isNotEmpty;

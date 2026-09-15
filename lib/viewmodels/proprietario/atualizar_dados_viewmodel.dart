@@ -38,7 +38,7 @@ class AtualizarDadosViewModel extends ChangeNotifier
     required String logradouro,
     required String bairro,
     required String cidade,
-    required UF uf,
+    UF? uf,
     String? inscEstadualDigitada,
     String? cnpjDigitado,
     String? pais,
@@ -90,8 +90,14 @@ class AtualizarDadosViewModel extends ChangeNotifier
         final endOrig = dadosOriginais.pessoa.endereco;
         final cepAtualNum = cepDigitado.replaceAll(RegExp(r'\D'), '');
 
+        final enderecoPreenchido = cepAtualNum.isNotEmpty ||
+            logradouro.trim().isNotEmpty ||
+            bairro.trim().isNotEmpty ||
+            cidade.trim().isNotEmpty ||
+            uf != null;
+
         if (endOrig == null) {
-          mudouEndereco = true;
+          mudouEndereco = enderecoPreenchido;
         } else {
           final cepOrigNum = endOrig.cep.numero.replaceAll(RegExp(r'\D'), '');
           if (cepAtualNum != cepOrigNum ||
@@ -104,7 +110,7 @@ class AtualizarDadosViewModel extends ChangeNotifier
           }
         }
 
-        if (mudouEndereco) {
+        if (mudouEndereco && uf != null) {
           final cepVo = CEP.criar(cepDigitado);
           final novoEndereco = Endereco(
             cidade: cidade.trim(),

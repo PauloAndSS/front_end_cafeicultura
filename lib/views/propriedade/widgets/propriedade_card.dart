@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/propriedade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_entidade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class CardPropriedadeWidget extends StatelessWidget {
   final Propriedade propriedade;
@@ -26,7 +27,7 @@ class CardPropriedadeWidget extends StatelessWidget {
       margem: EdgeInsets.zero,
       acao: onTap == null
           ? null
-          : Icon(iconeAcao, size: 16, color: Colors.black26),
+          : Icon(iconeAcao, size: 16, color: AppCores.textoTerciario),
       corpo: [
         LinhaCartao(
           icone: Icons.square_foot,

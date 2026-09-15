@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
@@ -37,6 +38,36 @@ abstract class BaseService {
   }
 
   static String? sessionCookie;
+
+  static void Function()? aoPerderConexao;
+
+  static final RegExp _padraoDeFalhaDeRede = RegExp(
+    'socketexception|handshakeexception|failed host lookup|'
+    'connection refused|connection closed|connection timed out|'
+    'network is unreachable|software caused connection abort',
+    caseSensitive: false,
+  );
+
+  static bool ehFalhaDeConexao(Object erro) {
+    if (erro is TimeoutException) return true;
+    if (erro is http.ClientException) return true;
+
+    return _padraoDeFalhaDeRede.hasMatch(erro.toString());
+  }
+
+  static Future<bool> servidorRespondeu() async {
+    try {
+      final base = Uri.parse(
+        resolveBaseUrl(isWeb: kIsWeb, platform: defaultTargetPlatform),
+      );
+
+      await http.get(base).timeout(const Duration(seconds: 6));
+
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
 
   static bool logarCorpoDeSucesso = false;
 
@@ -99,15 +130,27 @@ abstract class BaseService {
         return aoSucesso(response);
       }
 
-      _logarResposta(response, acao);
-
       final resultadoDeStatus = resultadosPorStatus?[response.statusCode];
       if (resultadoDeStatus != null) return resultadoDeStatus();
 
       final erroDeStatus = errosPorStatus?[response.statusCode];
-      if (erroDeStatus != null) throw ApiException(erroDeStatus);
+      if (erroDeStatus != null) {
+        _logarResposta(response, acao);
+        throw ApiException(erroDeStatus);
+      }
 
-      if (aoListaVazia != null && isEmptyList(response)) return aoListaVazia();
+      if (aoListaVazia != null && isEmptyList(response)) {
+        _logarListaVazia(response, acao);
+        return aoListaVazia();
+      }
+
+      _logarResposta(response, acao);
+
+      if (response.statusCode >= 500) {
+        throw ErroDoServidorException(
+          'O servidor falhou ao $acao. Tente de novo em alguns instantes.',
+        );
+      }
 
       tratarErroRequisicao(
         response.bodyBytes,
@@ -121,9 +164,15 @@ abstract class BaseService {
       rethrow;
     } catch (e, rastro) {
       _logarExcecao(acao, e, rastro);
-      throw ApiException(
-        'Falha na comunicação ao $acao. Tente novamente mais tarde.',
-      );
+
+      if (ehFalhaDeConexao(e)) {
+        aoPerderConexao?.call();
+        throw SemConexaoException(
+          'Falha na comunicação ao $acao. Tente novamente mais tarde.',
+        );
+      }
+
+      throw ApiException('Não foi possível $acao. Tente novamente.');
     }
   }
 
@@ -138,6 +187,15 @@ abstract class BaseService {
     if (enviado != null) debugPrint('[API] enviado: $enviado');
     debugPrint('[API] falha ao $acao | status: ${response.statusCode}');
     debugPrint('[API] corpo: ${corpo.isEmpty ? '<vazio>' : corpo}');
+  }
+
+  void _logarListaVazia(http.Response response, String acao) {
+    if (!kDebugMode) return;
+
+    final requisicao = response.request;
+
+    debugPrint('[API] ${requisicao?.method} ${requisicao?.url} '
+        '| $acao | sem registros (status ${response.statusCode})');
   }
 
   void _logarSucesso(http.Response response, String acao) {
