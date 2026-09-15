@@ -42,7 +42,7 @@ class _DialogoMesAnoState extends State<_DialogoMesAno> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      backgroundColor: Colors.white,
+      backgroundColor: AppCores.superficie,
       title: const Text(
         'Escolher mês',
         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -62,7 +62,7 @@ class _DialogoMesAnoState extends State<_DialogoMesAno> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar', style: TextStyle(color: Colors.black54)),
+          child: const Text('Cancelar', style: TextStyle(color: AppCores.textoSecundario)),
         ),
       ],
     );
@@ -75,20 +75,20 @@ class _DialogoMesAnoState extends State<_DialogoMesAno> {
         IconButton(
           onPressed: _podeVoltarAno ? () => setState(() => _ano--) : null,
           icon: const Icon(Icons.chevron_left),
-          color: AppCores.verdePrimario,
+          color: AppCores.acao,
         ),
         Text(
           '$_ano',
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: AppCores.textoPrimario,
           ),
         ),
         IconButton(
           onPressed: _podeAvancarAno ? () => setState(() => _ano++) : null,
           icon: const Icon(Icons.chevron_right),
-          color: AppCores.verdePrimario,
+          color: AppCores.acao,
         ),
       ],
     );
@@ -116,7 +116,7 @@ class _DialogoMesAnoState extends State<_DialogoMesAno> {
     final rotulo = formatarMesAbreviado(DateTime(_ano, mes));
 
     return Material(
-      color: selecionado ? AppCores.verdePrimario : AppCores.fundo,
+      color: selecionado ? AppCores.acao : AppCores.fundo,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
@@ -125,7 +125,7 @@ class _DialogoMesAnoState extends State<_DialogoMesAno> {
           child: Text(
             rotulo,
             style: TextStyle(
-              color: selecionado ? Colors.white : Colors.black87,
+              color: selecionado ? AppCores.sobreAcao : AppCores.textoPrimario,
               fontWeight: selecionado ? FontWeight.bold : FontWeight.normal,
               fontSize: 14,
             ),

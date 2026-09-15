@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/insumos/insumos_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/armazem/acoes_insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/views/armazem/detalhes_insumo_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/armazem/widgets/insumo_card.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/corpo_com_estado.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/botao_cadastro_flutuante.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/modal_selecao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/reinicio_de_secao.dart';
 
 class InsumosTabView extends StatefulWidget {
   final InsumosViewModel viewModel;
@@ -26,13 +29,25 @@ class InsumosTabView extends StatefulWidget {
 }
 
 class _InsumosTabViewState extends State<InsumosTabView>
-    with AutomaticKeepAliveClientMixin {
+    with
+        AutomaticKeepAliveClientMixin,
+        ReinicioDeSecaoMixin,
+        RolagemEstendeCadastroMixin {
   final _buscaController = TextEditingController();
+  final _controladorDeRolagem = ScrollController();
 
   String _termoBusca = '';
 
   @override
   bool get wantKeepAlive => true;
+
+  @override
+  SecaoPrincipal get secaoDoReinicio => SecaoPrincipal.armazem;
+
+  @override
+  void aoReiniciarSecao() {
+    voltarAoTopo(_controladorDeRolagem);
+  }
 
   @override
   void initState() {
@@ -43,6 +58,7 @@ class _InsumosTabViewState extends State<InsumosTabView>
   @override
   void dispose() {
     _buscaController.dispose();
+    _controladorDeRolagem.dispose();
     super.dispose();
   }
 
@@ -60,12 +76,12 @@ class _InsumosTabViewState extends State<InsumosTabView>
         .toList();
   }
 
-  void _recarregar() {
+  Future<void> _recarregar() async {
     final idPropriedade = widget.idPropriedade;
 
     if (idPropriedade == null) return;
 
-    widget.viewModel.carregarInsumos(idPropriedade: idPropriedade);
+    await widget.viewModel.carregarInsumos(idPropriedade: idPropriedade);
   }
 
   Future<void> _cadastrar() async {
@@ -77,8 +93,11 @@ class _InsumosTabViewState extends State<InsumosTabView>
   }
 
   Future<void> _comprar(Insumo insumo) async {
-    final atualizado =
-        await abrirRegistroDeCompra(context, widget.viewModel, insumo);
+    final atualizado = await abrirRegistroDeCompra(
+      context,
+      widget.viewModel,
+      insumo,
+    );
 
     if (atualizado == null || !mounted) return;
 
@@ -107,50 +126,55 @@ class _InsumosTabViewState extends State<InsumosTabView>
   Widget build(BuildContext context) {
     super.build(context);
 
+    observarReinicioDeSecao(context);
+
     return Scaffold(
       backgroundColor: AppCores.fundo,
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _cadastrar,
-        backgroundColor: AppCores.verdePrimario,
-        icon: const Icon(Icons.add, color: Colors.white),
-        label: const Text(
-          'Novo Insumo',
-          style: TextStyle(color: Colors.white),
-        ),
+      floatingActionButton: BotaoCadastroFlutuante(
+        rotulo: 'Novo Insumo',
+        aoTocar: _cadastrar,
+        estendido: cadastroEstendido,
       ),
-      body: widget.idPropriedade == null
-          ? const EstadoVazio(
-              icone: Icons.holiday_village_outlined,
-              mensagem:
-                  'Selecione uma propriedade para ver o estoque do armazém.',
-            )
-          : ListenableBuilder(
-              listenable: widget.viewModel,
-              builder: (context, child) {
-                final vm = widget.viewModel;
+      body: observarRolagemDoCadastro(
+        widget.idPropriedade == null
+            ? const EstadoVazio(
+                icone: Icons.holiday_village_outlined,
+                mensagem:
+                    'Selecione uma propriedade para ver o estoque do armazém.',
+              )
+            : ListenableBuilder(
+                listenable: widget.viewModel,
+                builder: (context, child) {
+                  final vm = widget.viewModel;
 
-                return CorpoComEstado(
-                  isLoading: vm.isCarregandoInsumos,
-                  mensagemErro:
-                      vm.insumos.isEmpty ? vm.mensagemErroInsumos : null,
-                  vazio: vm.insumos.isEmpty,
-                  aoTentarNovamente: _recarregar,
-                  construirVazio: (context) => EstadoVazio(
-                    icone: Icons.inventory_2_outlined,
-                    mensagem:
-                        'Nenhum insumo no armazém.\nCadastre o primeiro para começar a controlar o estoque.',
-                    acao: SizedBox(
-                      width: 220,
-                      child: CustomButton(
-                        text: 'Cadastrar insumo',
-                        onPressed: _cadastrar,
+                  return RefreshIndicator(
+                    onRefresh: _recarregar,
+                    child: CorpoComEstado(
+                      isLoading: vm.isCarregandoInsumos,
+                      mensagemErro: vm.insumos.isEmpty
+                          ? vm.mensagemErroInsumos
+                          : null,
+                      vazio: vm.insumos.isEmpty,
+                      aoTentarNovamente: _recarregar,
+                      construirVazio: (context) => EstadoVazio(
+                        icone: Icons.inventory_2_outlined,
+                        mensagem:
+                            'Nenhum insumo no armazém.\nCadastre o primeiro para começar a controlar o estoque.',
+                        acao: SizedBox(
+                          width: 220,
+                          child: CustomButton(
+                            text: 'Cadastrar insumo',
+                            onPressed: _cadastrar,
+                          ),
+                        ),
                       ),
+                      construirConteudo: (context) =>
+                          _construirLista(vm.insumos),
                     ),
-                  ),
-                  construirConteudo: (context) => _construirLista(vm.insumos),
-                );
-              },
-            ),
+                  );
+                },
+              ),
+      ),
     );
   }
 
@@ -167,11 +191,15 @@ class _InsumosTabViewState extends State<InsumosTabView>
         const SizedBox(height: 16),
         Expanded(
           child: filtrados.isEmpty
-              ? EstadoVazio(
-                  icone: Icons.search_off,
-                  mensagem: 'Nenhum insumo encontrado com "$_termoBusca".',
+              ? CorpoCentralizadoRolavel(
+                  filho: EstadoVazio(
+                    icone: Icons.search_off,
+                    mensagem: 'Nenhum insumo encontrado com "$_termoBusca".',
+                  ),
                 )
               : ListView.builder(
+                  controller: _controladorDeRolagem,
+                  physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 96),
                   itemCount: filtrados.length,
                   itemBuilder: (context, indice) {

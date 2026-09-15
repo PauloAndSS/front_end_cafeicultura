@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class TituloWidget extends StatelessWidget {
   final String titulo;
@@ -14,14 +15,14 @@ class TituloWidget extends StatelessWidget {
           style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: AppCores.textoPrimario,
           ),
         ),
         const SizedBox(height: 4),
         Container(
           width: 200,
           height: 1,
-          color: Colors.black54,
+          color: AppCores.textoSecundario,
         ),
       ],
     );

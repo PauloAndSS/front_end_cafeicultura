@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/talhao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_entidade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 class TalhaoCard extends StatelessWidget {
   final Talhao talhao;
@@ -20,10 +21,10 @@ class TalhaoCard extends StatelessWidget {
           if (talhao.encerrado)
             const BadgeTexto(
               texto: 'Encerrado',
-              cor: Colors.red,
+              cor: AppCores.erro,
               margem: EdgeInsets.only(right: 8),
             ),
-          const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.black26),
+          const Icon(Icons.arrow_forward_ios, size: 16, color: AppCores.textoTerciario),
         ],
       ),
       corpo: [

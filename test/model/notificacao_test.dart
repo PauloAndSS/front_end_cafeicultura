@@ -76,16 +76,6 @@ void main() {
       expect(lembrete.dataPrevistaDoEvento, DateTime(2026, 9, 3));
     });
 
-    test('PRESENTE aponta para o proprio dia da criacao', () {
-      final lembrete = notificacao(
-        id: 4,
-        tipoNotificacao: 'PRESENTE',
-        dataCriacao: '2026-08-27T05:00:00',
-      );
-
-      expect(lembrete.dataPrevistaDoEvento, DateTime(2026, 8, 27));
-    });
-
     test('PASSADO aponta para o dia anterior ao da criacao', () {
       final confirmacao = notificacao(
         id: 2,
@@ -93,6 +83,18 @@ void main() {
       );
 
       expect(confirmacao.dataPrevistaDoEvento, DateTime(2026, 8, 26));
+    });
+
+    test('PRESENTE aponta para o proprio dia da criacao', () {
+      final doDia = notificacao(
+        id: 4,
+        tipoNotificacao: 'PRESENTE',
+        dataCriacao: '2026-09-15T05:00:00',
+      );
+
+      expect(doDia.dataPrevistaDoEvento, DateTime(2026, 9, 15));
+      expect(doDia.ehInterpretavel, isTrue);
+      expect(doDia.ehConfirmacao, isFalse);
     });
 
     test('atravessa a virada de mes sem somar 24 horas', () {
@@ -130,25 +132,14 @@ void main() {
       expect(grupos.single.representante.id, 2);
     });
 
-    test('agrupa por evento, e a linha mais nova representa o grupo', () {
+    test('separa por evento e por tipo de notificacao', () {
       final grupos = NotificacaoAgrupada.agrupar([
-        notificacao(id: 1, idEvento: 43, dataCriacao: '2026-08-27T07:00:00'),
+        notificacao(id: 1, idEvento: 43),
         notificacao(id: 2, idEvento: 64),
-        notificacao(
-          id: 3,
-          idEvento: 43,
-          tipoNotificacao: 'FUTURO_UM',
-          dataCriacao: '2026-08-28T07:00:00',
-        ),
+        notificacao(id: 3, idEvento: 43, tipoNotificacao: 'FUTURO_UM'),
       ]);
 
-      expect(grupos, hasLength(2));
-
-      final doEvento43 = grupos.singleWhere((grupo) => grupo.idEvento == 43);
-
-      expect(doEvento43.representante.id, 3);
-      expect(doEvento43.tipoNotificacao, TipoNotificacao.futuroUm);
-      expect(doEvento43.ids, [1, 3]);
+      expect(grupos, hasLength(3));
     });
 
     test('grupo com uma unica nao lida conta como nao lido', () {
@@ -240,6 +231,46 @@ void main() {
 
       expect(grupos, hasLength(1));
       expect(grupos.single.tipoNotificacao, TipoNotificacao.passado);
+    });
+  });
+
+  group('HorizonteDaNotificacao', () {
+    test('separa vencido, hoje, amanha e proximos', () {
+      expect(
+        HorizonteDaNotificacao.de(emDias(-1)),
+        HorizonteDaNotificacao.vencido,
+      );
+      expect(HorizonteDaNotificacao.de(emDias(0)), HorizonteDaNotificacao.hoje);
+      expect(
+        HorizonteDaNotificacao.de(emDias(1)),
+        HorizonteDaNotificacao.amanha,
+      );
+      expect(
+        HorizonteDaNotificacao.de(emDias(2)),
+        HorizonteDaNotificacao.proximos,
+      );
+      expect(
+        HorizonteDaNotificacao.de(emDias(7)),
+        HorizonteDaNotificacao.proximos,
+      );
+    });
+
+    test('o passado distante continua vencido', () {
+      expect(
+        HorizonteDaNotificacao.de(emDias(-30)),
+        HorizonteDaNotificacao.vencido,
+      );
+    });
+
+    test('ignora a hora do dia', () {
+      final base = hoje();
+
+      expect(
+        HorizonteDaNotificacao.de(
+          DateTime(base.year, base.month, base.day, 23, 59),
+        ),
+        HorizonteDaNotificacao.hoje,
+      );
     });
   });
 

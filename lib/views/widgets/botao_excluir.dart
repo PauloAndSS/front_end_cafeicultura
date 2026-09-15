@@ -39,7 +39,7 @@ class BotaoExcluir extends StatelessWidget {
   Widget build(BuildContext context) {
     final desabilitado = bloqueado || aoConfirmar == null;
 
-    final cor = desabilitado ? Colors.black38 : AppCores.erro;
+    final cor = desabilitado ? AppCores.textoTerciario : AppCores.erro;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,

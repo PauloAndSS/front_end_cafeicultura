@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/propriedade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/propriedade/widgets/propriedade_card.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
 
 class ResumoPropriedade extends StatefulWidget {
   final Propriedade propriedade;
@@ -39,28 +40,18 @@ class _ResumoPropriedadeState extends State<ResumoPropriedade> {
 
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
+      decoration: AppEstilos.cartao(),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(AppEstilos.raioCartao),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(AppEstilos.raioCartao),
           onTap: _alternar,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Row(
               children: [
-                const Icon(Icons.landscape, color: AppCores.verdeSecundario, size: 28),
+                const Icon(Icons.landscape, color: AppCores.acao, size: 28),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -73,7 +64,7 @@ class _ResumoPropriedadeState extends State<ResumoPropriedade> {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: AppCores.textoPrimario,
                         ),
                       ),
                       const SizedBox(height: 2),
@@ -84,7 +75,7 @@ class _ResumoPropriedadeState extends State<ResumoPropriedade> {
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
                           fontSize: 13,
-                          color: Colors.black54,
+                          color: AppCores.textoSecundario,
                         ),
                       ),
                     ],
@@ -93,7 +84,7 @@ class _ResumoPropriedadeState extends State<ResumoPropriedade> {
                 const Icon(
                   Icons.expand_more,
                   size: 20,
-                  color: Colors.black26,
+                  color: AppCores.textoTerciario,
                 ),
               ],
             ),

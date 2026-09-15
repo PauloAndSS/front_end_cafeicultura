@@ -30,7 +30,7 @@ class SinoNotificacoes extends StatelessWidget {
         IconButton(
           icon: const Icon(
             Icons.notifications_none,
-            color: Colors.white,
+            color: AppCores.sobreCasca,
             size: 26,
           ),
           tooltip: 'Notificações',
@@ -65,15 +65,14 @@ class _ContadorNaoLidas extends StatelessWidget {
       constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-        color: AppCores.aviso,
+        color: AppCores.acento,
         borderRadius: BorderRadius.circular(9),
-        border: Border.all(color: AppCores.verdeSecundario, width: 1.5),
       ),
       child: Text(
         _texto,
         textAlign: TextAlign.center,
         style: const TextStyle(
-          color: Colors.white,
+          color: AppCores.sobreAcento,
           fontSize: 11,
           fontWeight: FontWeight.bold,
           height: 1.1,

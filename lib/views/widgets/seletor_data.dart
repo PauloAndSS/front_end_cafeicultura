@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
-import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 const _anosDeAgendamento = 5;
 
@@ -45,18 +44,6 @@ Future<DateTime?> selecionarData({
     lastDate: ultima,
     helpText: ajuda,
     selectableDayPredicate: diaSelecionavel,
-    builder: (context, child) {
-      return Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.light(
-            primary: AppCores.verdePrimario,
-            onPrimary: Colors.white,
-            onSurface: Colors.black,
-          ),
-        ),
-        child: child!,
-      );
-    },
   );
 }
 

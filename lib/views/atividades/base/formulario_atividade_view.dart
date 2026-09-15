@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/transacao_financeira_dialog.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/detalhes_despesa_dialog.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_suspenso.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/selo_situacao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/base/dados_formulario_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
 import 'package:frond_end_cafeicultura_mobile/model/periodo.dart';
@@ -24,6 +26,11 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dar
 import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_de_data.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/propriedade/acoes_propriedade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/safra/acoes_safra.dart';
+import 'package:frond_end_cafeicultura_mobile/views/talhao/acoes_talhao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
 
 class FormularioAtividadeView extends StatefulWidget {
   final CadastrarAtividadeViewModel viewModel;
@@ -564,6 +571,27 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
   }
 
   Widget _construirEstadoVazio(SafraViewModel safraViewModel) {
+    final propriedadesViewModel = context.read<PropriedadesUsuarioViewModel>();
+
+    if (propriedadesViewModel.propriedades.isEmpty) {
+      return const EstadoSemPropriedade();
+    }
+
+    if (propriedadesViewModel.idPropriedadeSelecionada == null) {
+      return const EstadoPropriedadeNaoSelecionada(
+        mensagem:
+            'Selecione uma propriedade no topo da tela para lançar atividades.',
+      );
+    }
+
+    if (_viewModel.mensagemErro != null) {
+      return EstadoVazio(
+        icone: Icons.cloud_off_outlined,
+        mensagem: _viewModel.mensagemErro!,
+        acao: _acaoDoEstadoVazio('Tentar novamente', _recarregarDados),
+      );
+    }
+
     final semTalhoes =
         _viewModel.talhoes.where((talhao) => talhao.id != null).isEmpty;
 
@@ -571,38 +599,63 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
         .where((safra) => safra.id != null && safra.periodo != null)
         .isEmpty;
 
-    final mensagem = _viewModel.mensagemErro ??
-        (semTalhoes
-            ? widget.mensagemSemTalhoes
-            : semSafras
-                ? widget.mensagemSemSafras
-                : widget.mensagemSemJanela);
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+    if (semTalhoes && semSafras) {
+      return EstadoVazio(
+        icone: Icons.eco_outlined,
+        mensagem:
+            'Esta propriedade ainda não tem talhão nem safra.\n'
+            'Cadastre um talhão e abra uma safra para lançar atividades.',
+        acao: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.eco_outlined, size: 56, color: AppCores.verdeSecundario),
-            const SizedBox(height: 16),
-            Text(
-              mensagem,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15, color: Colors.black54),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: 200,
-              child: CustomButton(
-                text: 'Tentar novamente',
-                onPressed: _recarregarDados,
-              ),
-            ),
+            _acaoDoEstadoVazio('Cadastrar talhão', _cadastrarTalhao),
+            const SizedBox(height: 12),
+            _acaoDoEstadoVazio('Nova safra', _abrirNovaSafra),
           ],
         ),
-      ),
+      );
+    }
+
+    if (semTalhoes) {
+      return EstadoVazio(
+        icone: Icons.agriculture_outlined,
+        mensagem: widget.mensagemSemTalhoes,
+        acao: _acaoDoEstadoVazio('Cadastrar talhão', _cadastrarTalhao),
+      );
+    }
+
+    if (semSafras) {
+      return EstadoVazio(
+        icone: Icons.grass,
+        mensagem: widget.mensagemSemSafras,
+        acao: _acaoDoEstadoVazio('Nova safra', _abrirNovaSafra),
+      );
+    }
+
+    return EstadoVazio(
+      icone: Icons.event_busy_outlined,
+      mensagem: widget.mensagemSemJanela,
+      acao: _acaoDoEstadoVazio('Tentar novamente', _recarregarDados),
     );
+  }
+
+  Widget _acaoDoEstadoVazio(String rotulo, VoidCallback aoTocar) {
+    return SizedBox(
+      width: 220,
+      child: CustomButton(text: rotulo, onPressed: aoTocar),
+    );
+  }
+
+  Future<void> _cadastrarTalhao() async {
+    await abrirCadastroDeTalhao(context);
+
+    if (mounted) _recarregarDados();
+  }
+
+  Future<void> _abrirNovaSafra() async {
+    await abrirNovaSafra(context);
+
+    if (mounted) _recarregarDados();
   }
 
   Widget _construirCampoDeEscopo<T>({
@@ -610,6 +663,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     required List<T> disponiveis,
     required T? selecionado,
     required String Function(T item) rotuloItem,
+    required Widget Function(T item) seloItem,
     required String dicaSelecionar,
     required ValueChanged<T?> aoSelecionar,
   }) {
@@ -619,31 +673,23 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
       return _CampoFixoAtividade(
         rotulo: rotulo,
         valor: rotuloItem(disponiveis.first),
+        selo: seloItem(disponiveis.first),
       );
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        rotuloDeCampo(rotulo),
-        DropdownButtonFormField<T>(
-          key: ValueKey('$rotulo-$_dataInicio'),
-          initialValue: selecionado,
-          isExpanded: true,
-          decoration: decoracaoDeSeletor(),
-          hint: Text(
-            semData ? 'Escolha a data de início primeiro' : dicaSelecionar,
-            style: const TextStyle(color: Colors.black26, fontSize: 14),
-          ),
-          items: disponiveis.map((item) {
-            return DropdownMenuItem(
-              value: item,
-              child: Text(rotuloItem(item), overflow: TextOverflow.ellipsis),
-            );
-          }).toList(),
-          onChanged: semData ? null : aoSelecionar,
-          validator: (valor) => valor == null ? 'Obrigatório' : null,
-          autovalidateMode: AutovalidateMode.onUserInteraction,
+        CampoSuspenso<T>(
+          chaveDoSeletor: ValueKey('$rotulo-$_dataInicio'),
+          rotulo: rotulo,
+          valor: selecionado,
+          itens: disponiveis,
+          rotuloItem: rotuloItem,
+          seloItem: seloItem,
+          dica: semData ? 'Escolha a data de início primeiro' : dicaSelecionar,
+          aoSelecionar: semData ? null : aoSelecionar,
+          validador: (valor) => valor == null ? 'Obrigatório' : null,
         ),
         const SizedBox(height: 16),
       ],
@@ -660,15 +706,9 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppCores.superficie,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0D000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppEstilos.sombraCartao,
       ),
       child: Form(
         key: _formKey,
@@ -686,6 +726,8 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
               disponiveis: talhoesDisponiveis,
               selecionado: talhaoDoLancamento,
               rotuloItem: (talhao) => talhao.nomeExibicao,
+              seloItem: (talhao) =>
+                  SeloDeSituacao.talhao(encerrado: talhao.encerrado),
               dicaSelecionar: 'Selecione o talhão',
               aoSelecionar: _aoSelecionarTalhao,
             ),
@@ -695,6 +737,8 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
               disponiveis: safrasDisponiveis,
               selecionado: safraDoLancamento,
               rotuloItem: (safra) => safra.nomeExibicao,
+              seloItem: (safra) =>
+                  SeloDeSituacao.safra(encerrado: safra.encerrada),
               dicaSelecionar: 'Selecione a safra',
               aoSelecionar: _aoSelecionarSafra,
             ),
@@ -706,9 +750,11 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
 
             if (_aceitaDataFim) ...[
               CampoDeData(
-                label: _dataFimObrigatoria(talhaoDoLancamento, safraDoLancamento)
-                    ? 'Data de término'
-                    : 'Data de término (opcional)',
+                label: 'Data de término',
+                opcional: !_dataFimObrigatoria(
+                  talhaoDoLancamento,
+                  safraDoLancamento,
+                ),
                 controller: _dataFimController,
                 aoTocar: _selecionarDataFim,
                 hintText: widget.dicaDataFim,
@@ -724,7 +770,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
                     icon: const Icon(Icons.close, size: 16),
                     label: const Text('Remover data de término'),
                     style:
-                        TextButton.styleFrom(foregroundColor: AppCores.verdePrimario),
+                        TextButton.styleFrom(foregroundColor: AppCores.acao),
                   ),
                 ),
             ] else if (_dataInicio != null)
@@ -733,7 +779,8 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
             const SizedBox(height: 8),
 
             CustomTextField(
-              label: 'Descrição (opcional)',
+              label: 'Descrição',
+              opcional: true,
               controller: _descricaoController,
               hintText: 'O que foi feito no talhão',
             ),
@@ -741,7 +788,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
             const Divider(),
             const SizedBox(height: 16),
 
-            rotuloDeCampo('Responsáveis'),
+            rotuloDeCampo(context, 'Responsáveis', opcional: true),
             SeletorMultiploAtividade<Pessoa>(
               icone: Icons.group_outlined,
               rotuloVazio: 'Selecionar responsáveis',
@@ -762,7 +809,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
             ],
 
             const SizedBox(height: 24),
-            rotuloDeCampo('Despesas'),
+            rotuloDeCampo(context, 'Despesas', opcional: true),
             SeletorMultiploAtividade<Despesa>(
               icone: Icons.payments_outlined,
               rotuloVazio: 'Adicionar despesa',
@@ -921,17 +968,17 @@ class _CaixaAvisoAtividade extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppCores.verdeSecundario.withValues(alpha: 0.12),
+        color: AppCores.acao.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
         children: [
-          Icon(icone, size: 20, color: AppCores.verdePrimario),
+          Icon(icone, size: 20, color: AppCores.acao),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               texto,
-              style: const TextStyle(fontSize: 13, color: Colors.black87),
+              style: const TextStyle(fontSize: 13, color: AppCores.textoPrimario),
             ),
           ),
         ],
@@ -943,24 +990,36 @@ class _CaixaAvisoAtividade extends StatelessWidget {
 class _CampoFixoAtividade extends StatelessWidget {
   final String rotulo;
   final String valor;
+  final Widget selo;
 
-  const _CampoFixoAtividade({required this.rotulo, required this.valor});
+  const _CampoFixoAtividade({
+    required this.rotulo,
+    required this.valor,
+    required this.selo,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        rotuloDeCampo(rotulo),
+        rotuloDeCampo(context, rotulo),
         InputDecorator(
-          decoration: decoracaoDeSeletor().copyWith(
+          decoration: const InputDecoration(
             filled: true,
-            fillColor: Colors.grey.shade200,
+            fillColor: AppCores.fundoCampoInativo,
           ),
-          child: Text(
-            valor,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(fontSize: 16, color: Colors.black87),
+          child: Row(
+            children: [
+              Flexible(
+                child: Text(
+                  valor,
+                  overflow: TextOverflow.ellipsis,
+                  style: estiloDeValorDeCampo(context),
+                ),
+              ),
+              selo,
+            ],
           ),
         ),
         const SizedBox(height: 16),

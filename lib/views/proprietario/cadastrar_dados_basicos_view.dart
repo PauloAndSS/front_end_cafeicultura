@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/proprietario/cadastrar_dados_basicos_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/proprietario/cadastrar_endereco_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_suspenso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
@@ -13,6 +15,8 @@ import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_identificacao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_contato.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_tema.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_formulario.dart';
 
 class CadastrarUsuarioView extends StatefulWidget {
   const CadastrarUsuarioView({super.key});
@@ -51,7 +55,7 @@ class _CadastrarUsuarioViewState extends State<CadastrarUsuarioView> {
     super.dispose();
   }
 
-void _cadastrarDadosBasicos() async {
+  void _cadastrarDadosBasicos() async {
     if (_formKey.currentState!.validate()) {
       FocusScope.of(context).unfocus();
 
@@ -61,21 +65,32 @@ void _cadastrarDadosBasicos() async {
         email: _emailController.text,
         senha: _senhaController.text,
         telefone: _telefoneController.text,
-        nome: _viewModel.tipoPessoaAtual == TipoPessoa.fisica ? _nomeController.text : null,
-        cpf: _viewModel.tipoPessoaAtual == TipoPessoa.fisica ? _cpfController.text : null,
-        razaoSocial: _viewModel.tipoPessoaAtual == TipoPessoa.juridica ? _razaoSocialController.text : null,
-        cnpj: _viewModel.tipoPessoaAtual == TipoPessoa.juridica ? _cnpjController.text : null,
-        inscEstadual: _viewModel.tipoPessoaAtual == TipoPessoa.juridica ? _inscricaoEstadualController.text : null,
+        nome: _viewModel.tipoPessoaAtual == TipoPessoa.fisica
+            ? _nomeController.text
+            : null,
+        cpf: _viewModel.tipoPessoaAtual == TipoPessoa.fisica
+            ? _cpfController.text
+            : null,
+        razaoSocial: _viewModel.tipoPessoaAtual == TipoPessoa.juridica
+            ? _razaoSocialController.text
+            : null,
+        cnpj: _viewModel.tipoPessoaAtual == TipoPessoa.juridica
+            ? _cnpjController.text
+            : null,
+        inscEstadual: _viewModel.tipoPessoaAtual == TipoPessoa.juridica
+            ? _inscricaoEstadualController.text
+            : null,
         session: session,
       );
 
       if (resultado != null && mounted) {
+        mostrarSucesso(context, 'Conta criada com sucesso!');
+
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => CadastrarEnderecoView(
-              proprietario: resultado,
-            ),
+            builder: (context) =>
+                CadastrarEnderecoView(proprietario: resultado),
           ),
         );
       } else if (mounted) {
@@ -84,20 +99,26 @@ void _cadastrarDadosBasicos() async {
     }
   }
 
-@override
+  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppCores.verdeAuth,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20),
-            child: Column(
-              children: [
-                const LogoCircular(),
-                const SizedBox(height: 24),
-                _buildFormCard(),
-              ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: AppTema.barraDeStatusSobreClaro,
+      child: Scaffold(
+        backgroundColor: AppCores.fundoAuth,
+        body: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 24.0,
+                vertical: 20,
+              ),
+              child: Column(
+                children: [
+                  const LogoCircular(),
+                  const SizedBox(height: 24),
+                  _buildFormCard(),
+                ],
+              ),
             ),
           ),
         ),
@@ -106,13 +127,8 @@ void _cadastrarDadosBasicos() async {
   }
 
   Widget _buildFormCard() {
-    return Container(
-      padding: const EdgeInsets.all(24.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Form(
+    return CartaoFormulario(
+      filho: Form(
         key: _formKey,
         child: Column(
           children: [
@@ -122,40 +138,14 @@ void _cadastrarDadosBasicos() async {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Tipo de Conta',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.black87,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<TipoPessoa>(
-                      initialValue: _viewModel.tipoPessoaAtual,
-                      icon: const Icon(Icons.keyboard_arrow_down, color: AppCores.verdePrimario),
-                      decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: AppCores.borda),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
-                          borderSide: const BorderSide(color: AppCores.borda),
-                        ),
-                      ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: TipoPessoa.fisica,
-                          child: Text('Pessoa Física (CPF)'),
-                        ),
-                        DropdownMenuItem(
-                          value: TipoPessoa.juridica,
-                          child: Text('Pessoa Jurídica (CNPJ)'),
-                        ),
-                      ],
-                      onChanged: (TipoPessoa? valor) {
+                    CampoSuspenso<TipoPessoa>(
+                      rotulo: 'Tipo de Conta',
+                      valor: _viewModel.tipoPessoaAtual,
+                      itens: TipoPessoa.values,
+                      rotuloItem: (tipo) => tipo == TipoPessoa.fisica
+                          ? 'Pessoa Física (CPF)'
+                          : 'Pessoa Jurídica (CNPJ)',
+                      aoSelecionar: (TipoPessoa? valor) {
                         if (valor != null) {
                           _viewModel.alterarTipoPessoa(valor);
                         }
@@ -198,7 +188,10 @@ void _cadastrarDadosBasicos() async {
               label: 'Confirmar Senha',
               controller: _confirmarSenhaController,
               isPassword: true,
-              validator: (value) => Validator.validarConfirmacaoSenha(value, _senhaController.text),
+              validator: (value) => Validator.validarConfirmacaoSenha(
+                value,
+                _senhaController.text,
+              ),
               hintText: 'Confirme sua senha',
             ),
 
@@ -208,7 +201,7 @@ void _cadastrarDadosBasicos() async {
               listenable: _viewModel,
               builder: (context, _) {
                 if (_viewModel.isLoading) {
-                  return const CircularProgressIndicator(color: AppCores.verdePrimario);
+                  return const CircularProgressIndicator();
                 }
                 return CustomButton(
                   text: "Continuar Cadastro",

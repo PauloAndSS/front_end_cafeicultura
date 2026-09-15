@@ -33,15 +33,15 @@ class FiltroStatusAtividade extends StatelessWidget {
         ),
         backgroundColor: WidgetStateProperty.resolveWith<Color>((estados) {
           if (estados.contains(WidgetState.selected)) {
-            return AppCores.verdePrimario;
+            return AppCores.acao;
           }
-          return Colors.white;
+          return AppCores.sobreAcao;
         }),
         foregroundColor: WidgetStateProperty.resolveWith<Color>((estados) {
           if (estados.contains(WidgetState.selected)) {
-            return Colors.white;
+            return AppCores.sobreAcao;
           }
-          return Colors.black87;
+          return AppCores.textoPrimario;
         }),
       ),
     );

@@ -2,13 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/proprietario/cadastrar_endereco_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/views/propriedade/cadastrar_propriedade_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_endereco.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_formulario.dart';
 
 class CadastrarEnderecoView extends StatefulWidget {
   final Proprietario proprietario;
@@ -52,13 +52,8 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
       );
 
       if (proprietarioSalvo != null && mounted) {
-        mostrarSucesso(context, 'Conta e endereço cadastrados com sucesso!');
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CadastrarPropriedadeView(),
-          ),
-        );
+        mostrarSucesso(context, 'Endereço cadastrado com sucesso!');
+        _voltarParaOInicio();
       } else if (mounted) {
         mostrarErro(context, _viewModel.mensagemErro ??
                   'Erro desconhecido ao cadastrar endereço.');
@@ -67,9 +62,11 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
   }
 
   void _finalizarCadastroSemEndereco() {
-    Navigator.of(context).popUntil(
-      (route) => route.isFirst,
-    );
+    _voltarParaOInicio();
+  }
+
+  void _voltarParaOInicio() {
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
@@ -83,8 +80,8 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
         Navigator.of(context).popUntil((route) => route.isFirst);
       },
       child: Scaffold(
-        backgroundColor: AppCores.verdeAuth,
-        appBar: const AppBarPadrao(cor: Colors.transparent, elevacao: 0),
+        backgroundColor: AppCores.fundoAuth,
+        appBar: const AppBarPadrao(cor: AppCores.fundoAuth, elevacao: 0),
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -107,13 +104,8 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
   }
 
   Widget _buildEnderecoCard() {
-    return Container(
-      padding: const EdgeInsets.all(24.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Form(
+    return CartaoFormulario(
+      filho: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -123,7 +115,7 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppCores.verdePrimario,
+                color: AppCores.acao,
               ),
             ),
             const SizedBox(height: 16),
@@ -144,7 +136,7 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
               builder: (context, _) {
                 if (_viewModel.isLoading) {
                   return const Center(
-                    child: CircularProgressIndicator(color: AppCores.verdePrimario),
+                    child: CircularProgressIndicator(),
                   );
                 }
 
@@ -161,8 +153,8 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
                     CustomButton(
                       text: "Adicionar endereço depois",
                       onPressed: _finalizarCadastroSemEndereco,
-                      backgroundColor: Colors.white,
-                      foregroundColor: AppCores.verdePrimario,
+                      backgroundColor: AppCores.superficie,
+                      foregroundColor: AppCores.acao,
                     ),
                   ],
                 );

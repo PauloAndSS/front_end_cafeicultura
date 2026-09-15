@@ -71,7 +71,7 @@ class _QuantidadeInsumoDialogState extends State<_QuantidadeInsumoDialog> {
       title: Text(
         widget.insumo.descricao,
         style: const TextStyle(
-          color: AppCores.verdePrimario,
+          color: AppCores.acao,
           fontWeight: FontWeight.bold,
           fontSize: 18,
         ),
@@ -89,7 +89,7 @@ class _QuantidadeInsumoDialogState extends State<_QuantidadeInsumoDialog> {
             suffixText: widget.insumo.medida.sigla,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppCores.borda),
+              borderSide: const BorderSide(color: AppCores.bordaCampo),
             ),
           ),
           validator: Validator.valorPositivo,

@@ -6,7 +6,6 @@ import 'package:frond_end_cafeicultura_mobile/http/services/services_notificacao
 import 'package:frond_end_cafeicultura_mobile/http/websocket/canal_notificacoes.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/model/notificacoes/notificacao_agrupada.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/estado_de_carga.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/notifica_se_vivo_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/notificacoes/registro_de_leituras.dart';
@@ -51,18 +50,30 @@ class NotificacoesViewModel extends ChangeNotifier
 
   List<NotificacaoAgrupada> get grupos => List.unmodifiable(_grupos);
 
-  List<NotificacaoAgrupada> get _visiveis =>
-      _grupos.where((grupo) => !estaConfirmada(grupo)).toList();
+  List<NotificacaoAgrupada> get _visiveis => _grupos
+      .where((grupo) => !estaConfirmada(grupo))
+      .where((grupo) => !_lembreteVencido(grupo))
+      .toList();
 
-  List<NotificacaoAgrupada> get naoLidas =>
-      _visiveis.where((grupo) => !grupo.lida).toList();
+  List<NotificacaoAgrupada> get naoLidas => _visiveis
+      .where((grupo) => !grupo.lida || aguardaResposta(grupo))
+      .toList();
 
-  List<NotificacaoAgrupada> get lidas =>
-      _visiveis.where((grupo) => grupo.lida).toList();
+  List<NotificacaoAgrupada> get lidas => _visiveis
+      .where((grupo) => grupo.lida && !aguardaResposta(grupo))
+      .toList();
+
+  List<NotificacaoAgrupada> get pendentesDeResposta =>
+      naoLidas.where(aguardaResposta).toList();
+
+  List<NotificacaoAgrupada> get naoLidasSemPendencia =>
+      naoLidas.where((grupo) => !aguardaResposta(grupo)).toList();
 
   int get quantidadeNaoLidas => naoLidas.length;
 
   bool get temNaoLidas => quantidadeNaoLidas > 0;
+
+  bool get temLeituraPendente => naoLidasSemPendencia.isNotEmpty;
 
   bool get vazio => _visiveis.isEmpty;
 
@@ -80,11 +91,20 @@ class NotificacoesViewModel extends ChangeNotifier
   bool estaConfirmada(NotificacaoAgrupada grupo) =>
       atividadeDe(grupo)?.finalizado ?? false;
 
+  bool aguardaResposta(NotificacaoAgrupada grupo) =>
+      grupo.ehConfirmacao &&
+      (grupo.tipoEvento?.temTelaPropria ?? false) &&
+      !estaConfirmada(grupo);
+
   DateTime dataDoEvento(NotificacaoAgrupada grupo) =>
       atividadeDe(grupo)?.dataInicio ?? grupo.dataPrevistaDoEvento;
 
-  bool precisaDeResposta(NotificacaoAgrupada grupo) =>
-      grupo.ehConfirmacao || diasAPartirDeHoje(dataDoEvento(grupo)) < 0;
+  HorizonteDaNotificacao _horizonteDe(NotificacaoAgrupada grupo) =>
+      HorizonteDaNotificacao.de(dataDoEvento(grupo));
+
+  bool _lembreteVencido(NotificacaoAgrupada grupo) =>
+      !grupo.ehConfirmacao &&
+      _horizonteDe(grupo) == HorizonteDaNotificacao.vencido;
 
   Future<void> garantirCarregado(int idPropriedade) {
     if (isLoading || _propriedadeJaTentada == idPropriedade) {
@@ -151,10 +171,10 @@ class NotificacoesViewModel extends ChangeNotifier
 
   Future<bool> marcarComoLida(NotificacaoAgrupada grupo) => _marcar([grupo]);
 
-  Future<bool> marcarTodasComoLidas() => _marcar(naoLidas);
+  Future<bool> marcarTodasComoLidas() => _marcar(naoLidasSemPendencia);
 
   bool aguardaLeitura(NotificacaoAgrupada grupo) =>
-      !grupo.lida && !precisaDeResposta(grupo);
+      !grupo.lida && !aguardaResposta(grupo);
 
   void registrarVista(NotificacaoAgrupada grupo) {
     if (!aguardaLeitura(grupo)) return;
@@ -241,9 +261,11 @@ class NotificacoesViewModel extends ChangeNotifier
   }
 
   Future<bool> _marcar(List<NotificacaoAgrupada> alvos) {
-    if (alvos.isEmpty) return Future.value(true);
+    final permitidos = alvos.where((grupo) => !aguardaResposta(grupo)).toList();
 
-    final ids = alvos.expand((grupo) => grupo.ids).toList();
+    if (permitidos.isEmpty) return Future.value(alvos.isEmpty);
+
+    final ids = permitidos.expand((grupo) => grupo.ids).toList();
 
     return _cargaLeitura.executar(
       chamada: () async {
@@ -313,46 +335,48 @@ class NotificacoesViewModel extends ChangeNotifier
   }
 
   List<SecaoDeNotificacoes> _secoes(List<NotificacaoAgrupada> grupos) {
-    final precisamDeResposta = grupos.where(precisaDeResposta).toList();
+    final pendentes = grupos.where(aguardaResposta).toList();
+    final lembretes = grupos.where((grupo) => !aguardaResposta(grupo)).toList();
 
-    final futuras =
-        grupos.where((grupo) => !precisaDeResposta(grupo)).toList();
-
-    final hoje = _porHorizonte(futuras, (dias) => dias == 0);
-    final amanha = _porHorizonte(futuras, (dias) => dias == 1);
-    final proximas = _porHorizonte(futuras, (dias) => dias > 1);
+    final deHoje = _comHorizonte(lembretes, HorizonteDaNotificacao.hoje);
+    final deAmanha = _comHorizonte(lembretes, HorizonteDaNotificacao.amanha);
+    final proximas = _comHorizonte(lembretes, HorizonteDaNotificacao.proximos);
+    final comecadas = _comHorizonte(lembretes, HorizonteDaNotificacao.vencido);
 
     return [
-      if (precisamDeResposta.isNotEmpty)
+      if (pendentes.isNotEmpty)
         SecaoDeNotificacoes(
           'Precisa de resposta',
-          _ordenar(precisamDeResposta, crescente: false),
+          _ordenar(pendentes, crescente: false),
         ),
-      if (hoje.isNotEmpty)
+      if (deHoje.isNotEmpty)
         SecaoDeNotificacoes(
           'Acontece hoje',
-          _ordenar(hoje, crescente: true),
+          _ordenar(deHoje, crescente: true),
         ),
-      if (amanha.isNotEmpty)
+      if (deAmanha.isNotEmpty)
         SecaoDeNotificacoes(
           'Acontece amanhã',
-          _ordenar(amanha, crescente: true),
+          _ordenar(deAmanha, crescente: true),
         ),
       if (proximas.isNotEmpty)
         SecaoDeNotificacoes(
           'Próximos dias',
           _ordenar(proximas, crescente: true),
         ),
+      if (comecadas.isNotEmpty)
+        SecaoDeNotificacoes(
+          'Já começaram',
+          _ordenar(comecadas, crescente: false),
+        ),
     ];
   }
 
-  List<NotificacaoAgrupada> _porHorizonte(
-    List<NotificacaoAgrupada> futuras,
-    bool Function(int dias) filtro,
+  List<NotificacaoAgrupada> _comHorizonte(
+    List<NotificacaoAgrupada> grupos,
+    HorizonteDaNotificacao horizonte,
   ) =>
-      futuras
-          .where((grupo) => filtro(diasAPartirDeHoje(dataDoEvento(grupo))))
-          .toList();
+      grupos.where((grupo) => _horizonteDe(grupo) == horizonte).toList();
 
   List<NotificacaoAgrupada> _ordenar(
     List<NotificacaoAgrupada> grupos, {

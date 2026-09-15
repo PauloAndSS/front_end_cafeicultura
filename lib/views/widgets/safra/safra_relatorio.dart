@@ -53,9 +53,9 @@ class _SafraRelatorioWidgetState extends State<SafraRelatorioWidget> {
     'Defensivo',
   ];
 
-  static const List<Color> _paletaTratos = AppCores.paletaTerrosa;
-  static const List<Color> _paletaTalhoes = AppCores.paletaCiano;
-  static const List<Color> _paletaGastos = AppCores.paletaVerde;
+  static const List<Color> _paletaTratos = AppCores.paletaGrafico;
+  static const List<Color> _paletaTalhoes = AppCores.paletaGrafico;
+  static const List<Color> _paletaGastos = AppCores.paletaGrafico;
 
   bool get _temDados =>
       widget.eventos.isNotEmpty ||
@@ -69,7 +69,7 @@ class _SafraRelatorioWidgetState extends State<SafraRelatorioWidget> {
     if (widget.isLoading) {
       conteudo = const Padding(
         padding: EdgeInsets.symmetric(vertical: 32),
-        child: Center(child: CircularProgressIndicator(color: AppCores.verdePrimario)),
+        child: Center(child: CircularProgressIndicator()),
       );
     } else if (widget.mensagemErro != null) {
       conteudo = _buildMessageCard(widget.mensagemErro!);
@@ -93,7 +93,7 @@ class _SafraRelatorioWidgetState extends State<SafraRelatorioWidget> {
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: AppCores.verdePrimario,
+            color: AppCores.acao,
           ),
         ),
         const SizedBox(height: 12),
@@ -128,8 +128,8 @@ class _SafraRelatorioWidgetState extends State<SafraRelatorioWidget> {
         Center(
           child: TextButton.icon(
             onPressed: () => _abrirRelatorioCompleto(context),
-            icon: const Icon(Icons.open_in_new, size: 16, color: AppCores.verdePrimario),
-            label: const Text('Ver relatório completo', style: TextStyle(color: AppCores.verdePrimario)),
+            icon: const Icon(Icons.open_in_new, size: 16, color: AppCores.acao),
+            label: const Text('Ver relatório completo', style: TextStyle(color: AppCores.acao)),
           ),
         ),
       ],
@@ -213,14 +213,14 @@ class _SafraRelatorioWidgetState extends State<SafraRelatorioWidget> {
             conteudo: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSubtituloGrupoEventos('Pendentes', pendentes.length, Colors.orange.shade700),
+                _buildSubtituloGrupoEventos('Pendentes', pendentes.length, AppCores.aviso),
                 const SizedBox(height: 8),
                 if (pendentes.isEmpty)
                   _buildAvisoGrupoVazio('Nenhum evento pendente.')
                 else
                   ...pendentes.map(_buildEventCard),
                 const SizedBox(height: 16),
-                _buildSubtituloGrupoEventos('Concluídos', concluidos.length, Colors.green.shade700),
+                _buildSubtituloGrupoEventos('Concluídos', concluidos.length, AppCores.sucesso),
                 const SizedBox(height: 8),
                 if (concluidos.isEmpty)
                   _buildAvisoGrupoVazio('Nenhum evento concluído ainda.')
@@ -258,7 +258,7 @@ class _SafraRelatorioWidgetState extends State<SafraRelatorioWidget> {
                   Expanded(
                     child: Row(
                       children: [
-                        Icon(icone, color: AppCores.verdePrimario),
+                        Icon(icone, color: AppCores.acao),
                         const SizedBox(width: 8),
                         Flexible(
                           child: Text(
@@ -266,7 +266,7 @@ class _SafraRelatorioWidgetState extends State<SafraRelatorioWidget> {
                             style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 15,
-                              color: AppCores.verdePrimario,
+                              color: AppCores.acao,
                             ),
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -276,7 +276,7 @@ class _SafraRelatorioWidgetState extends State<SafraRelatorioWidget> {
                   ),
                   Icon(
                     expandido ? Icons.expand_less : Icons.expand_more,
-                    color: AppCores.verdePrimario,
+                    color: AppCores.acao,
                   ),
                 ],
               ),
@@ -320,14 +320,13 @@ class _SafraRelatorioWidgetState extends State<SafraRelatorioWidget> {
       padding: const EdgeInsets.only(bottom: 4),
       child: Text(
         mensagem,
-        style: TextStyle(fontSize: 13, color: Colors.grey.shade600, fontStyle: FontStyle.italic),
+        style: TextStyle(fontSize: 13, color: AppCores.textoSecundario, fontStyle: FontStyle.italic),
       ),
     );
   }
 
   // 1. Resumo dos Eventos (Cards de indicadores)
   Widget _buildResumoRelatorio() {
-    final total = widget.eventos.length;
     final finalizados = widget.eventos.where((e) => e.status == StatusEvento.finalizado).length;
     final emAndamento = widget.eventos.where((e) => e.status == StatusEvento.emAndamento).length;
     final agendados = widget.eventos.where((e) => e.status == StatusEvento.agendado).length;
@@ -335,31 +334,24 @@ class _SafraRelatorioWidgetState extends State<SafraRelatorioWidget> {
     return Row(
       children: [
         Expanded(
-          child: _buildEstatisticaCard('Total', '$total', Icons.event_note_outlined, AppCores.verdePrimario),
+          child: _buildEstatisticaCard('Finalizados', '$finalizados', Icons.check_circle_outline, AppCores.sucesso),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: _buildEstatisticaCard('Finalizados', '$finalizados', Icons.check_circle_outline, Colors.green.shade700),
+          child: _buildEstatisticaCard('Em andamento', '$emAndamento', Icons.hourglass_empty, AppCores.aviso),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: _buildEstatisticaCard('Em andamento', '$emAndamento', Icons.hourglass_empty, Colors.orange.shade700),
+          child: _buildEstatisticaCard('Agendados', '$agendados', Icons.event_available, AppCores.acao),
         ),
-        if (agendados > 0) ...[
-          const SizedBox(width: 8),
-          Expanded(
-            child: _buildEstatisticaCard('Agendados', '$agendados', Icons.event_available, AppCores.verdeSecundario),
-          ),
-        ],
       ],
     );
   }
 
   Widget _buildEstatisticaCard(String rotulo, String valor, IconData icone, Color cor) {
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
         child: Column(
           children: [
             Icon(icone, color: cor, size: 20),
@@ -368,7 +360,7 @@ class _SafraRelatorioWidgetState extends State<SafraRelatorioWidget> {
             const SizedBox(height: 2),
             Text(
               rotulo,
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
+              style: const TextStyle(fontSize: 11, color: AppCores.textoSecundario),
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -501,7 +493,7 @@ class _SafraRelatorioWidgetState extends State<SafraRelatorioWidget> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: isConcluido ? Colors.green.shade50 : Colors.orange.shade50,
+                    color: isConcluido ? AppCores.sucesso.withValues(alpha: 0.12) : AppCores.aviso.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(999),
                   ),
                   child: Text(
@@ -509,7 +501,7 @@ class _SafraRelatorioWidgetState extends State<SafraRelatorioWidget> {
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: isConcluido ? Colors.green.shade700 : Colors.orange.shade700,
+                      color: isConcluido ? AppCores.sucesso : AppCores.aviso,
                     ),
                   ),
                 ),
@@ -547,12 +539,12 @@ class _SafraRelatorioWidgetState extends State<SafraRelatorioWidget> {
     return SizedBox(
       width: double.infinity,
       child: Card(
-        color: Colors.red.shade50,
+        color: AppCores.erro.withValues(alpha: 0.12),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
             message,
-            style: const TextStyle(color: Colors.red),
+            style: const TextStyle(color: AppCores.erro),
             textAlign: TextAlign.center,
           ),
         ),
@@ -568,12 +560,12 @@ class _SafraRelatorioWidgetState extends State<SafraRelatorioWidget> {
         child: Center(
           child: Column(
             children: [
-              Icon(Icons.description_outlined, size: 44, color: AppCores.verdeSecundario),
+              Icon(Icons.description_outlined, size: 44, color: AppCores.acao),
               SizedBox(height: 12),
               Text(
                 'Nada registrado nessa Safra ainda, registre mais dados e os relatórios aparecerão por aqui!',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(color: AppCores.textoSecundario),
               ),
             ],
           ),

@@ -15,7 +15,7 @@ Future<List<Pessoa>?> mostrarSelecaoResponsaveis({
   return showModalBottomSheet<List<Pessoa>>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.white,
+    backgroundColor: AppCores.superficie,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),
@@ -101,6 +101,7 @@ class _SelecionarResponsaveisSheetState
                 dica: 'Buscar por nome',
               ),
               BarraDeAbas(
+                corDeFundo: AppCores.superficie,
                 rolavel: true,
                 abas: [
                   for (final papel in categoriasDeResponsavel)
@@ -115,10 +116,8 @@ class _SelecionarResponsaveisSheetState
                         catalogo: widget.viewModel,
                         papel: papel,
                         termoBusca: _termoBusca,
-                        construirItem: (context, papelPessoa) => _construirItem(
-                          papelPessoa.id!,
-                          papelPessoa.pessoa,
-                        ),
+                        construirItem: (context, papelPessoa) =>
+                            _construirItem(papelPessoa.id!, papelPessoa.pessoa),
                       ),
                   ],
                 ),
@@ -138,11 +137,11 @@ class _SelecionarResponsaveisSheetState
   Widget _construirItem(int id, Pessoa pessoa) {
     return CheckboxListTile(
       value: _selecionados.containsKey(id),
-      activeColor: AppCores.verdePrimario,
+      activeColor: AppCores.acao,
       title: Text(pessoa.nomeParaExibicao),
       subtitle: Text(
         pessoa.documentoFormatado,
-        style: const TextStyle(fontSize: 12, color: Colors.black54),
+        style: const TextStyle(fontSize: 12, color: AppCores.textoSecundario),
       ),
       onChanged: (marcado) => _alternar(id, pessoa, marcado == true),
     );

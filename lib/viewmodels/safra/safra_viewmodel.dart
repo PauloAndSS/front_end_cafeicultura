@@ -62,11 +62,14 @@ class SafraViewModel extends ChangeNotifier
     int idPropriedade, {
     bool forcarAtualizacao = false,
   }) async {
-    if (!forcarAtualizacao && _propriedadeIdAtual == idPropriedade && _dadosCarregados) {
+    if (!forcarAtualizacao &&
+        _propriedadeIdAtual == idPropriedade &&
+        _dadosCarregados) {
       return;
     }
 
-    if (!forcarAtualizacao && _cacheSafrasPorPropriedade.containsKey(idPropriedade)) {
+    if (!forcarAtualizacao &&
+        _cacheSafrasPorPropriedade.containsKey(idPropriedade)) {
       _propriedadeIdAtual = idPropriedade;
       mensagemErro = null;
       _restaurarSafrasDoCache(idPropriedade);
@@ -86,8 +89,9 @@ class SafraViewModel extends ChangeNotifier
 
     await cargaPrincipal.executar(
       chamada: () async {
-        final safrasCarregadas =
-            _ordenarSafras(await _service.buscarPorPropriedade(idPropriedade));
+        final safrasCarregadas = _ordenarSafras(
+          await _service.buscarPorPropriedade(idPropriedade),
+        );
 
         if (safrasCarregadas.isEmpty) {
           _safras = [];
@@ -101,7 +105,7 @@ class SafraViewModel extends ChangeNotifier
         _safras = safrasCarregadas;
         _salvarSafrasNoCache(idPropriedade, _safras);
 
-        _safraSelecionada = _safras.first;
+        _safraSelecionada = _safraEscolhidaOuPadrao(idPropriedade);
         _cacheSafraSelecionadaPorPropriedade[idPropriedade] =
             _safraSelecionada!.id;
 
@@ -118,9 +122,12 @@ class SafraViewModel extends ChangeNotifier
   }
 
   void _restaurarSafrasDoCache(int idPropriedade) {
-    _safras = List<Safra>.from(_cacheSafrasPorPropriedade[idPropriedade] ?? const []);
+    _safras = List<Safra>.from(
+      _cacheSafrasPorPropriedade[idPropriedade] ?? const [],
+    );
 
-    final idSelecionadaCache = _cacheSafraSelecionadaPorPropriedade[idPropriedade];
+    final idSelecionadaCache =
+        _cacheSafraSelecionadaPorPropriedade[idPropriedade];
     Safra? safraRestaurada;
     if (idSelecionadaCache != null) {
       for (final safra in _safras) {
@@ -130,7 +137,7 @@ class SafraViewModel extends ChangeNotifier
         }
       }
     }
-    _safraSelecionada = safraRestaurada ?? (_safras.isNotEmpty ? _safras.first : null);
+    _safraSelecionada = safraRestaurada ?? _safraPadrao(_safras);
   }
 
   void _salvarSafrasNoCache(int idPropriedade, List<Safra> safras) {
@@ -228,10 +235,7 @@ class SafraViewModel extends ChangeNotifier
     notificarSeVivo();
   }
 
-  Future<bool> criarSafra({
-    required int idPropriedade,
-    DateTime? dataInicio,
-  }) {
+  Future<bool> criarSafra({required int idPropriedade, DateTime? dataInicio}) {
     return cargaPrincipal.executar(
       chamada: () async {
         await _service.cadastrar(
@@ -295,7 +299,9 @@ class SafraViewModel extends ChangeNotifier
   }) {
     return _cargaReleitura.executar(
       chamada: () async {
-        final novasSafras = _ordenarSafras(await _service.buscarPorPropriedade(idPropriedade));
+        final novasSafras = _ordenarSafras(
+          await _service.buscarPorPropriedade(idPropriedade),
+        );
         _safras = novasSafras;
         _salvarSafrasNoCache(idPropriedade, _safras);
 
@@ -310,7 +316,7 @@ class SafraViewModel extends ChangeNotifier
         if (selecionarMaisRecente ||
             _safraSelecionada == null ||
             !novasSafras.any((safra) => safra.id == _safraSelecionada?.id)) {
-          _safraSelecionada = _safras.first;
+          _safraSelecionada = _safraPadrao(_safras);
         } else {
           _safraSelecionada = novasSafras.firstWhere(
             (safra) => safra.id == _safraSelecionada!.id,
@@ -318,7 +324,8 @@ class SafraViewModel extends ChangeNotifier
           );
         }
 
-        _cacheSafraSelecionadaPorPropriedade[idPropriedade] = _safraSelecionada!.id;
+        _cacheSafraSelecionadaPorPropriedade[idPropriedade] =
+            _safraSelecionada!.id;
 
         await carregarRelatorioDaSafra(
           idPropriedade: idPropriedade,
@@ -329,11 +336,33 @@ class SafraViewModel extends ChangeNotifier
     );
   }
 
+  Safra? _safraEscolhidaOuPadrao(int idPropriedade) {
+    final idEscolhida = _cacheSafraSelecionadaPorPropriedade[idPropriedade];
+
+    for (final safra in _safras) {
+      if (safra.id == idEscolhida) return safra;
+    }
+
+    return _safraPadrao(_safras);
+  }
+
+  Safra? _safraPadrao(List<Safra> safras) {
+    if (safras.isEmpty) return null;
+
+    for (final safra in safras) {
+      if (!safra.encerrada) return safra;
+    }
+
+    return safras.first;
+  }
+
   List<Safra> _ordenarSafras(List<Safra> safras) {
     final copia = List<Safra>.from(safras);
     copia.sort((a, b) {
-      final dataA = a.dataInicio ?? a.dataFim ?? DateTime.fromMillisecondsSinceEpoch(0);
-      final dataB = b.dataInicio ?? b.dataFim ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final dataA =
+          a.dataInicio ?? a.dataFim ?? DateTime.fromMillisecondsSinceEpoch(0);
+      final dataB =
+          b.dataInicio ?? b.dataFim ?? DateTime.fromMillisecondsSinceEpoch(0);
       final comparacaoData = dataB.compareTo(dataA);
       if (comparacaoData != 0) {
         return comparacaoData;

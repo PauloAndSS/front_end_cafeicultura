@@ -4,6 +4,7 @@ import 'package:frond_end_cafeicultura_mobile/http/services/services_safra.dart'
 import 'package:frond_end_cafeicultura_mobile/model/safra/relatorio_financeiro_safra.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/safra/pie_chart.dart';
 
 class RelatorioFinanceiroWidget extends StatefulWidget {
@@ -14,6 +15,7 @@ class RelatorioFinanceiroWidget extends StatefulWidget {
   final String? mensagemErro;
   final bool mostrarTitulo;
   final bool mostrarListaDespesas;
+  final Widget? acaoVazio;
 
   const RelatorioFinanceiroWidget({
     super.key,
@@ -24,6 +26,7 @@ class RelatorioFinanceiroWidget extends StatefulWidget {
     this.mensagemErro,
     this.mostrarTitulo = true,
     this.mostrarListaDespesas = true,
+    this.acaoVazio,
   });
 
   @override
@@ -38,7 +41,7 @@ class _RelatorioFinanceiroWidgetState extends State<RelatorioFinanceiroWidget> {
   String? _erroLocal;
   RelatorioFinanceiroSafra? _relatorioLocal;
 
-  static const List<Color> _paletaGastos = AppCores.paletaVerde;
+  static const List<Color> _paletaGastos = AppCores.paletaGrafico;
 
   bool get _usarDadosExternos => widget.relatorio != null;
 
@@ -106,19 +109,19 @@ class _RelatorioFinanceiroWidgetState extends State<RelatorioFinanceiroWidget> {
       conteudo = const Padding(
         padding: EdgeInsets.symmetric(vertical: 24),
         child: Center(
-          child: CircularProgressIndicator(color: AppCores.verdePrimario),
+          child: CircularProgressIndicator(),
         ),
       );
     } else if (_erroAtual != null) {
       conteudo = Card(
-        color: Colors.red.shade50,
+        color: AppCores.erro.withValues(alpha: 0.12),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               Text(
                 _erroAtual!,
-                style: const TextStyle(color: Colors.red),
+                style: const TextStyle(color: AppCores.erro),
                 textAlign: TextAlign.center,
               ),
               if (!_usarDadosExternos) ...[
@@ -134,24 +137,10 @@ class _RelatorioFinanceiroWidgetState extends State<RelatorioFinanceiroWidget> {
         ),
       );
     } else if (_relatorioAtual.transacoes.isEmpty) {
-      conteudo = Card(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Center(
-            child: Column(
-              children: [
-                Icon(Icons.payments_outlined, size: 36, color: Colors.grey.shade400),
-                const SizedBox(height: 8),
-                Text(
-                  'Nenhuma despesa registrada nessa safra ainda.',
-                  style: TextStyle(color: Colors.grey.shade600),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
+      conteudo = CartaoVazio(
+        icone: Icons.payments_outlined,
+        mensagem: 'Nenhuma despesa registrada nessa safra ainda.',
+        acao: widget.acaoVazio,
       );
     } else {
       conteudo = Column(
@@ -177,14 +166,14 @@ class _RelatorioFinanceiroWidgetState extends State<RelatorioFinanceiroWidget> {
       children: [
         const Row(
           children: [
-            Icon(Icons.monetization_on_outlined, size: 20, color: AppCores.verdePrimario),
+            Icon(Icons.monetization_on_outlined, size: 20, color: AppCores.acao),
             SizedBox(width: 8),
             Text(
               'Relatório Financeiro',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: AppCores.verdePrimario,
+                color: AppCores.acao,
               ),
             ),
           ],
@@ -202,7 +191,7 @@ class _RelatorioFinanceiroWidgetState extends State<RelatorioFinanceiroWidget> {
         padding: const EdgeInsets.all(16),
         child: Row(
           children: [
-            const Icon(Icons.payments_outlined, size: 20, color: AppCores.verdePrimario),
+            const Icon(Icons.payments_outlined, size: 20, color: AppCores.acao),
             const SizedBox(width: 8),
             const Expanded(
               child: Text(
@@ -210,7 +199,7 @@ class _RelatorioFinanceiroWidgetState extends State<RelatorioFinanceiroWidget> {
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w600,
-                  color: AppCores.verdePrimario,
+                  color: AppCores.acao,
                 ),
               ),
             ),
@@ -219,7 +208,7 @@ class _RelatorioFinanceiroWidgetState extends State<RelatorioFinanceiroWidget> {
               style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.red,
+                color: AppCores.erro,
               ),
             ),
           ],
@@ -325,7 +314,7 @@ class _RelatorioFinanceiroWidgetState extends State<RelatorioFinanceiroWidget> {
           style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: AppCores.verdePrimario,
+            color: AppCores.acao,
           ),
         ),
         const SizedBox(height: 8),
@@ -355,21 +344,21 @@ class _RelatorioFinanceiroWidgetState extends State<RelatorioFinanceiroWidget> {
                 ),
                 Text(
                   despesa.valorFormatado,
-                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.red),
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: AppCores.erro),
                 ),
               ],
             ),
             const SizedBox(height: 4),
             Text(
               '${despesa.formaPagamento.rotulo} · ${transacao.origemFormatada}',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+              style: TextStyle(fontSize: 13, color: AppCores.textoSecundario),
             ),
             if (despesa.dataHoraFormatada != null)
               Padding(
                 padding: const EdgeInsets.only(top: 2),
                 child: Text(
                   'Data: ${despesa.dataHoraFormatada}',
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 13, color: AppCores.textoSecundario),
                 ),
               ),
             if (despesa.beneficiado != null)
@@ -377,7 +366,7 @@ class _RelatorioFinanceiroWidgetState extends State<RelatorioFinanceiroWidget> {
                 padding: const EdgeInsets.only(top: 2),
                 child: Text(
                   'Beneficiado: ${despesa.beneficiadoTexto}',
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  style: TextStyle(fontSize: 13, color: AppCores.textoSecundario),
                 ),
               ),
           ],

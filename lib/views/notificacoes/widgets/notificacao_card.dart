@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/model/notificacoes/notificacao_agrupada.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/aparencia_atividade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
@@ -18,7 +17,7 @@ class NotificacaoCard extends StatelessWidget {
 
   final bool confirmada;
 
-  final bool precisaDeResposta;
+  final bool precisaResponder;
 
   final VoidCallback? aoAbrir;
   final VoidCallback? aoResponderSim;
@@ -32,14 +31,12 @@ class NotificacaoCard extends StatelessWidget {
     required this.dataDoEvento,
     required this.nomeTalhao,
     this.confirmada = false,
-    required this.precisaDeResposta,
+    this.precisaResponder = false,
     this.aoAbrir,
     this.aoResponderSim,
     this.aoAlterar,
     this.aoExcluir,
   });
-
-  bool get _mostrarPergunta => precisaDeResposta && !confirmada;
 
   String get _titulo =>
       atividade?.tituloExibicao ?? grupo.representante.tituloGenerico;
@@ -54,18 +51,16 @@ class NotificacaoCard extends StatelessWidget {
 
   String get _rotuloBadge {
     if (confirmada) return 'Confirmada';
-    if (precisaDeResposta) return 'Ocorreu?';
+    if (precisaResponder) return 'Ocorreu?';
 
     return rotuloDeHorizonte(dataDoEvento);
   }
 
   Color get _corBadge {
     if (confirmada) return AppCores.sucesso;
-    if (precisaDeResposta) return AppCores.aviso;
+    if (precisaResponder) return AppCores.aviso;
 
-    return diasAPartirDeHoje(dataDoEvento) <= 2
-        ? AppCores.verdePrimario
-        : AppCores.verdeSecundario;
+    return AppCores.acao;
   }
 
   @override
@@ -87,14 +82,14 @@ class NotificacaoCard extends StatelessWidget {
           titulo: 'Talhão',
           valor: nomeTalhao,
         ),
-        if (_mostrarPergunta) ...[
+        if (precisaResponder) ...[
           const SizedBox(height: 20),
           const Text(
             'Esse trato cultural ocorreu?',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              color: AppCores.textoPrimario,
             ),
           ),
           const SizedBox(height: 12),
@@ -102,7 +97,7 @@ class NotificacaoCard extends StatelessWidget {
           const SizedBox(height: 4),
           _AcaoSecundaria(
             texto: 'Ainda não. Alterar informações',
-            cor: AppCores.verdePrimario,
+            cor: AppCores.acao,
             onPressed: aoAlterar,
           ),
           _AcaoSecundaria(

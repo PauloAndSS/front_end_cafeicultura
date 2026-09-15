@@ -21,14 +21,14 @@ class SeletorDataEmBloco extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
         decoration: BoxDecoration(
-          border: Border.all(color: Colors.grey.shade400),
+          border: Border.all(color: AppCores.bordaCampo),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
           children: [
             const Icon(
               Icons.calendar_today_outlined,
-              color: AppCores.verdePrimario,
+              color: AppCores.acao,
             ),
             const SizedBox(width: 10),
             Text(formatarDataBr(data)),

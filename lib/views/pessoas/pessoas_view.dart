@@ -5,6 +5,7 @@ import 'package:frond_end_cafeicultura_mobile/views/pessoas/cadastrar_pessoa_vie
 import 'package:frond_end_cafeicultura_mobile/views/pessoas/pessoas_categoria_tab_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/abas_padrao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/botao_cadastro_flutuante.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_app_bar.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/custom_bottom_navbar.dart';
 
@@ -16,7 +17,7 @@ class PessoasView extends StatefulWidget {
 }
 
 class _PessoasViewState extends State<PessoasView>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, RolagemEstendeCadastroMixin {
   static const List<TipoPapel> _categorias = TipoPapel.values;
 
   late final TabController _tabController = TabController(
@@ -64,49 +65,34 @@ class _PessoasViewState extends State<PessoasView>
     return Scaffold(
       backgroundColor: AppCores.fundo,
       appBar: const CustomAppBar(),
-      body: Column(
-        children: [
-          BarraDeAbas(
-            controller: _tabController,
-            rolavel: true,
-            abas: [
-              for (final papel in _categorias) Tab(text: papel.tituloPlural),
-            ],
-          ),
-          Expanded(
-            child: TabBarView(
+      body: observarRolagemDoCadastro(
+        Column(
+          children: [
+            BarraDeAbas(
               controller: _tabController,
-              children: [
-                for (final papel in _categorias)
-                  PessoasCategoriaTabView(viewModel: _viewModels[papel]!),
+              rolavel: true,
+              abas: [
+                for (final papel in _categorias) Tab(text: papel.tituloPlural),
               ],
             ),
-          ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppCores.verdeSecundario,
-        elevation: 2,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-        onPressed: _abrirTelaCadastro,
-        label: Row(
-          children: [
-            Text(
-              'Cadastrar\n${_papelAtivo.titulo}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-                height: 1.1,
+            Expanded(
+              child: TabBarView(
+                controller: _tabController,
+                children: [
+                  for (final papel in _categorias)
+                    PessoasCategoriaTabView(viewModel: _viewModels[papel]!),
+                ],
               ),
             ),
-            const SizedBox(width: 8),
-            const Icon(Icons.add, color: Colors.white, size: 28),
           ],
         ),
       ),
-      bottomNavigationBar: const CustomBottomNavBar(ocultarSelecao: true),
+      floatingActionButton: BotaoCadastroFlutuante(
+        rotulo: 'Cadastrar ${_papelAtivo.titulo}',
+        aoTocar: _abrirTelaCadastro,
+        estendido: cadastroEstendido,
+      ),
+      bottomNavigationBar: const CustomBottomNavBar(),
     );
   }
 }

@@ -8,7 +8,9 @@ class CotacaoCafeViewModel extends ChangeNotifier {
   bool isLoading = false;
   String? mensagemErro;
   RespostaCotacaoCafe? resposta;
+
   bool get temDados => resposta?.temAlgumDado ?? false;
+
   Future<void> carregar() async {
     isLoading = true;
     mensagemErro = null;

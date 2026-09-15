@@ -7,13 +7,14 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_pessoa
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/insumos/carregar_insumos_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
+import 'package:frond_end_cafeicultura_mobile/views/insumos/acoes_fornecedor.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/widgets/campo_quantidade_comprada.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_suspenso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_transacao_financeira.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 
 Future<Insumo?> mostrarCadastroInsumo({
   required BuildContext context,
@@ -65,7 +66,12 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
   String? _erro;
   bool _salvando = false;
 
-  bool get _semFornecedores => widget.fornecedores.isEmpty;
+  late bool _semFornecedores = widget.fornecedores.isEmpty;
+
+  Future<void> _cadastrarFornecedor() async {
+    final cadastrou = await cadastrarFornecedor(context, widget.catalogoDePessoas);
+    if (cadastrou && mounted) setState(() => _semFornecedores = false);
+  }
 
   @override
   void dispose() {
@@ -125,7 +131,7 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
       title: const Text(
         'Novo Insumo',
         style:
-            TextStyle(color: AppCores.verdePrimario, fontWeight: FontWeight.bold),
+            TextStyle(color: AppCores.acao, fontWeight: FontWeight.bold),
       ),
       content: SingleChildScrollView(
         child: Form(
@@ -135,9 +141,8 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (_semFornecedores) ...[
-                const CaixaAvisoAtencao(
-                  mensagem:
-                      'Cadastre um fornecedor antes de registrar a compra deste insumo.',
+                AvisoSemFornecedor(
+                  aoCadastrar: _salvando ? null : _cadastrarFornecedor,
                 ),
                 const SizedBox(height: 16),
               ],
@@ -155,33 +160,27 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
                 controller: _nomeController,
                 hintText: 'Ex: Ureia Agrícola 46% N',
                 validator: Validator.validarNome,
+                habilitado: !_salvando,
               ),
-              rotuloDeCampo('Unidade de medida'),
-              DropdownButtonFormField<MedidaInsumo>(
-                initialValue: _medidaSelecionada,
-                isExpanded: true,
-                decoration: decoracaoDeSeletor(),
-                hint: dicaDeSeletor('Selecione a medida'),
-                items: MedidaInsumo.values.map((medida) {
-                  return DropdownMenuItem(
-                    value: medida,
-                    child: Text(medida.rotulo, overflow: TextOverflow.ellipsis),
-                  );
-                }).toList(),
-                onChanged: _salvando
+              CampoSuspenso<MedidaInsumo>(
+                rotulo: 'Unidade de medida',
+                valor: _medidaSelecionada,
+                itens: MedidaInsumo.values,
+                rotuloItem: (medida) => medida.rotulo,
+                dica: 'Selecione a medida',
+                aoSelecionar: _salvando
                     ? null
                     : (valor) => setState(() => _medidaSelecionada = valor),
-                validator: (valor) => valor == null ? 'Obrigatório' : null,
-                autovalidateMode: AutovalidateMode.onUserInteraction,
+                validador: (valor) => valor == null ? 'Obrigatório' : null,
               ),
-              const SizedBox(height: 24),
-              const Divider(),
               const SizedBox(height: 16),
               CampoQuantidadeComprada(
                 controller: _qtdCompradaController,
                 medida: _medidaSelecionada,
                 habilitado: !_salvando,
               ),
+              const SizedBox(height: 24),
+              const Divider(),
               const SizedBox(height: 16),
               BlocoTransacaoFinanceira(
                 tipoOperacao: _tipoOperacao,
@@ -206,7 +205,8 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
       actions: acoesDeDialogo(
         context: context,
         rotuloConfirmar: _salvando ? 'Salvando...' : 'Cadastrar',
-        aoConfirmar: _salvando ? null : _salvar,
+        cancelarHabilitado: !_salvando,
+        aoConfirmar: _salvando || _semFornecedores ? null : _salvar,
       ),
     );
   }

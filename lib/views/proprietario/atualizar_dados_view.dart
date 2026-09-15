@@ -101,7 +101,7 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
         bairro: _bairroController.text,
         cidade: _cidadeController.text,
         pais: _paisController.text,
-        uf: _ufSelecionada!,
+        uf: _ufSelecionada,
         inscEstadualDigitada: _isPessoaFisica
             ? null
             : _inscricaoEstadualController.text,
@@ -157,13 +157,21 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
           _bairroController.text = endereco.bairro;
           _cidadeController.text = endereco.cidade;
           _ufSelecionada = endereco.uf;
-          _paisController.text = endereco.pais!;
+          _paisController.text = endereco.pais ?? '';
         }
       });
     } else if (mounted) {
       mostrarErro(context, _viewModel.mensagemErro ?? 'Erro desconhecido ao buscar dados.');
     }
   }
+
+  bool get _enderecoPreenchido =>
+      _cepController.text.trim().isNotEmpty ||
+      _logradouroController.text.trim().isNotEmpty ||
+      _bairroController.text.trim().isNotEmpty ||
+      _cidadeController.text.trim().isNotEmpty ||
+      _paisController.text.trim().isNotEmpty ||
+      _ufSelecionada != null;
 
   bool _houveAlteracao() {
     if (_dadosOriginais == null) return false;
@@ -235,18 +243,13 @@ return PopScope(
       },
       child: Scaffold(
         backgroundColor: AppCores.fundo,
-        appBar: const AppBarPadrao(
-          titulo: 'Meus Dados',
-          cor: AppCores.verdeSecundario,
-          elevacao: 0,
-        ),
+        appBar: const AppBarPadrao(titulo: 'Meus Dados'),
         body: ListenableBuilder(
           listenable: _viewModel,
           builder: (context, child) {
             if (_viewModel.isLoading && _nomeController.text.isEmpty) {
               return const Center(
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(AppCores.verdeSecundario),
                 ),
               );
             }
@@ -269,7 +272,7 @@ return PopScope(
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: AppCores.textoPrimario,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -313,7 +316,7 @@ return PopScope(
                     const Divider(
                       height: 32,
                       thickness: 1,
-                      color: Colors.black12,
+                      color: AppCores.borda,
                     ),
 
                     const Text(
@@ -321,7 +324,7 @@ return PopScope(
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: AppCores.textoPrimario,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -333,6 +336,7 @@ return PopScope(
                       controllerCidade: _cidadeController,
                       controllerPais: _paisController,
                       uf: _ufSelecionada,
+                      exigirPreenchimento: () => _enderecoPreenchido,
                       aoSelecionarUf: (novo) =>
                           setState(() => _ufSelecionada = novo),
                     ),
@@ -346,7 +350,7 @@ return PopScope(
                         text: _viewModel.isLoading
                             ? 'AGUARDE...'
                             : 'SALVAR ALTERAÇÕES',
-                        backgroundColor: AppCores.verdeSecundario,
+                        backgroundColor: AppCores.acao,
                         onPressed: _viewModel.isLoading ? null : atualizar,
                       ),
                     ),

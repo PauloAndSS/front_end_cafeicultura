@@ -18,6 +18,8 @@ class BlocoEndereco extends StatelessWidget {
   final String dicaLogradouro;
   final String dicaBairro;
 
+  final bool Function()? exigirPreenchimento;
+
   const BlocoEndereco({
     super.key,
     required this.controllerCep,
@@ -27,9 +29,15 @@ class BlocoEndereco extends StatelessWidget {
     required this.uf,
     required this.aoSelecionarUf,
     this.controllerPais,
+    this.exigirPreenchimento,
     this.dicaLogradouro = 'Rua, Avenida, número, complemento...',
     this.dicaBairro = 'Digite o bairro ou distrito',
   });
+
+  String? _seExigido(String? Function(String?) validar, String? valor) {
+    final exigido = exigirPreenchimento?.call() ?? true;
+    return exigido ? validar(valor) : null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,20 +48,20 @@ class BlocoEndereco extends StatelessWidget {
           label: 'CEP',
           controller: controllerCep,
           keyboardType: TextInputType.number,
-          validator: Validator.validarCEP,
+          validator: (valor) => _seExigido(Validator.validarCEP, valor),
           inputFormatters: [AppMasks.cep],
           hintText: 'Digite o CEP (apenas números)',
         ),
         CustomTextField(
           label: 'Logradouro',
           controller: controllerLogradouro,
-          validator: Validator.validarNome,
+          validator: (valor) => _seExigido(Validator.validarNome, valor),
           hintText: dicaLogradouro,
         ),
         CustomTextField(
           label: 'Bairro',
           controller: controllerBairro,
-          validator: Validator.validarNome,
+          validator: (valor) => _seExigido(Validator.validarNome, valor),
           hintText: dicaBairro,
         ),
         if (controllerPais == null)
@@ -77,7 +85,7 @@ class BlocoEndereco extends StatelessWidget {
                 child: CustomTextField(
                   label: 'País',
                   controller: controllerPais!,
-                  validator: Validator.obrigatorio,
+                  validator: (valor) => _seExigido(Validator.obrigatorio, valor),
                 ),
               ),
             ],
@@ -90,13 +98,16 @@ class BlocoEndereco extends StatelessWidget {
   Widget _campoCidade() => CustomTextField(
     label: 'Cidade',
     controller: controllerCidade,
-    validator: Validator.validarNome,
+    validator: (valor) => _seExigido(Validator.validarNome, valor),
     hintText: 'Nome da cidade',
   );
 
   Widget _campoUf() => UfDropdown(
     value: uf,
     onChanged: aoSelecionarUf,
-    validator: (valor) => valor == null ? 'Obrigatório' : null,
+    validator: (valor) {
+      if (!(exigirPreenchimento?.call() ?? true)) return null;
+      return valor == null ? 'Obrigatório' : null;
+    },
   );
 }

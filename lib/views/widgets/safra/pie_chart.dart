@@ -23,7 +23,7 @@ class PieChartCard extends StatelessWidget {
     required this.icone,
     required this.valores,
     required this.paleta,
-    this.corTitulo = AppCores.verdePrimario,
+    this.corTitulo = AppCores.acao,
     this.valorFormatador,
     this.mostrarTitulo = true,
   });
@@ -120,7 +120,7 @@ class _LegendaFatia extends StatelessWidget {
               ),
               Text(
                 '$valorFormatado · ${porcentagem.toStringAsFixed(0)}%',
-                style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                style: TextStyle(fontSize: 12, color: AppCores.textoSecundario),
               ),
             ],
           ),

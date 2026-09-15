@@ -163,62 +163,6 @@ void main() {
       expect(servidor.idsEnviados, [5]);
     });
 
-    test('lembrete cujo dia ja passou pede resposta e nao e auto-lido',
-        () async {
-      final servidor = Servidor(
-        notificacoes: [
-          notificacaoJson(id: 6, idEvento: 76, criadaHaDias: 10),
-        ],
-      );
-
-      await servidor.atende(() async {
-        final viewModel = NotificacoesViewModel();
-        await viewModel.carregar(idPropriedade);
-
-        final grupo = viewModel.naoLidas.single;
-
-        expect(grupo.tipoNotificacao, TipoNotificacao.futuroUm);
-        expect(viewModel.precisaDeResposta(grupo), isTrue);
-        expect(viewModel.aguardaLeitura(grupo), isFalse);
-        expect(
-          viewModel.secoesNaoLidas.map((secao) => secao.titulo),
-          ['Precisa de resposta'],
-        );
-
-        viewModel.registrarVista(grupo);
-        await viewModel.encerrarVisita();
-        viewModel.dispose();
-      });
-
-      expect(servidor.leituras, isEmpty);
-    });
-
-    test('a secao Ja comecaram nao existe mais: tudo no passado pede resposta',
-        () async {
-      final servidor = Servidor(
-        notificacoes: [
-          notificacaoJson(id: 7, idEvento: 77, criadaHaDias: 3, lida: true),
-          notificacaoJson(
-            id: 8,
-            idEvento: 78,
-            tipoNotificacao: 'PASSADO',
-            lida: true,
-          ),
-        ],
-      );
-
-      await servidor.atende(() async {
-        final viewModel = NotificacoesViewModel();
-        await viewModel.carregar(idPropriedade);
-
-        expect(viewModel.secoesLidas, hasLength(1));
-        expect(viewModel.secoesLidas.single.titulo, 'Precisa de resposta');
-        expect(viewModel.secoesLidas.single.grupos, hasLength(2));
-
-        viewModel.dispose();
-      });
-    });
-
     test('a confirmacao pendente fica de fora do lote', () async {
       final servidor = Servidor(
         notificacoes: [

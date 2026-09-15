@@ -16,10 +16,13 @@ class SecaoResponsaveisAtividade<T extends EventoAgricola>
 
   final bool podeEditar;
 
+  final bool opcional;
+
   const SecaoResponsaveisAtividade({
     super.key,
     required this.viewModel,
     required this.podeEditar,
+    this.opcional = false,
   });
 
   Future<void> _editar(BuildContext context) async {
@@ -66,6 +69,7 @@ class SecaoResponsaveisAtividade<T extends EventoAgricola>
 
     return SecaoListaAtividade<Pessoa>(
       titulo: 'Responsáveis',
+      opcional: opcional,
       icone: Icons.group_outlined,
       rotuloVazio: 'Selecionar responsáveis',
       textoVazio: 'Nenhum responsável',
@@ -86,11 +90,14 @@ class SecaoDespesasAtividade<T extends EventoAgricola>
 
   final String motivoSomenteLeitura;
 
+  final bool opcional;
+
   const SecaoDespesasAtividade({
     super.key,
     required this.viewModel,
     required this.podeEditar,
     required this.motivoSomenteLeitura,
+    this.opcional = false,
   });
 
   Future<void> _lancar(BuildContext context) async {
@@ -183,6 +190,7 @@ class SecaoDespesasAtividade<T extends EventoAgricola>
 
     return SecaoListaAtividade<Despesa>(
       titulo: 'Despesas',
+      opcional: opcional,
       icone: Icons.payments_outlined,
       rotuloVazio: 'Adicionar despesa',
       textoVazio: 'Nenhuma despesa lançada',

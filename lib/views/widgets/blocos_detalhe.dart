@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
 
 const estiloRotuloDetalhe = TextStyle(
   fontWeight: FontWeight.w600,
-  color: Colors.black54,
+  color: AppCores.textoSecundario,
   fontSize: 15,
 );
 
@@ -33,7 +34,7 @@ class LinhaInfo extends StatelessWidget {
           Expanded(
             child: Text(
               valor,
-              style: const TextStyle(color: Colors.black87, fontSize: 15),
+              style: const TextStyle(color: AppCores.textoPrimario, fontSize: 15),
               textAlign: TextAlign.end,
             ),
           ),
@@ -42,7 +43,7 @@ class LinhaInfo extends StatelessWidget {
             const Icon(
               Icons.edit_outlined,
               size: 16,
-              color: AppCores.verdePrimario,
+              color: AppCores.acao,
             ),
           ],
         ],
@@ -63,12 +64,14 @@ class SecaoEditavel extends StatelessWidget {
   final String titulo;
   final Widget conteudo;
   final VoidCallback? onEditar;
+  final bool opcional;
 
   const SecaoEditavel({
     super.key,
     required this.titulo,
     required this.conteudo,
     this.onEditar,
+    this.opcional = false,
   });
 
   @override
@@ -80,13 +83,14 @@ class SecaoEditavel extends StatelessWidget {
         children: [
           Row(
             children: [
-              Text(titulo, style: estiloRotuloDetalhe),
+              Flexible(child: Text(titulo, style: estiloRotuloDetalhe)),
+              if (opcional) const MarcaOpcional(),
               if (onEditar != null) ...[
                 const SizedBox(width: 6),
                 const Icon(
                   Icons.edit_outlined,
                   size: 16,
-                  color: AppCores.verdePrimario,
+                  color: AppCores.acao,
                 ),
               ],
             ],
@@ -130,7 +134,7 @@ class ChipsLista<T> extends StatelessWidget {
     if (itens.isEmpty) {
       return Text(
         textoVazio,
-        style: const TextStyle(color: Colors.black87, fontSize: 15),
+        style: const TextStyle(color: AppCores.textoPrimario, fontSize: 15),
       );
     }
 
@@ -144,7 +148,7 @@ class ChipsLista<T> extends StatelessWidget {
   Widget _construirChip(T item) {
     final rotulo = Text(
       rotuloItem(item),
-      style: const TextStyle(color: Colors.white, fontSize: 13),
+      style: const TextStyle(color: AppCores.sobreAcao, fontSize: 13),
     );
 
     final remover = aoRemover;
@@ -154,16 +158,16 @@ class ChipsLista<T> extends StatelessWidget {
     if (aoTocarItem == null) {
       return Chip(
         label: rotulo,
-        backgroundColor: AppCores.verdeSecundario,
-        deleteIconColor: Colors.white,
+        backgroundColor: AppCores.acao,
+        deleteIconColor: AppCores.sobreAcao,
         onDeleted: removivel ? () => remover(item) : null,
       );
     }
 
     return InputChip(
       label: rotulo,
-      backgroundColor: AppCores.verdeSecundario,
-      deleteIconColor: Colors.white,
+      backgroundColor: AppCores.acao,
+      deleteIconColor: AppCores.sobreAcao,
       onPressed: () => aoTocarItem(item),
       onDeleted: removivel ? () => remover(item) : null,
     );

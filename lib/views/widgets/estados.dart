@@ -24,7 +24,7 @@ class MensagemDeErro extends StatelessWidget {
         children: [
           Text(
             mensagem,
-            style: const TextStyle(color: Colors.red),
+            style: const TextStyle(color: AppCores.erro),
             textAlign: TextAlign.center,
           ),
           if (aoTentarNovamente != null) ...[
@@ -33,7 +33,7 @@ class MensagemDeErro extends StatelessWidget {
               onPressed: aoTentarNovamente,
               child: const Text(
                 'Tentar novamente',
-                style: TextStyle(color: AppCores.verdePrimario),
+                style: TextStyle(color: AppCores.acao),
               ),
             ),
           ],
@@ -48,12 +48,7 @@ class EstadoVazio extends StatelessWidget {
   final IconData? icone;
   final Widget? acao;
 
-  const EstadoVazio({
-    super.key,
-    required this.mensagem,
-    this.icone,
-    this.acao,
-  });
+  const EstadoVazio({super.key, required this.mensagem, this.icone, this.acao});
 
   @override
   Widget build(BuildContext context) {
@@ -65,13 +60,16 @@ class EstadoVazio extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (icone != null) ...[
-              Icon(icone, size: 48, color: Colors.black26),
+              Icon(icone, size: 48, color: AppCores.textoTerciario),
               const SizedBox(height: 16),
             ],
             Text(
               mensagem,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15, color: Colors.black54),
+              style: const TextStyle(
+                fontSize: 15,
+                color: AppCores.textoSecundario,
+              ),
             ),
             if (acao != null) ...[const SizedBox(height: 24), acao!],
           ],
@@ -106,7 +104,7 @@ class RodapePaginacao extends StatelessWidget {
             height: 24,
             child: CircularProgressIndicator(
               strokeWidth: 2,
-              color: AppCores.verdePrimario,
+              color: AppCores.acao,
             ),
           ),
         ),
@@ -135,12 +133,12 @@ class CartaoDeErro extends StatelessWidget {
     return SizedBox(
       width: double.infinity,
       child: Card(
-        color: Colors.red.shade50,
+        color: AppCores.erro.withValues(alpha: 0.12),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
             mensagem,
-            style: const TextStyle(color: Colors.red),
+            style: const TextStyle(color: AppCores.erro),
             textAlign: TextAlign.center,
           ),
         ),
@@ -152,11 +150,13 @@ class CartaoDeErro extends StatelessWidget {
 class CartaoVazio extends StatelessWidget {
   final IconData icone;
   final String mensagem;
+  final Widget? acao;
 
   const CartaoVazio({
     super.key,
     required this.icone,
     required this.mensagem,
+    this.acao,
   });
 
   @override
@@ -167,11 +167,40 @@ class CartaoVazio extends StatelessWidget {
         child: Center(
           child: Column(
             children: [
-              Icon(icone, size: 44, color: AppCores.verdeSecundario),
+              Icon(icone, size: 44, color: AppCores.acao),
               const SizedBox(height: 12),
-              Text(mensagem, textAlign: TextAlign.center),
+              Text(
+                mensagem,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 15,
+                  color: AppCores.textoSecundario,
+                ),
+              ),
+              if (acao != null) ...[const SizedBox(height: 24), acao!],
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class CorpoCentralizadoRolavel extends StatelessWidget {
+  final Widget filho;
+
+  const CorpoCentralizadoRolavel({super.key, required this.filho});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, restricoes) => SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            minHeight: restricoes.hasBoundedHeight ? restricoes.maxHeight : 0,
+          ),
+          child: Center(child: filho),
         ),
       ),
     );

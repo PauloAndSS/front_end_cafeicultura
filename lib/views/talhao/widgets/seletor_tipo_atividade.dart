@@ -17,9 +17,9 @@ class SeletorTipoAtividade extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppCores.superficie,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppCores.borda),
+        border: Border.all(color: AppCores.bordaCampo),
       ),
       child: DropdownButton<TipoAtividade>(
         value: selecionado,
@@ -27,9 +27,9 @@ class SeletorTipoAtividade extends StatelessWidget {
         underline: const SizedBox.shrink(),
         icon: const Icon(
           Icons.keyboard_arrow_down,
-          color: AppCores.verdePrimario,
+          color: AppCores.acao,
         ),
-        style: const TextStyle(fontSize: 15, color: Colors.black87),
+        style: const TextStyle(fontSize: 15, color: AppCores.textoPrimario),
         items: TipoAtividade.values.map((tipo) {
           return DropdownMenuItem<TipoAtividade>(
             value: tipo,

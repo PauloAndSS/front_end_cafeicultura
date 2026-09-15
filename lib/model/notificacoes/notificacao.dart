@@ -16,6 +16,21 @@ String rotuloDeHorizonte(DateTime dia) {
 String textoDeQuando(DateTime dia) =>
     '${rotuloDeHorizonte(dia)} · ${formatarDataComDiaDaSemana(dia)}';
 
+enum HorizonteDaNotificacao {
+  vencido,
+  hoje,
+  amanha,
+  proximos;
+
+  static HorizonteDaNotificacao de(DateTime dia) =>
+      switch (diasAPartirDeHoje(dia)) {
+        < 0 => vencido,
+        0 => hoje,
+        1 => amanha,
+        _ => proximos,
+      };
+}
+
 enum TipoNotificacao {
   futuroSete('FUTURO_SETE', 7),
   futuroTres('FUTURO_TRES', 3),
@@ -136,7 +151,8 @@ class Notificacao {
 
   String get tituloGenerico => tipoEvento?.rotulo ?? 'Atividade';
 
-  String get chaveDeAgrupamento => '$idEvento|${tipoEvento?.codigoApi}';
+  String get chaveDeAgrupamento =>
+      '$idEvento|${tipoEvento?.codigoApi}|${tipoNotificacao?.codigoApi}';
 
   static List<Notificacao> substituirDoEvento(
     List<Notificacao> atuais,

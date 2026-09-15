@@ -116,8 +116,12 @@ class _SelecionarBeneficiadoSheetState
       child: Column(
         children: [
           CabecalhoModal(titulo: widget.titulo),
-          CampoBuscaModal(controller: _buscaController, dica: 'Buscar por nome'),
+          CampoBuscaModal(
+            controller: _buscaController,
+            dica: 'Buscar por nome',
+          ),
           BarraDeAbas(
+            corDeFundo: AppCores.superficie,
             rolavel: true,
             abas: [
               if (_temAbaDeSugeridos) const Tab(text: 'Responsáveis'),
@@ -155,9 +159,11 @@ class _SelecionarBeneficiadoSheetState
     final visiveis = _termoBusca.isEmpty
         ? widget.sugeridos
         : widget.sugeridos
-            .where((pessoa) =>
-                pessoa.nomeParaExibicao.toLowerCase().contains(_termoBusca))
-            .toList();
+              .where(
+                (pessoa) =>
+                    pessoa.nomeParaExibicao.toLowerCase().contains(_termoBusca),
+              )
+              .toList();
 
     if (visiveis.isEmpty) {
       return EstadoVazio(
@@ -175,17 +181,18 @@ class _SelecionarBeneficiadoSheetState
   }
 
   Widget _construirItem(Pessoa pessoa, {required String legenda}) {
-    final marcado = pessoa.id != null && pessoa.id == widget.selecionadoAtual?.id;
+    final marcado =
+        pessoa.id != null && pessoa.id == widget.selecionadoAtual?.id;
 
     return ListTile(
       leading: Icon(
         marcado ? Icons.radio_button_checked : Icons.radio_button_unchecked,
-        color: marcado ? AppCores.verdePrimario : Colors.black38,
+        color: marcado ? AppCores.acao : AppCores.textoTerciario,
       ),
       title: Text(pessoa.nomeParaExibicao),
       subtitle: Text(
         legenda,
-        style: const TextStyle(fontSize: 12, color: Colors.black54),
+        style: const TextStyle(fontSize: 12, color: AppCores.textoSecundario),
       ),
       onTap: () => Navigator.of(context).pop(pessoa),
     );

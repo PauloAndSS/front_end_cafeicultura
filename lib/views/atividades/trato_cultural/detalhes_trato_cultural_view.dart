@@ -86,9 +86,14 @@ class _DetalhesTratoCulturalViewState extends State<DetalhesTratoCulturalView> {
     }
   }
 
-  Widget _construirSecaoInsumos(TratoCultural trato, bool editavel) {
+  Widget _construirSecaoInsumos(
+    TratoCultural trato,
+    bool editavel, {
+    bool opcional = false,
+  }) {
     return SecaoListaAtividade<InsumoUtilizado>(
       titulo: 'Insumos utilizados',
+      opcional: opcional,
       icone: Icons.inventory_2_outlined,
       rotuloVazio: 'Selecionar insumos',
       textoVazio: 'Nenhum insumo lançado',
@@ -106,11 +111,11 @@ class _DetalhesTratoCulturalViewState extends State<DetalhesTratoCulturalView> {
       viewModel: _viewModel,
       talhao: widget.talhao,
       tituloCartao: 'Informações do Trato',
-      rotuloBotaoConfirmar: 'Confirmar Trato',
-      tituloTelaConfirmar: 'Confirmar Trato Cultural',
+      rotuloBotaoConfirmar: 'Finalizar Trato',
+      tituloTelaConfirmar: 'Finalizar Trato Cultural',
       ajudaDataInicio: 'Data de início do trato cultural',
       ajudaDataFim: 'Data de término do trato cultural',
-      mensagemSucessoConfirmar: 'Trato cultural confirmado com sucesso!',
+      mensagemSucessoConfirmar: 'Trato cultural finalizado com sucesso!',
       mensagemJaFinalizada:
           'Este trato cultural já foi finalizado e não pode mais ser modificado.',
       construirLinhasExtras: (context, trato, editavel) => [
@@ -122,7 +127,7 @@ class _DetalhesTratoCulturalViewState extends State<DetalhesTratoCulturalView> {
       ],
       secaoExtraVazia: (trato) => trato.insumosUtilizados.isEmpty,
       construirSecaoExtraNaConfirmacao: (context, trato) =>
-          _construirSecaoInsumos(trato, !_viewModel.isLoading),
+          _construirSecaoInsumos(trato, !_viewModel.isLoading, opcional: true),
     );
   }
 }

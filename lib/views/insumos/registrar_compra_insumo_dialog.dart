@@ -9,6 +9,7 @@ import 'package:frond_end_cafeicultura_mobile/views/insumos/widgets/campo_quanti
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/blocos_detalhe.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
+import 'package:frond_end_cafeicultura_mobile/views/insumos/acoes_fornecedor.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_transacao_financeira.dart';
 
@@ -60,7 +61,12 @@ class _RegistrarCompraDialogState extends State<_RegistrarCompraDialog> {
   String? _erro;
   bool _salvando = false;
 
-  bool get _semFornecedores => widget.fornecedores.isEmpty;
+  late bool _semFornecedores = widget.fornecedores.isEmpty;
+
+  Future<void> _cadastrarFornecedor() async {
+    final cadastrou = await cadastrarFornecedor(context, widget.viewModel);
+    if (cadastrou && mounted) setState(() => _semFornecedores = false);
+  }
 
   @override
   void dispose() {
@@ -118,7 +124,7 @@ class _RegistrarCompraDialogState extends State<_RegistrarCompraDialog> {
       title: const Text(
         'Registrar Compra',
         style: TextStyle(
-          color: AppCores.verdePrimario,
+          color: AppCores.acao,
           fontWeight: FontWeight.bold,
         ),
       ),
@@ -130,9 +136,8 @@ class _RegistrarCompraDialogState extends State<_RegistrarCompraDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (_semFornecedores) ...[
-                const CaixaAvisoAtencao(
-                  mensagem:
-                      'Cadastre um fornecedor antes de registrar a compra deste insumo.',
+                AvisoSemFornecedor(
+                  aoCadastrar: _salvando ? null : _cadastrarFornecedor,
                 ),
                 const SizedBox(height: 16),
               ],
@@ -186,7 +191,8 @@ class _RegistrarCompraDialogState extends State<_RegistrarCompraDialog> {
       actions: acoesDeDialogo(
         context: context,
         rotuloConfirmar: _salvando ? 'Salvando...' : 'Registrar',
-        aoConfirmar: _salvando ? null : _salvar,
+        cancelarHabilitado: !_salvando,
+        aoConfirmar: _salvando || _semFornecedores ? null : _salvar,
       ),
     );
   }

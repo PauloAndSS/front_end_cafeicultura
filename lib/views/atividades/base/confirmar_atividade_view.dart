@@ -15,6 +15,7 @@ import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
 
 typedef SecaoVaziaAtividade<T> = bool Function(T atividade);
 
@@ -186,15 +187,9 @@ class _ConfirmarAtividadeViewState<T extends EventoAgricola>
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppCores.superficie,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x0D000000),
-            blurRadius: 10,
-            offset: Offset(0, 4),
-          ),
-        ],
+        boxShadow: AppEstilos.sombraCartao,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -204,13 +199,13 @@ class _ConfirmarAtividadeViewState<T extends EventoAgricola>
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppCores.verdePrimario,
+              color: AppCores.acao,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             'Talhão: $_nomeTalhao',
-            style: const TextStyle(fontSize: 14, color: Colors.black54),
+            style: const TextStyle(fontSize: 14, color: AppCores.textoSecundario),
           ),
           const Divider(height: 32, color: AppCores.borda),
 
@@ -257,6 +252,7 @@ class _ConfirmarAtividadeViewState<T extends EventoAgricola>
         SecaoResponsaveisAtividade<T>(
           viewModel: _viewModel,
           podeEditar: editavel,
+          opcional: true,
         ),
         const SizedBox(height: 20),
       ],
@@ -268,6 +264,7 @@ class _ConfirmarAtividadeViewState<T extends EventoAgricola>
         SecaoDespesasAtividade<T>(
           viewModel: _viewModel,
           podeEditar: editavel,
+          opcional: true,
           motivoSomenteLeitura: 'Aguarde a conclusão da operação em andamento '
               'para alterar as despesas.',
         ),
@@ -303,9 +300,8 @@ class _AvisoSecoesPendentes extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Text(
-      'Ainda dá para registrar o que ficou de fora. É opcional, e cada item é '
-      'salvo assim que você o seleciona.',
-      style: TextStyle(fontSize: 13, color: Colors.black54),
+      'Revise os campos abaixo (preenchimento opcional).',
+      style: TextStyle(fontSize: 13, color: AppCores.textoSecundario),
     );
   }
 }

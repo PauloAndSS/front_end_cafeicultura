@@ -47,3 +47,5 @@ app.*.map.json
 #Claude
 CLAUDE.md
 .claudeignore
+.claude/
+skills-lock.json
