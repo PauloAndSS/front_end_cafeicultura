@@ -116,7 +116,7 @@ class Talhao {
 
   String get variedadesTexto {
     if (variedadesCafe == null || variedadesCafe!.isEmpty) {
-      return 'Nenhuma variedade';
+      return 'Não informada';
     }
     return variedadesCafe!.map((v) => v.descricao).join(', ');
   }
