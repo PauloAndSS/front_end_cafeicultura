@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
 import 'package:flutter/services.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/proprietario/cadastrar_dados_basicos_viewmodel.dart';
@@ -56,7 +57,7 @@ class _CadastrarUsuarioViewState extends State<CadastrarUsuarioView> {
   }
 
   void _cadastrarDadosBasicos() async {
-    if (_formKey.currentState!.validate()) {
+    if (validarRevelandoCampoInvalido(_formKey)) {
       FocusScope.of(context).unfocus();
 
       final session = Provider.of<SessionViewModel>(context, listen: false);

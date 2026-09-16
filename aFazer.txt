@@ -1,5 +1,1 @@
 -> atualizar documentação -> focar em programadores novos que querem entender o código. Por onde começar? O Readme.md faz sentido para isso? Deve ser implementado algum plugin para isso?
-
--> Toda hora que volta para a home, o widget de cotação de café recarrega
-
--> Se houver algo do claude publico no github, esconda-o.

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/retorno_a_secao.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/date_symbol_data_local.dart';
@@ -51,6 +52,7 @@ class MeuApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Cafeicultura',
       theme: AppTema.claro,
+      navigatorObservers: [observadorDeRotas],
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,

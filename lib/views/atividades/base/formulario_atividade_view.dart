@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/transacao_financeira_dialog.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/detalhes_despesa_dialog.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
@@ -43,6 +44,8 @@ class FormularioAtividadeView extends StatefulWidget {
   final String rotuloBotaoSalvar;
   final String mensagemSucesso;
 
+  final String? mensagemSucessoAgendamento;
+
   final String ajudaDataInicio;
   final String ajudaDataFim;
 
@@ -77,6 +80,7 @@ class FormularioAtividadeView extends StatefulWidget {
     required this.mensagemSemSafras,
     required this.mensagemSemJanela,
     required this.aoSalvar,
+    this.mensagemSucessoAgendamento,
     this.dataInicial,
     this.valoresIniciais,
     this.construirCamposEspecificos,
@@ -92,6 +96,8 @@ class FormularioAtividadeView extends StatefulWidget {
 
 class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
   final _formKey = GlobalKey<FormState>();
+
+  final _chaveDataFim = GlobalKey();
 
   final _descricaoController = TextEditingController();
   final _dataInicioController = TextEditingController();
@@ -270,6 +276,10 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
 
   bool get _aceitaDataFim => _ehRetroativa;
 
+  String get _mensagemDeSucesso => _ehRetroativa
+      ? widget.mensagemSucesso
+      : widget.mensagemSucessoAgendamento ?? widget.mensagemSucesso;
+
   DateTime? _fimDoEscopo(Talhao? talhao, Safra? safra) =>
       menorData(talhao?.dataFim, safra?.dataFim);
 
@@ -430,7 +440,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
   }
 
   Future<void> _salvar() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!validarRevelandoCampoInvalido(_formKey)) return;
 
     if (widget.validarCamposEspecificos?.call() == false) return;
 
@@ -454,6 +464,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     }
 
     if (_dataFimObrigatoria(talhao, safra) && _dataFim == null) {
+      revelarCampo(_chaveDataFim.currentContext);
       mostrarAviso(
         context,
         'Informe a data de término: o talhão ou a safra deste lançamento já foi encerrado.',
@@ -487,7 +498,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
 
     _salvou = true;
 
-    mostrarSucesso(context, widget.mensagemSucesso);
+    mostrarSucesso(context, _mensagemDeSucesso);
     Navigator.of(context).pop(true);
   }
 
@@ -721,6 +732,11 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
               aoTocar: _selecionarDataInicio,
             ),
 
+            if (_dataInicio != null && !_aceitaDataFim) ...[
+              const _AvisoAgendamento(),
+              const SizedBox(height: 8),
+            ],
+
             _construirCampoDeEscopo<Talhao>(
               rotulo: 'Talhão',
               disponiveis: talhoesDisponiveis,
@@ -750,6 +766,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
 
             if (_aceitaDataFim) ...[
               CampoDeData(
+                key: _chaveDataFim,
                 label: 'Data de término',
                 opcional: !_dataFimObrigatoria(
                   talhaoDoLancamento,
@@ -773,8 +790,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
                         TextButton.styleFrom(foregroundColor: AppCores.acao),
                   ),
                 ),
-            ] else if (_dataInicio != null)
-              const _AvisoAgendamento(),
+            ],
 
             const SizedBox(height: 8),
 

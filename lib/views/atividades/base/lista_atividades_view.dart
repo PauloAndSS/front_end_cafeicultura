@@ -15,6 +15,7 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/atividades_m
 import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/reinicio_de_secao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/retorno_a_secao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/botao_cadastro_flutuante.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
@@ -59,6 +60,7 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
     with
         AutomaticKeepAliveClientMixin,
         ReinicioDeSecaoMixin,
+        RetornoASecaoMixin,
         RolagemEstendeCadastroMixin {
   @override
   bool get wantKeepAlive => true;
@@ -69,6 +71,22 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
   @override
   void aoReiniciarSecao() {
     voltarAoTopo(_controladorDeRolagem);
+    _voltarAoMesAtual();
+  }
+
+  @override
+  SecaoPrincipal get secaoDoRetorno => SecaoPrincipal.atividades;
+
+  @override
+  void aoRetornarASecao() => _voltarAoMesAtual();
+
+  void _voltarAoMesAtual() {
+    final idPropriedade = _idPropriedadeDaAgenda;
+    if (idPropriedade == null) return;
+
+    if (_diaSelecionado != null) setState(() => _diaSelecionado = null);
+
+    _agendaViewModel.carregarMes(idPropriedade, hoje());
   }
 
   final _controladorDeRolagem = ScrollController();
@@ -202,6 +220,7 @@ class _ListaAtividadesViewState<T extends EventoAgricola>
     super.build(context);
 
     observarReinicioDeSecao(context);
+    observarRetornoASecao(context);
 
     final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
 

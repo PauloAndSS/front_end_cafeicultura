@@ -42,8 +42,8 @@ class _WeatherWidgetState extends State<WeatherWidget> {
     }
 
     return CorpoComEstado(
-      isLoading: vm.isLoading,
-      mensagemErro: vm.errorMessage,
+      isLoading: vm.isLoading || vm.aindaNaoTentou,
+      mensagemErro: vm.mensagemErro,
       aoTentarNovamente: vm.permissaoDeLocalizacaoNegada
           ? Geolocator.openAppSettings
           : () => _carregar(propriedade, forcar: true),
@@ -205,11 +205,7 @@ class _WeatherDayCard extends StatelessWidget {
   final WeatherModel weather;
   final bool isToday;
 
-  const _WeatherDayCard({
-    Key? key,
-    required this.weather,
-    required this.isToday,
-  }) : super(key: key);
+  const _WeatherDayCard({required this.weather, required this.isToday});
 
   String _obterCaminhoSvg(String iconCode) {
     const assetPrefix = 'assets/images/icons/clima/';

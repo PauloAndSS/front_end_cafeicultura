@@ -379,83 +379,82 @@ class _CotacaoCafeWidgetState extends State<CotacaoCafeWidget> {
         children: [
           _buildRotuloDaFonte(_fontes[2]),
           const SizedBox(height: 10),
-          Row(
+          Table(
+            columnWidths: const {
+              0: FlexColumnWidth(),
+              1: IntrinsicColumnWidth(),
+              2: IntrinsicColumnWidth(),
+            },
+            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
             children: [
-              const Expanded(flex: 3, child: SizedBox()),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  rotuloHoje,
-                  textAlign: TextAlign.right,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppCores.textoTerciario,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+              TableRow(
+                children: [
+                  const SizedBox.shrink(),
+                  _buildCabecalhoDeColuna(rotuloHoje),
+                  _buildCabecalhoDeColuna('Média mensal'),
+                ],
               ),
-              const SizedBox(width: 8),
-              const Expanded(
-                flex: 2,
-                child: Text(
-                  'Média mensal',
-                  textAlign: TextAlign.right,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppCores.textoTerciario,
-                    fontWeight: FontWeight.w600,
+              for (final (nome, doDia, mensal) in linhas)
+                TableRow(
+                  decoration: const BoxDecoration(
+                    border: Border(top: BorderSide(color: AppCores.borda)),
                   ),
+                  children: [
+                    _buildCelulaCccv(
+                      Text(
+                        nome,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppCores.textoPrimario,
+                        ),
+                      ),
+                    ),
+                    _buildCelulaCccv(_buildValorCccv(doDia, destaque: true)),
+                    _buildCelulaCccv(_buildValorCccv(mensal)),
+                  ],
                 ),
-              ),
             ],
           ),
-          const SizedBox(height: 6),
-          Expanded(
-            child: ListView.separated(
-              padding: EdgeInsets.zero,
-              itemCount: linhas.length,
-              separatorBuilder: (_, _) => const Divider(height: 1, color: AppCores.borda),
-              itemBuilder: (context, i) {
-                final (nome, hoje, mensal) = linhas[i];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        flex: 3,
-                        child: Text(
-                          nome,
-                          style: const TextStyle(fontSize: 13, color: AppCores.textoPrimario),
-                        ),
-                      ),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          hoje,
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            color: AppCores.acao,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        flex: 2,
-                        child: Text(
-                          mensal,
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(fontSize: 13, color: AppCores.textoSecundario),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              },
-            ),
-          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCabecalhoDeColuna(String texto) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12, bottom: 6),
+      child: Text(
+        texto,
+        textAlign: TextAlign.right,
+        softWrap: false,
+        style: const TextStyle(
+          fontSize: 11,
+          color: AppCores.textoTerciario,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCelulaCccv(Widget filho) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 9),
+      child: filho,
+    );
+  }
+
+  Widget _buildValorCccv(String texto, {bool destaque = false}) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 12),
+      child: Text(
+        texto,
+        textAlign: TextAlign.right,
+        softWrap: false,
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: destaque ? FontWeight.w700 : FontWeight.w400,
+          color: destaque ? AppCores.acao : AppCores.textoSecundario,
+        ),
       ),
     );
   }

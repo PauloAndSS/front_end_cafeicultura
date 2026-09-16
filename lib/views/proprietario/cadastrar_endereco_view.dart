@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/proprietario/cadastrar_endereco_viewmodel.dart';
@@ -39,7 +40,7 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
   }
 
   void _finalizarCadastroComEndereco() async {
-    if (_formKey.currentState!.validate()) {
+    if (validarRevelandoCampoInvalido(_formKey)) {
       FocusScope.of(context).unfocus();
 
       final proprietarioSalvo = await _viewModel.adicionarEndereco(

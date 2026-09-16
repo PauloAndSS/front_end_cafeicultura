@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
 import 'package:flutter/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/funcionario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pessoa.dart';
@@ -96,7 +97,7 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
           corConfirmar: AppCores.acao,
           aoCancelar: () => Navigator.pop(context, false),
           aoConfirmar: () {
-            if (formKey.currentState!.validate()) {
+            if (validarRevelandoCampoInvalido(formKey)) {
               Navigator.pop(context, true);
             }
           },

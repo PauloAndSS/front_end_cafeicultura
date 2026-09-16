@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/financeiro/despesa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
@@ -111,7 +112,7 @@ class _TransacaoFinanceiraDialogState
   }
 
   void _confirmar() {
-    if (!_formKey.currentState!.validate()) return;
+    if (!validarRevelandoCampoInvalido(_formKey)) return;
 
     final despesa = Despesa(
       idPropriedade: widget.idPropriedade,

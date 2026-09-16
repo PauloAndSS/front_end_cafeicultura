@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/financeiro/despesa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
@@ -82,7 +83,7 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
   }
 
   Future<void> _salvar() async {
-    if (!_formKey.currentState!.validate()) {
+    if (!validarRevelandoCampoInvalido(_formKey)) {
       setState(() => _erro = 'Revise os campos destacados.');
       return;
     }

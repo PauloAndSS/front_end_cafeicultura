@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/model/tamanho.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
@@ -124,7 +125,7 @@ class _AtualizarPropriedadeViewState extends State<AtualizarPropriedadeView> {
     );
   }
   void _salvarAlteracoes() async {
-    if (_formKey.currentState!.validate()) {
+    if (validarRevelandoCampoInvalido(_formKey)) {
       FocusScope.of(context).unfocus();
 
       final sucesso = await _viewModel.atualizarPropriedadeCompleta(

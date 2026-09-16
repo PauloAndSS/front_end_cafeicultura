@@ -44,8 +44,3 @@ app.*.map.json
 /android/app/profile
 /android/app/rele/
 
-#Claude
-CLAUDE.md
-.claudeignore
-.claude/
-skills-lock.json

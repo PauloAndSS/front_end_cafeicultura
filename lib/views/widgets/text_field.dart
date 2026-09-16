@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
 
-class CustomTextField extends StatelessWidget {
+class CustomTextField extends StatefulWidget {
   final String label;
   final TextEditingController controller;
   final bool isPassword;
@@ -29,23 +29,46 @@ class CustomTextField extends StatelessWidget {
   });
 
   @override
+  State<CustomTextField> createState() => _CustomTextFieldState();
+}
+
+class _CustomTextFieldState extends State<CustomTextField> {
+  bool _senhaOculta = true;
+
+  void _alternarVisibilidadeDaSenha() {
+    setState(() => _senhaOculta = !_senhaOculta);
+  }
+
+  Widget? _botaoDeVisibilidade() {
+    if (!widget.isPassword) return null;
+    return IconButton(
+      onPressed: widget.habilitado ? _alternarVisibilidadeDaSenha : null,
+      tooltip: _senhaOculta ? 'Mostrar senha' : 'Ocultar senha',
+      icon: Icon(
+        _senhaOculta ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        rotuloDeCampo(context, label, opcional: opcional),
+        rotuloDeCampo(context, widget.label, opcional: widget.opcional),
         TextFormField(
-          controller: controller,
-          enabled: habilitado,
-          obscureText: isPassword,
-          keyboardType: keyboardType,
-          validator: validator,
+          controller: widget.controller,
+          enabled: widget.habilitado,
+          obscureText: widget.isPassword && _senhaOculta,
+          keyboardType: widget.keyboardType,
+          validator: widget.validator,
           autovalidateMode: AutovalidateMode.onUserInteraction,
-          readOnly: readOnly,
-          inputFormatters: inputFormatters,
+          readOnly: widget.readOnly,
+          inputFormatters: widget.inputFormatters,
           decoration: InputDecoration(
-            hintText: hintText,
-            filled: readOnly || !habilitado,
+            hintText: widget.hintText,
+            filled: widget.readOnly || !widget.habilitado,
+            suffixIcon: _botaoDeVisibilidade(),
           ),
         ),
         const SizedBox(height: 16),

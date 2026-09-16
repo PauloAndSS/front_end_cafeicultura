@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
@@ -41,7 +42,6 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
   final _logradouroController = TextEditingController();
   final _bairroController = TextEditingController();
   final _cidadeController = TextEditingController();
-  final _paisController = TextEditingController();
 
   UF? _ufSelecionada;
 
@@ -54,7 +54,6 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
     _logradouroController.dispose();
     _bairroController.dispose();
     _cidadeController.dispose();
-    _paisController.dispose();
     super.dispose();
   }
 
@@ -73,7 +72,7 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
     );
   }
   void atualizar() async {
-    if (_formKey.currentState!.validate()) {
+    if (validarRevelandoCampoInvalido(_formKey)) {
       FocusScope.of(context).unfocus();
 
       final session = Provider.of<SessionViewModel>(context, listen: false);
@@ -100,7 +99,6 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
         logradouro: _logradouroController.text,
         bairro: _bairroController.text,
         cidade: _cidadeController.text,
-        pais: _paisController.text,
         uf: _ufSelecionada,
         inscEstadualDigitada: _isPessoaFisica
             ? null
@@ -157,7 +155,6 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
           _bairroController.text = endereco.bairro;
           _cidadeController.text = endereco.cidade;
           _ufSelecionada = endereco.uf;
-          _paisController.text = endereco.pais ?? '';
         }
       });
     } else if (mounted) {
@@ -170,7 +167,6 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
       _logradouroController.text.trim().isNotEmpty ||
       _bairroController.text.trim().isNotEmpty ||
       _cidadeController.text.trim().isNotEmpty ||
-      _paisController.text.trim().isNotEmpty ||
       _ufSelecionada != null;
 
   bool _houveAlteracao() {
@@ -196,7 +192,6 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
           _logradouroController.text.isNotEmpty ||
           _bairroController.text.isNotEmpty ||
           _cidadeController.text.isNotEmpty ||
-          _paisController.text.isNotEmpty ||
           _ufSelecionada != null) {
         return true;
       }
@@ -207,7 +202,6 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
       if (_bairroController.text.trim() != endereco.bairro) return true;
       if (_cidadeController.text.trim() != endereco.cidade) return true;
       if (_ufSelecionada != endereco.uf) return true;
-      if (_paisController.text.trim() != (endereco.pais ?? '')) return true;
     }
 
     return false;
@@ -334,7 +328,6 @@ return PopScope(
                       controllerLogradouro: _logradouroController,
                       controllerBairro: _bairroController,
                       controllerCidade: _cidadeController,
-                      controllerPais: _paisController,
                       uf: _ufSelecionada,
                       exigirPreenchimento: () => _enderecoPreenchido,
                       aoSelecionarUf: (novo) =>

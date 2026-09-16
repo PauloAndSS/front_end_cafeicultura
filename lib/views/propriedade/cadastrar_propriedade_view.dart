@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/model/tamanho.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
@@ -61,7 +62,7 @@ class _CadastrarPropriedadeViewState extends State<CadastrarPropriedadeView> {
   }
 
   void _salvarPropriedade() async {
-    if (_formKey.currentState!.validate()) {
+    if (validarRevelandoCampoInvalido(_formKey)) {
       FocusScope.of(context).unfocus();
 
       final session = Provider.of<SessionViewModel>(context, listen: false);

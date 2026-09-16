@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/talhao.dart';
 import 'package:frond_end_cafeicultura_mobile/model/tamanho.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
@@ -26,6 +27,8 @@ class CadastrarTalhaoView extends StatefulWidget {
 
 class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
   final _formKey = GlobalKey<FormState>();
+
+  final _chaveVariedades = GlobalKey();
 
   final _nomeController = TextEditingController();
   final _tamanhoController = TextEditingController();
@@ -73,12 +76,13 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
   }
 
   Future<void> _salvar() async {
-    if (_formKey.currentState!.validate()) {
+    if (validarRevelandoCampoInvalido(_formKey)) {
       if (_dataInicio == null) {
         mostrarAviso(context, 'Selecione a data de início');
         return;
       }
       if (_variedadesSelecionadas.isEmpty) {
+        revelarCampo(_chaveVariedades.currentContext);
         mostrarAviso(context, 'Selecione pelo menos uma variedade');
         return;
       }
@@ -227,11 +231,14 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                     ),
                     const SizedBox(height: 16),
 
-                    const Text(
-                      'Variedades',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: AppCores.acao,
+                    KeyedSubtree(
+                      key: _chaveVariedades,
+                      child: const Text(
+                        'Variedades',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppCores.acao,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),

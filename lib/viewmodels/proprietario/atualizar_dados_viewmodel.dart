@@ -41,7 +41,6 @@ class AtualizarDadosViewModel extends ChangeNotifier
     UF? uf,
     String? inscEstadualDigitada,
     String? cnpjDigitado,
-    String? pais,
   }) {
     return cargaPrincipal.executar(
       chamada: () async {
@@ -104,8 +103,7 @@ class AtualizarDadosViewModel extends ChangeNotifier
               logradouro.trim() != endOrig.logradouro ||
               bairro.trim() != endOrig.bairro ||
               cidade.trim() != endOrig.cidade ||
-              uf != endOrig.uf ||
-              (pais?.trim() ?? '') != (endOrig.pais ?? '')) { 
+              uf != endOrig.uf) {
             mudouEndereco = true;
           }
         }
@@ -118,7 +116,6 @@ class AtualizarDadosViewModel extends ChangeNotifier
             cep: cepVo,
             logradouro: logradouro.trim(),
             uf: uf,
-            pais: pais?.trim(),
           );
           requisicoes.add(_proprietarioService.atualizarEndereco(idProprietario, novoEndereco));
         }

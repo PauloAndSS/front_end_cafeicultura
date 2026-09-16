@@ -10,7 +10,6 @@ class BlocoEndereco extends StatelessWidget {
   final TextEditingController controllerLogradouro;
   final TextEditingController controllerBairro;
   final TextEditingController controllerCidade;
-  final TextEditingController? controllerPais;
 
   final UF? uf;
   final ValueChanged<UF?> aoSelecionarUf;
@@ -28,15 +27,15 @@ class BlocoEndereco extends StatelessWidget {
     required this.controllerCidade,
     required this.uf,
     required this.aoSelecionarUf,
-    this.controllerPais,
     this.exigirPreenchimento,
     this.dicaLogradouro = 'Rua, Avenida, número, complemento...',
     this.dicaBairro = 'Digite o bairro ou distrito',
   });
 
+  bool get _exigido => exigirPreenchimento?.call() ?? true;
+
   String? _seExigido(String? Function(String?) validar, String? valor) {
-    final exigido = exigirPreenchimento?.call() ?? true;
-    return exigido ? validar(valor) : null;
+    return _exigido ? validar(valor) : null;
   }
 
   @override
@@ -64,33 +63,14 @@ class BlocoEndereco extends StatelessWidget {
           validator: (valor) => _seExigido(Validator.validarNome, valor),
           hintText: dicaBairro,
         ),
-        if (controllerPais == null)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(flex: 2, child: _campoCidade()),
-              const SizedBox(width: 12),
-              Expanded(flex: 1, child: _campoUf()),
-            ],
-          )
-        else ...[
-          _campoCidade(),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(flex: 1, child: _campoUf()),
-              const SizedBox(width: 12),
-              Expanded(
-                flex: 2,
-                child: CustomTextField(
-                  label: 'País',
-                  controller: controllerPais!,
-                  validator: (valor) => _seExigido(Validator.obrigatorio, valor),
-                ),
-              ),
-            ],
-          ),
-        ],
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(flex: 2, child: _campoCidade()),
+            const SizedBox(width: 12),
+            Expanded(flex: 1, child: _campoUf()),
+          ],
+        ),
       ],
     );
   }
@@ -106,7 +86,7 @@ class BlocoEndereco extends StatelessWidget {
     value: uf,
     onChanged: aoSelecionarUf,
     validator: (valor) {
-      if (!(exigirPreenchimento?.call() ?? true)) return null;
+      if (!_exigido) return null;
       return valor == null ? 'Obrigatório' : null;
     },
   );

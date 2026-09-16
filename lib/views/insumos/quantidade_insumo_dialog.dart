@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
@@ -59,7 +60,7 @@ class _QuantidadeInsumoDialogState extends State<_QuantidadeInsumoDialog> {
   }
 
   void _confirmar() {
-    if (!_formKey.currentState!.validate()) return;
+    if (!validarRevelandoCampoInvalido(_formKey)) return;
 
     Navigator.of(context).pop(AppMasks.paraDouble(_controller.text));
   }

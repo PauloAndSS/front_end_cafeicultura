@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/cadastrar_pessoa_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
@@ -112,7 +113,7 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
   }
 
   void _salvar() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!validarRevelandoCampoInvalido(_formKey)) return;
 
     FocusScope.of(context).unfocus();
 

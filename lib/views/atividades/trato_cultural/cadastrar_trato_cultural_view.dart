@@ -34,6 +34,7 @@ class _CadastrarTratoCulturalViewState extends State<CadastrarTratoCulturalView>
       titulo: 'Novo Trato Cultural',
       rotuloBotaoSalvar: 'Salvar Trato Cultural',
       mensagemSucesso: 'Trato cultural cadastrado com sucesso!',
+      mensagemSucessoAgendamento: 'Trato cultural agendado com sucesso!',
       ajudaDataInicio: 'Data de início do trato cultural',
       ajudaDataFim: 'Data de término do trato cultural',
       dicaDataFim: 'Trato em andamento',

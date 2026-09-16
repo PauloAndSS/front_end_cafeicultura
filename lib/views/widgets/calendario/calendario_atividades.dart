@@ -53,7 +53,18 @@ class _CalendarioAtividadesState<T extends Evento>
     if (!identical(oldWidget.atividades, widget.atividades)) {
       _porDia = _agruparPorDia(widget.atividades);
     }
+
+    final mesInicial = widget.mesInicial;
+
+    if (mesInicial != null &&
+        mesInicial != oldWidget.mesInicial &&
+        !_mesmoMes(mesInicial, _diaFocado)) {
+      _diaFocado = mesInicial;
+    }
   }
+
+  bool _mesmoMes(DateTime a, DateTime b) =>
+      a.year == b.year && a.month == b.month;
 
   Map<DateTime, List<T>> _agruparPorDia(List<T> atividades) {
     final agrupadas = <DateTime, List<T>>{};
@@ -200,7 +211,7 @@ class _CalendarioAtividadesState<T extends Evento>
         onTap: _abrirSeletorDeMes,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-          child: titulo,
+          child: FittedBox(fit: BoxFit.scaleDown, child: titulo),
         ),
       ),
     );

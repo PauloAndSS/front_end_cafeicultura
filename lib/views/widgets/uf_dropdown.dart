@@ -17,7 +17,7 @@ class UfDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CampoSuspenso<UF>(
-      rotulo: 'UF',
+      rotulo: 'Estado',
       valor: value,
       itens: UF.values,
       rotuloItem: (uf) => uf.name,

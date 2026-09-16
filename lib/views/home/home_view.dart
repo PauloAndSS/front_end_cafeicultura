@@ -27,6 +27,9 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/atividades_m
 import 'package:frond_end_cafeicultura_mobile/viewmodels/financeiro/financeiro_mudou.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/reinicio_de_secao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/retorno_a_secao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
 import 'package:frond_end_cafeicultura_mobile/views/safra/acoes_safra.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
@@ -46,7 +49,8 @@ class _HomeViewState extends State<HomeView>
     with
         AutomaticKeepAliveClientMixin,
         SingleTickerProviderStateMixin,
-        ReinicioDeSecaoMixin {
+        ReinicioDeSecaoMixin,
+        RetornoASecaoMixin {
   final _agendaViewModel = AgendaPropriedadeViewModel();
   final _cotacaoCafeViewModel = CotacaoCafeViewModel();
   final _weatherViewModel = WeatherViewModel();
@@ -69,6 +73,24 @@ class _HomeViewState extends State<HomeView>
     _abas.index = 0;
     voltarAoTopo(_rolagemVisaoGeral);
     voltarAoTopo(_rolagemSafra);
+    _voltarAoMesAtual();
+  }
+
+  @override
+  SecaoPrincipal get secaoDoRetorno => SecaoPrincipal.home;
+
+  @override
+  void aoRetornarASecao() => _voltarAoMesAtual();
+
+  void _voltarAoMesAtual() {
+    final idPropriedade = _idPropriedadeDaAgenda;
+    if (idPropriedade == null) return;
+
+    if (_diaSelecionadoNaAgenda != null) {
+      setState(() => _diaSelecionadoNaAgenda = null);
+    }
+
+    _agendaViewModel.carregarMes(idPropriedade, hoje());
   }
 
   @override
@@ -94,6 +116,7 @@ class _HomeViewState extends State<HomeView>
     super.build(context);
 
     observarReinicioDeSecao(context);
+    observarRetornoASecao(context);
 
     final propriedadesVM = context.watch<PropriedadesUsuarioViewModel>();
     final talhoesVM = context.read<TalhoesViewModel>();
@@ -243,41 +266,55 @@ class _HomeViewState extends State<HomeView>
           );
         }
 
-        if (talhoesVM.talhoes.isEmpty) return _construirAtalhoDeTalhao();
+        if (talhoesVM.talhoes.isEmpty) {
+          return _construirAtalhosDoPrimeiroCadastro();
+        }
 
         return _construirCalendario(idPropriedade);
       },
     );
   }
 
-  Widget _construirAtalhoDeTalhao() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 32),
-        child: Column(
-          children: [
-            IconButton(
-              icon: const Icon(
-                Icons.add_circle_outline,
-                size: 64,
-                color: AppCores.acao,
-              ),
-              onPressed: () => abrirCadastroDeTalhao(context),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Cadastrar Novo Talhão',
-              style: TextStyle(
-                color: AppCores.acao,
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+  Widget _construirAtalhosDoPrimeiroCadastro() {
+    final textos = Theme.of(context).textTheme;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
+      decoration: AppEstilos.cartao(),
+      child: Column(
+        children: [
+          const Icon(Icons.eco_outlined, size: 40, color: AppCores.acao),
+          const SizedBox(height: 12),
+          Text(
+            'Nenhum talhão cadastrado nesta propriedade',
+            textAlign: TextAlign.center,
+            style: textos.titleSmall,
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Cadastre um talhão e abra uma safra para começar a lançar as '
+            'atividades no calendário.',
+            textAlign: TextAlign.center,
+            style: textos.bodyMedium?.copyWith(color: AppCores.textoSecundario),
+          ),
+          const SizedBox(height: 20),
+          CustomButton(
+            text: 'Cadastrar Novo Talhão',
+            onPressed: () => abrirCadastroDeTalhao(context),
+          ),
+          const SizedBox(height: 12),
+          CustomButton(
+            text: 'Cadastrar Safra',
+            contornado: true,
+            onPressed: _irParaSafra,
+          ),
+        ],
       ),
     );
   }
+
+  void _irParaSafra() => _abas.animateTo(1);
 
   Widget _construirCalendario(int? idPropriedade) {
     return ListenableBuilder(
@@ -292,6 +329,7 @@ class _HomeViewState extends State<HomeView>
           construirVazio: (_) => const SizedBox.shrink(),
           construirConteudo: (_) => CalendarioAtividades<EventoAgricola>(
             atividades: _agendaViewModel.atividadesDoMes,
+            mesInicial: _agendaViewModel.mesVisivel,
             diaSelecionado: _diaSelecionadoNaAgenda,
             carregando: _agendaViewModel.isLoading,
             corDoMarcador: (atividade) => corDoStatus(atividade.status),
