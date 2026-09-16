@@ -92,7 +92,7 @@ class PessoaFisica extends Pessoa {
       if (id != null) 'id': id,
       'tipoPessoa': 'fisica',
       'nome': nome,
-      'cpf': cpf.numero,
+      'cpf': cpf.formatado,
       if (endereco != null) 'endereco': endereco!.toJson(),
     };
   }
@@ -102,4 +102,4 @@ class PessoaFisica extends Pessoa {
 
   @override
   String get documentoFormatado => cpf.formatado;
-}
+}

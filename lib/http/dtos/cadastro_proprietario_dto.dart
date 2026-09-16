@@ -31,10 +31,10 @@ class CadastroProprietarioDTO {
       
       "nome": isFisica ? pessoa.nome : null,
       
-      "cpf": isFisica ? pessoa.cpf.numero : null,
+      "cpf": isFisica ? pessoa.cpf.formatado : null,
       
       "razaoSocial": !isFisica ? (pessoa as PessoaJuridica).razaoSocial : null,
-      "cnpj": !isFisica ? (pessoa as PessoaJuridica).cnpj.numero : null,
+      "cnpj": !isFisica ? (pessoa as PessoaJuridica).cnpj.formatado : null,
       "inscrEstadual": !isFisica ? (pessoa as PessoaJuridica).inscricaoEstadual : null,
       
       "email": proprietario.email.endereco,

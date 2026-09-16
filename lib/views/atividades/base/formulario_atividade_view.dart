@@ -26,6 +26,7 @@ import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_de_data.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/propriedade/acoes_propriedade.dart';
 import 'package:frond_end_cafeicultura_mobile/views/safra/acoes_safra.dart';
@@ -777,6 +778,14 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
                 hintText: widget.dicaDataFim,
                 obrigatorio: false,
               ),
+              if (_dataFim != null) ...[
+                const CaixaAvisoAtencao(
+                  mensagem: 'Informar a data de término finaliza a atividade: '
+                      'depois de salva, ela não poderá mais ser alterada nem '
+                      'excluída — apenas visualizada.',
+                ),
+                const SizedBox(height: 8),
+              ],
               if (_dataFimObrigatoria(talhaoDoLancamento, safraDoLancamento))
                 const _AvisoEscopoEncerrado()
               else if (_dataFim != null)

@@ -93,7 +93,7 @@ class PessoaJuridica extends Pessoa {
       if (id != null) 'id': id,
       'tipoPessoa': 'juridica',
       'razaoSocial': razaoSocial,
-      'cnpj': cnpj.numero,
+      'cnpj': cnpj.formatado,
       if (inscricaoEstadual != null) 'inscrEstadual': inscricaoEstadual,
       if (endereco != null) 'endereco': endereco!.toJson(),
     };
@@ -104,4 +104,4 @@ class PessoaJuridica extends Pessoa {
 
   @override
   String get documentoFormatado => cnpj.formatado;
-}
+}

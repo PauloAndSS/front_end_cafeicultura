@@ -58,7 +58,7 @@ class BlocoEndereco extends StatelessWidget {
           hintText: dicaLogradouro,
         ),
         CustomTextField(
-          label: 'Bairro',
+          label: 'Bairro/Distrito',
           controller: controllerBairro,
           validator: (valor) => _seExigido(Validator.validarNome, valor),
           hintText: dicaBairro,

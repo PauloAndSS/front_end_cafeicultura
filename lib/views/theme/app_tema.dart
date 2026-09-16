@@ -204,6 +204,7 @@ abstract final class AppTema {
     labelStyle: const TextStyle(color: AppCores.textoSecundario, fontSize: 14),
     floatingLabelStyle: const TextStyle(color: AppCores.acao, fontSize: 14),
     errorStyle: const TextStyle(color: AppCores.erro, fontSize: 12),
+    errorMaxLines: 3,
     suffixIconColor: AppCores.textoSecundario,
     prefixIconColor: AppCores.textoSecundario,
     border: _contorno(AppCores.bordaCampo),
