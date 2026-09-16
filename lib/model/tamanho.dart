@@ -1,3 +1,5 @@
+import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
+
 enum Medida {
   hectare('hectare', 'Hectares'),
   m2('m2', 'm²');
@@ -18,6 +20,8 @@ enum Medida {
 class Tamanho {
   final double valor;
   final Medida medida;
+
+  String get formatado => '${formatarDecimal(valor)} ${medida.nomeExibicao}';
 
   Tamanho({
     required this.valor,

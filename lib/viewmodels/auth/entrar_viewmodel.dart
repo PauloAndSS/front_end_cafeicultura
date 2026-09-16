@@ -1,57 +1,46 @@
 import 'package:flutter/widgets.dart';
 import 'package:frond_end_cafeicultura_mobile/http/dtos/auth_dto.dart';
-import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_auth.dart';
 import 'package:frond_end_cafeicultura_mobile/model/auth/credencial.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedade/propriedades_usuario_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/session_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/estado_de_carga.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/notifica_se_vivo_mixin.dart';
 
-class EntrarViewmodel extends ChangeNotifier{
-  bool _isLoading = false;
-  bool get isLoading => _isLoading;
-
-  String? _mensagemErro;
-  String? get mensagemErro => _mensagemErro;
-
+class EntrarViewModel extends ChangeNotifier
+    with NotificaSeVivoMixin, EstadoDeCarregamentoMixin {
   final ServicesAuth _service;
 
-  EntrarViewmodel({required ServicesAuth service}) : _service = service;
+  EntrarViewModel({required ServicesAuth service}) : _service = service;
 
-  Future<bool> fazerLogin(String entradaBruta, String senha, SessionViewModel session, PropriedadesUsuarioViewModel propriedadesVM,) async {
-    _isLoading = true;
-    _mensagemErro = null;
-    notifyListeners();
+  Future<bool> fazerLogin(
+    String entradaBruta,
+    String senha,
+    SessionViewModel session,
+  ) {
+    return cargaPrincipal.executar(
+      chamada: () async {
+        final credencial = Credencial(
+          identificacao: IdentificacaoLogin.criar(entradaBruta),
+          senha: senha,
+        );
 
-    try {
-      final credencial = Credencial(identificacao: IdentificacaoLogin.criar(entradaBruta), senha: senha);
-      final dto = LoginRequestDTO(entrada: credencial.valorEntrada, senha: credencial.senha, tipoEntrada: credencial.tipoEntrada);
+        final resposta = await _service.autenticar(LoginRequestDTO(
+          entrada: credencial.valorEntrada,
+          senha: credencial.senha,
+          tipoEntrada: credencial.tipoEntrada,
+        ));
 
-      final resposta = await _service.autenticar(dto);
-      
-      final id = resposta.sessaoAtiva?.idUsuario;
-      final nome = resposta.sessaoAtiva?.nome ?? 'Produtor';
+        final id = resposta.sessaoAtiva?.idUsuario;
 
-      if (id == null) {
-        throw Exception("ID do usuário não retornado pelo servidor.");
-      }
+        if (id == null) {
+          throw Exception('ID do usuário não retornado pelo servidor.');
+        }
 
-      await session.login(id, nome);
+        await session.login(id, resposta.sessaoAtiva?.nome ?? 'Produtor');
 
-      propriedadesVM.carregarPropriedades();
-      return true;
-
-    } on ArgumentError catch (e) {
-      _mensagemErro = e.message;
-      return false;
-    } on ApiException catch (e) {
-      _mensagemErro = e.toString();
-      return false;
-    } catch (e) {
-      _mensagemErro = e.toString().replaceAll('Exception: ', '');
-      return false;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
+        return true;
+      },
+      aoFalhar: () => false,
+    );
   }
 }

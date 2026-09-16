@@ -48,9 +48,7 @@ class CadastroProprietarioDTO {
 
 class CadastroProprietarioResponseDTO {
   final String mensagem;
-  final int? id;
 
   CadastroProprietarioResponseDTO.fromJson(Map<String, dynamic> json)
-      : mensagem = json['mensagem'] ?? '',
-        id = json['id'] as int?; // 2. Faz o mapeamento aceitando nulo
+      : mensagem = json['mensagem'] ?? '';
 }

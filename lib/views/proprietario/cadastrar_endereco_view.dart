@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/cadastro/cadastrar_endereco_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/views/propriedade/cadastrar_propriedade_view.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/proprietario/cadastrar_endereco_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/uf_dropdown.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_endereco.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_formulario.dart';
 
 class CadastrarEnderecoView extends StatefulWidget {
   final Proprietario proprietario;
@@ -21,7 +22,7 @@ class CadastrarEnderecoView extends StatefulWidget {
 
 class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
   final _formKey = GlobalKey<FormState>();
-  final _viewModel = CadastrarEnderecoViewmodel();
+  final _viewModel = CadastrarEnderecoViewModel();
   final _cepController = TextEditingController();
   final _logradouroController = TextEditingController();
   final _bairroController = TextEditingController();
@@ -39,7 +40,7 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
   }
 
   void _finalizarCadastroComEndereco() async {
-    if (_formKey.currentState!.validate() && _ufSelecionada != null) {
+    if (validarRevelandoCampoInvalido(_formKey)) {
       FocusScope.of(context).unfocus();
 
       final proprietarioSalvo = await _viewModel.adicionarEndereco(
@@ -52,64 +53,36 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
       );
 
       if (proprietarioSalvo != null && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Conta e endereço cadastrados com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => CadastrarPropriedadeView(),
-          ),
-        );
+        mostrarSucesso(context, 'Endereço cadastrado com sucesso!');
+        _voltarParaOInicio();
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _viewModel.mensagemErro ??
-                  'Erro desconhecido ao cadastrar endereço.',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        mostrarErro(context, _viewModel.mensagemErro ??
+                  'Erro desconhecido ao cadastrar endereço.');
       }
-    } else if (_ufSelecionada == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Selecione o Estado (UF).'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 
   void _finalizarCadastroSemEndereco() {
-    Navigator.of(context).popUntil(
-      (route) => route.isFirst,
-    ); // TODO: Ao implementar criaçao de propriedade, mudar destino da rota
+    _voltarParaOInicio();
+  }
+
+  void _voltarParaOInicio() {
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
   Widget build(BuildContext context) {
     return PopScope(
       canPop:
-          false, // Bloqueia o "voltar" padrão (que iria pra tela de cadastro)
+          false,
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
 
-        // Ao invés de voltar uma tela, mandamos ele para a tela inicial!
-        // Isso tem o mesmo efeito do botão "Adicionar endereço depois"
         Navigator.of(context).popUntil((route) => route.isFirst);
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF9FB896),
-        appBar: AppBar(
-          backgroundColor: Colors.transparent,
-          elevation: 0,
-          iconTheme: const IconThemeData(color: Colors.white),
-        ),
+        backgroundColor: AppCores.fundoAuth,
+        appBar: const AppBarPadrao(cor: AppCores.fundoAuth, elevacao: 0),
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -132,13 +105,8 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
   }
 
   Widget _buildEnderecoCard() {
-    return Container(
-      padding: const EdgeInsets.all(24.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Form(
+    return CartaoFormulario(
+      filho: Form(
         key: _formKey,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,59 +116,18 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF67835C),
+                color: AppCores.acao,
               ),
             ),
             const SizedBox(height: 16),
 
-            CustomTextField(
-              label: 'CEP',
-              controller: _cepController,
-              keyboardType: TextInputType.number,
-              validator: Validator.validarCEP,
-              inputFormatters: [AppMasks.cep],
-              hintText: 'Digite o CEP (apenas números)',
-            ),
-
-            CustomTextField(
-              label: 'Logradouro',
-              controller: _logradouroController,
-              validator: Validator.validarNome,
-              hintText: 'Rua, Avenida, número, complemento...',
-            ),
-
-            CustomTextField(
-              label: 'Bairro',
-              controller: _bairroController,
-              validator: Validator.validarNome,
-              hintText: 'Digite o bairro ou distrito',
-            ),
-
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: CustomTextField(
-                    label: 'Cidade',
-                    controller: _cidadeController,
-                    validator: Validator.validarNome,
-                    hintText: 'Nome da cidade',
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  flex: 1,
-                  child: UfDropdown(
-                    value: _ufSelecionada,
-                    onChanged: (UF? newValue) {
-                      setState(() {
-                        _ufSelecionada = newValue;
-                      });
-                    },
-                  ),
-                ),
-              ],
+            BlocoEndereco(
+              controllerCep: _cepController,
+              controllerLogradouro: _logradouroController,
+              controllerBairro: _bairroController,
+              controllerCidade: _cidadeController,
+              uf: _ufSelecionada,
+              aoSelecionarUf: (novo) => setState(() => _ufSelecionada = novo),
             ),
 
             const SizedBox(height: 24),
@@ -210,7 +137,7 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
               builder: (context, _) {
                 if (_viewModel.isLoading) {
                   return const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF67835C)),
+                    child: CircularProgressIndicator(),
                   );
                 }
 
@@ -227,8 +154,8 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
                     CustomButton(
                       text: "Adicionar endereço depois",
                       onPressed: _finalizarCadastroSemEndereco,
-                      backgroundColor: Colors.white,
-                      foregroundColor: const Color(0xFF67835C),
+                      backgroundColor: AppCores.superficie,
+                      foregroundColor: AppCores.acao,
                     ),
                   ],
                 );

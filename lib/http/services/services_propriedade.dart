@@ -1,157 +1,99 @@
 import 'dart:convert';
 
-import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/model/propriedade.dart';
 import 'package:frond_end_cafeicultura_mobile/model/tamanho.dart';
 import 'package:http/http.dart' as http;
-class ServicesPropriedade extends BaseService {
-  late final Uri url = Uri.parse('$baseUrl/propriedades');
 
-Future<bool> cadastrar(Propriedade propriedade) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$url/'),
+class ServicesPropriedade extends BaseService {
+  @override
+  String get recurso => 'propriedades';
+
+  Future<bool> cadastrar(Propriedade propriedade) {
+    return executarRequisicao(
+      enviar: () => http.post(
+        url,
         headers: defaultHeaders,
         body: jsonEncode(propriedade.toJson()),
-      );
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return true;
-      } else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg = jsonResponse['error'] ?? 
-                    jsonResponse['mensagem'] ?? 
-                    'Erro ao cadastrar propriedade.';
-        throw ApiException(msg);
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw Exception('Falha na comunicação: $e');
-    }
+      ),
+      aoSucesso: (_) => true,
+      erroMsg: 'Erro ao cadastrar propriedade.',
+      acao: 'cadastrar propriedade',
+    );
   }
 
-  //getters
-  Future<Propriedade> buscarPorId(int id) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$url/$id'),
-        headers: defaultHeaders,
-      );
-
-      if (response.statusCode == 200) {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        return Propriedade.fromJson(jsonResponse);
-      } else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg = jsonResponse['error'] ?? 
-                    jsonResponse['mensagem'] ?? 
-                    'Erro ao buscar propriedade.';
-        throw ApiException(msg);
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw Exception('Falha na comunicação: $e');
-    }
+  Future<Propriedade> buscarPorId(int id) {
+    return executarRequisicao(
+      enviar: () => http.get(rota('$id'), headers: defaultHeaders),
+      aoSucesso: (resposta) =>
+          extrairObjeto(resposta.bodyBytes, Propriedade.fromJson),
+      erroMsg: 'Erro ao buscar propriedade.',
+      acao: 'buscar propriedade',
+    );
   }
 
-  Future<List<Propriedade>> buscarPorProprietario() async {
-    try {
-      final response = await http.get(
-        Uri.parse('$url/proprietario'),
-        headers: defaultHeaders,
-      );
-
-      if (response.statusCode == 200) {
-        final List<dynamic> jsonList = jsonDecode(utf8.decode(response.bodyBytes));
-        
-        return jsonList.map((json) => Propriedade.fromJson(json)).toList();
-      } else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg = jsonResponse['error'] ?? 
-                    jsonResponse['mensagem'] ?? 
-                    'Erro ao buscar suas propriedades.';
-        throw ApiException(msg);
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw Exception('Falha na comunicação: $e');
-    }
+  Future<List<Propriedade>> buscarPorProprietario() {
+    return executarRequisicao(
+      enviar: () => http.get(rota('proprietario'), headers: defaultHeaders),
+      aoSucesso: (resposta) =>
+          extrairLista(resposta.bodyBytes, Propriedade.fromJson),
+      // Proprietário sem nenhuma propriedade: o backend responde 404 com
+      // corpo JSON. É o estado de quem acabou de se cadastrar, não um erro.
+      aoListaVazia: () => const [],
+      erroMsg: 'Erro ao buscar propriedades.',
+      acao: 'buscar propriedades',
+    );
   }
 
-  //updates
-  Future<bool> atualizarNome(int id, String novoNome) async {
-    try {
-      final response = await http.patch(
-        Uri.parse('$url/$id/nome'),
+  Future<bool> atualizarNome(int id, String novoNome) {
+    return executarRequisicao(
+      enviar: () => http.patch(
+        rota('$id/nome'),
         headers: defaultHeaders,
         body: jsonEncode({'nome': novoNome}),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        return true;
-      } else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg = jsonResponse['error'] ?? 
-                    jsonResponse['mensagem'] ?? 
-                    'Erro ao atualizar nome da propriedade.';
-        throw ApiException(msg);
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw Exception('Falha na comunicação: $e');
-    }
+      ),
+      aoSucesso: (_) => true,
+      erroMsg: 'Erro ao atualizar nome da propriedade.',
+      acao: 'atualizar nome da propriedade',
+    );
   }
 
-  Future<bool> atualizarTamanho(int id, Tamanho tamanho) async {
-    try {
-      final response = await http.patch(
-        Uri.parse('$url/$id/tamanho'),
+  Future<bool> atualizarTamanho(int id, Tamanho tamanho) {
+    return executarRequisicao(
+      enviar: () => http.patch(
+        rota('$id/tamanho'),
         headers: defaultHeaders,
         body: jsonEncode({'tamanho': tamanho.toJson()}),
-      );
-
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        return true;
-      } else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg = jsonResponse['error'] ?? 
-                    jsonResponse['mensagem'] ?? 
-                    'Erro ao atualizar tamanho da propriedade.';
-        throw ApiException(msg);
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw Exception('Falha na comunicação: $e');
-    }
+      ),
+      aoSucesso: (_) => true,
+      erroMsg: 'Erro ao atualizar tamanho da propriedade.',
+      acao: 'atualizar tamanho da propriedade',
+    );
   }
 
-  Future<bool> atualizarEndereco(int id, Endereco endereco) async {
-    try {
-      final response = await http.patch(
-        Uri.parse('$url/$id/endereco'),
+  Future<bool> atualizarEndereco(int id, Endereco endereco) {
+    return executarRequisicao(
+      enviar: () => http.patch(
+        rota('$id/endereco'),
         headers: defaultHeaders,
         body: jsonEncode({'endereco': endereco.toJson()}),
-      );
+      ),
+      aoSucesso: (_) => true,
+      erroMsg: 'Erro ao atualizar endereço da propriedade.',
+      acao: 'atualizar endereço da propriedade',
+    );
+  }
 
-      if (response.statusCode == 200 || response.statusCode == 204) {
-        return true;
-      } else {
-        final jsonResponse = jsonDecode(utf8.decode(response.bodyBytes));
-        final msg = jsonResponse['error'] ?? 
-                    jsonResponse['mensagem'] ?? 
-                    'Erro ao atualizar endereço da propriedade.';
-        throw ApiException(msg);
-      }
-    } on ApiException {
-      rethrow;
-    } catch (e) {
-      throw Exception('Falha na comunicação: $e');
-    }
+  Future<bool> excluir(int id) {
+    return executarRequisicao(
+      enviar: () => http.delete(rota('$id'), headers: defaultHeaders),
+      aoSucesso: (_) => true,
+      errosPorStatus: {
+        403: 'Propriedade possui talhões e/ou safras cadastradas nela e não pode ser excluida.',
+      },
+      erroMsg: 'Erro ao excluir propriedade.',
+      acao: 'excluir propriedade',
+    );
   }
 }

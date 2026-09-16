@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
@@ -6,12 +7,17 @@ import 'package:frond_end_cafeicultura_mobile/model/proprietario.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/proprietario/atualizar_dados_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/viewmodels/session_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/uf_dropdown.dart';
 import 'package:provider/provider.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_endereco.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_contato.dart';
 
 class AtualizarDadosView extends StatefulWidget {
   const AtualizarDadosView({super.key});
@@ -26,23 +32,16 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
   bool _podeSair = false;
   final _formKey = GlobalKey<FormState>();
   Proprietario? _dadosOriginais;
-  // ==========================================
-  // CONTROLADORES: Dados do Proprietário/Pessoa
-  // ==========================================
   final _nomeController = TextEditingController();
   final _emailController = TextEditingController();
   final _telefoneController = TextEditingController();
   final _cpfController = TextEditingController();
   final _cnpjController = TextEditingController();
   final _inscricaoEstadualController = TextEditingController();
-  // ==========================================
-  // CONTROLADORES E ESTADO: Dados do Endereço
-  // ==========================================
   final _cepController = TextEditingController();
   final _logradouroController = TextEditingController();
   final _bairroController = TextEditingController();
   final _cidadeController = TextEditingController();
-  final _paisController = TextEditingController();
 
   UF? _ufSelecionada;
 
@@ -55,7 +54,6 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
     _logradouroController.dispose();
     _bairroController.dispose();
     _cidadeController.dispose();
-    _paisController.dispose();
     super.dispose();
   }
 
@@ -65,48 +63,16 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
     _carregarDados();
   }
 
-  Future<bool> _mostrarDialogoConfirmacao() async {
-    return await showDialog<bool>(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              title: const Text('Sair sem salvar?'),
-              content: const Text(
-                'Se você voltar agora, todas as alterações não salvas serão perdidas. Deseja mesmo sair?',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text(
-                    'NÃO',
-                    style: TextStyle(color: Colors.grey),
-                  ),
-                ),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(true),
-                  child: const Text(
-                    'SIM, SAIR',
-                    style: TextStyle(color: Colors.red),
-                  ),
-                ),
-              ],
-            );
-          },
-        ) ??
-        false;
+  Future<bool> _mostrarDialogoConfirmacao() {
+    return confirmarDescarte(
+      context,
+      titulo: 'Sair sem salvar?',
+      mensagem:
+          'Se você voltar agora, todas as alterações não salvas serão perdidas. Deseja mesmo sair?',
+    );
   }
-
   void atualizar() async {
-    if (_formKey.currentState!.validate()) {
-      if (_ufSelecionada == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Por favor, selecione um Estado (UF).'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
+    if (validarRevelandoCampoInvalido(_formKey)) {
       FocusScope.of(context).unfocus();
 
       final session = Provider.of<SessionViewModel>(context, listen: false);
@@ -118,15 +84,9 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
       }
 
       if (_dadosOriginais == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Aguarde o carregamento dos dados antes de salvar.'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        mostrarAviso(context, 'Aguarde o carregamento dos dados antes de salvar.');
         return;
       }
-      print("Entrou");
       final sucesso = await _viewModel.atualizar(
         dadosOriginais: _dadosOriginais!,
         idProprietario: idUsuario,
@@ -139,32 +99,19 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
         logradouro: _logradouroController.text,
         bairro: _bairroController.text,
         cidade: _cidadeController.text,
-        uf: _ufSelecionada!,
-        inscEstadualDigitada: _isPessoaFisica 
-            ? null 
+        uf: _ufSelecionada,
+        inscEstadualDigitada: _isPessoaFisica
+            ? null
             : _inscricaoEstadualController.text,
-        cnpjDigitado: _isPessoaFisica 
-            ? null 
+        cnpjDigitado: _isPessoaFisica
+            ? null
             : _cnpjController.text,
       );
-    print("Entrou2");
       if (sucesso && mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Dados atualizados com sucesso!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        mostrarSucesso(context, 'Dados atualizados com sucesso!');
         Navigator.of(context).pop();
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _viewModel.mensagemErro ?? 'Erro desconhecido ao atualizar.',
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
+        mostrarErro(context, _viewModel.mensagemErro ?? 'Erro desconhecido ao atualizar.');
       }
     }
   }
@@ -211,23 +158,71 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
         }
       });
     } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _viewModel.mensagemErro ?? 'Erro desconhecido ao buscar dados.',
-          ),
-          backgroundColor: Colors.red,
-        ),
-      );
+      mostrarErro(context, _viewModel.mensagemErro ?? 'Erro desconhecido ao buscar dados.');
     }
+  }
+
+  bool get _enderecoPreenchido =>
+      _cepController.text.trim().isNotEmpty ||
+      _logradouroController.text.trim().isNotEmpty ||
+      _bairroController.text.trim().isNotEmpty ||
+      _cidadeController.text.trim().isNotEmpty ||
+      _ufSelecionada != null;
+
+  bool _houveAlteracao() {
+    if (_dadosOriginais == null) return false;
+
+    if (_emailController.text.trim() != _dadosOriginais!.email.endereco) return true;
+
+    final telMasked = AppMasks.telefone.maskText(_dadosOriginais!.telefone.numero);
+    if (_telefoneController.text.trim() != telMasked) return true;
+
+    if (_isPessoaFisica) {
+      final pf = _dadosOriginais!.pessoa as PessoaFisica;
+      if (_nomeController.text.trim() != pf.nome) return true;
+    } else {
+      final pj = _dadosOriginais!.pessoa as PessoaJuridica;
+      if (_nomeController.text.trim() != pj.razaoSocial) return true;
+      if (_inscricaoEstadualController.text.trim() != (pj.inscricaoEstadual ?? '')) return true;
+    }
+
+    final endereco = _dadosOriginais!.pessoa.endereco;
+    if (endereco == null) {
+      if (_cepController.text.isNotEmpty ||
+          _logradouroController.text.isNotEmpty ||
+          _bairroController.text.isNotEmpty ||
+          _cidadeController.text.isNotEmpty ||
+          _ufSelecionada != null) {
+        return true;
+      }
+    } else {
+      final cepMasked = AppMasks.cep.maskText(endereco.cep.numero);
+      if (_cepController.text.trim() != cepMasked) return true;
+      if (_logradouroController.text.trim() != endereco.logradouro) return true;
+      if (_bairroController.text.trim() != endereco.bairro) return true;
+      if (_cidadeController.text.trim() != endereco.cidade) return true;
+      if (_ufSelecionada != endereco.uf) return true;
+    }
+
+    return false;
   }
 
   @override
   Widget build(BuildContext context) {
-    return PopScope(
+return PopScope(
       canPop: _podeSair,
       onPopInvoked: (didPop) async {
         if (didPop) return;
+
+        if (!_houveAlteracao()) {
+          setState(() {
+            _podeSair = true;
+          });
+          if (mounted) {
+            Navigator.of(context).pop();
+          }
+          return;
+        }
 
         final querSair = await _mostrarDialogoConfirmacao();
 
@@ -241,20 +236,14 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
         }
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFFF5F5F5),
-        appBar: AppBar(
-          title: const Text('Meus Dados'),
-          backgroundColor: const Color(0xFF8FA67E),
-          foregroundColor: Colors.white,
-          elevation: 0,
-        ),
+        backgroundColor: AppCores.fundo,
+        appBar: const AppBarPadrao(titulo: 'Meus Dados'),
         body: ListenableBuilder(
           listenable: _viewModel,
           builder: (context, child) {
             if (_viewModel.isLoading && _nomeController.text.isEmpty) {
               return const Center(
                 child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF8FA67E)),
                 ),
               );
             }
@@ -272,15 +261,12 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
                     const Center(child: LogoCircular(size: 100.0)),
                     const SizedBox(height: 24),
 
-                    // ==============================
-                    // SEÇÃO 1: DADOS PESSOAIS
-                    // ==============================
                     const Text(
                       'Dados Pessoais',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: AppCores.textoPrimario,
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -289,7 +275,7 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
                       label: _isPessoaFisica ? 'Nome' : 'Razão Social',
                       controller: _nomeController,
                       validator: _isPessoaFisica
-                          ? Validator.validarNome
+                          ? Validator.validarNomePessoaFisica
                           : Validator.validarRazaoSocial,
                     ),
                     const SizedBox(height: 16),
@@ -303,8 +289,6 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
                       inputFormatters: [
                         _isPessoaFisica ? AppMasks.cpf : AppMasks.cnpj,
                       ],
-                      // Dica visual opcional: você pode passar uma cor de fundo cinza clara
-                      // para o CustomTextField quando for readOnly para deixar óbvio para o usuário.
                     ),
 
                     if (!_isPessoaFisica) ...[
@@ -317,111 +301,41 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
                     ],
 
                     const SizedBox(height: 16),
-                    CustomTextField(
-                      label: 'E-mail',
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: Validator.validarEmail,
-                    ),
-                    const SizedBox(height: 16),
-
-                    CustomTextField(
-                      label: 'Telefone',
-                      controller: _telefoneController,
-                      keyboardType: TextInputType.phone,
-                      inputFormatters: [AppMasks.telefone],
-                      validator: Validator.validarTelefone,
+                    BlocoContato(
+                      controllerEmail: _emailController,
+                      controllerTelefone: _telefoneController,
                     ),
 
                     const SizedBox(height: 16),
                     const Divider(
                       height: 32,
                       thickness: 1,
-                      color: Colors.black12,
+                      color: AppCores.borda,
                     ),
 
-                    // ==============================
-                    // SEÇÃO 2: ENDEREÇO
-                    // ==============================
                     const Text(
                       'Endereço',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: AppCores.textoPrimario,
                       ),
                     ),
                     const SizedBox(height: 16),
 
-                    CustomTextField(
-                      label: 'CEP',
-                      controller: _cepController,
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [AppMasks.cep],
-                      validator: Validator.validarCEP,
-                    ),
-                    const SizedBox(height: 16),
-
-                    CustomTextField(
-                      label: 'Logradouro (Rua, Avenida, etc.)',
-                      controller: _logradouroController,
-                      validator: (value) => value == null || value.isEmpty
-                          ? 'O logradouro é obrigatório'
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-
-                    CustomTextField(
-                      label: 'Bairro',
-                      controller: _bairroController,
-                      validator: (value) => value == null || value.isEmpty
-                          ? 'O bairro é obrigatório'
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-
-                    CustomTextField(
-                      label: 'Cidade',
-                      controller: _cidadeController,
-                      validator: (value) => value == null || value.isEmpty
-                          ? 'A cidade é obrigatória'
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          flex: 1,
-                          child: UfDropdown(
-                            value: _ufSelecionada,
-                            onChanged: (novoValor) {
-                              setState(() {
-                                _ufSelecionada = novoValor;
-                              });
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          flex: 2,
-                          child: CustomTextField(
-                            label: 'País',
-                            controller: _paisController,
-                            validator: (value) => value == null || value.isEmpty
-                                ? 'Obrigatório'
-                                : null,
-                          ),
-                        ),
-                      ],
+                    BlocoEndereco(
+                      controllerCep: _cepController,
+                      controllerLogradouro: _logradouroController,
+                      controllerBairro: _bairroController,
+                      controllerCidade: _cidadeController,
+                      uf: _ufSelecionada,
+                      exigirPreenchimento: () => _enderecoPreenchido,
+                      aoSelecionarUf: (novo) =>
+                          setState(() => _ufSelecionada = novo),
                     ),
 
                     const SizedBox(height: 40),
 
-                    // ==============================
-                    // BOTÃO
-                    // ==============================
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -429,7 +343,7 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
                         text: _viewModel.isLoading
                             ? 'AGUARDE...'
                             : 'SALVAR ALTERAÇÕES',
-                        backgroundColor: const Color(0xFF8FA67E),
+                        backgroundColor: AppCores.acao,
                         onPressed: _viewModel.isLoading ? null : atualizar,
                       ),
                     ),
