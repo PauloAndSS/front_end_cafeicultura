@@ -80,7 +80,7 @@ class AtualizarDadosViewModel extends ChangeNotifier
             requisicoes.add(_proprietarioService.atualizarInscricaoEstadual(
               id: idProprietario,
               inscEstadual: inscEstadualDigitada.trim(),
-              cnpj: cnpjVo.numero,
+              cnpj: cnpjVo.formatado,
             ));
           }
         }

@@ -2,8 +2,8 @@ import 'package:frond_end_cafeicultura_mobile/model/auth/usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
 
-class IdentificacaoLogin { 
-  final String tipoEntrada; 
+class IdentificacaoLogin {
+  final String tipoEntrada;
   final String valor;
 
   IdentificacaoLogin._({required this.valor, required this.tipoEntrada});
@@ -23,17 +23,17 @@ class IdentificacaoLogin {
     final apenasNumeros = textoLimpo.replaceAll(RegExp(r'[^0-9]'), '');
 
     if (apenasNumeros.length <= 11) {
-      CPF.criar(textoLimpo);
-      return IdentificacaoLogin._(valor: apenasNumeros, tipoEntrada: "cpf"); 
-    } else {
-      CNPJ.criar(textoLimpo);
-      return IdentificacaoLogin._(valor: apenasNumeros, tipoEntrada: "cnpj"); 
+      final cpf = CPF.criar(textoLimpo);
+      return IdentificacaoLogin._(valor: cpf.formatado, tipoEntrada: "cpf");
     }
+
+    final cnpj = CNPJ.criar(textoLimpo);
+    return IdentificacaoLogin._(valor: cnpj.formatado, tipoEntrada: "cnpj");
   }
 }
 
 class Credencial {
-  final IdentificacaoLogin identificacao; 
+  final IdentificacaoLogin identificacao;
   final String valorEntrada;
   final String tipoEntrada;
   final String senha;
@@ -41,7 +41,7 @@ class Credencial {
   Credencial({
     required this.identificacao,
     required this.senha,
-  }) : valorEntrada = identificacao.valor, 
+  }) : valorEntrada = identificacao.valor,
        tipoEntrada = identificacao.tipoEntrada {
     if (senha.trim().isEmpty) {
       throw ArgumentError('A senha é obrigatória.');

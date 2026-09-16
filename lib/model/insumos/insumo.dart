@@ -7,8 +7,8 @@ enum MedidaInsumo {
   miligrama('mg', 'Miligrama (mg)'),
   litro('l', 'Litro (l)'),
   mililitro('ml', 'Mililitro (ml)'),
-  metroCubico('m3', 'Metro cúbico (m³)');
-
+  metroCubico('m3', 'Metro cúbico (m³)'),
+  tonelada('t', 'Tonelada (t)');
   const MedidaInsumo(this.sigla, this.rotulo);
 
   final String sigla;

@@ -9,6 +9,7 @@ import 'package:frond_end_cafeicultura_mobile/views/proprietario/atualizar_dados
 import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({super.key});
@@ -67,6 +68,23 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   void _irParaInicio(BuildContext context) {
     context.read<NavegacaoViewModel>().irParaInicio();
     Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
+  Future<void> _encerrarSessao(
+    BuildContext context,
+    SessionViewModel session,
+  ) async {
+    final confirmou = await confirmarAcao(
+      context,
+      titulo: 'Encerrar sessão?',
+      mensagem: 'Você precisará informar login e senha para entrar novamente.',
+      rotuloConfirmar: 'Encerrar',
+    );
+
+    if (!confirmou || !context.mounted) return;
+
+    Navigator.of(context).popUntil((route) => route.isFirst);
+    await session.logout();
   }
 
   @override
@@ -245,8 +263,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
             if (escolha == 'pessoas') {
               _navegarSubstituindo(context, const PessoasView());
             } else if (escolha == 'sair') {
-              Navigator.of(context).popUntil((route) => route.isFirst);
-              await session.logout();
+              await _encerrarSessao(context, session);
             }
           },
           itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[

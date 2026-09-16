@@ -8,7 +8,9 @@ enum FormaPagamento {
   cartaoDebito('Cartão de Débito', 'Cartão de débito'),
   cheque('Cheque', 'Cheque'),
   pix('Pix', 'Pix'),
-  sacas('Sacas', 'Sacas');
+  sacas('Sacas', 'Sacas'),
+  boleto('Boleto', 'Boleto'),
+  boletoParcelado('Boleto Parcelado', 'Boleto parcelado');
 
   const FormaPagamento(this.codigoApi, this.rotulo);
 

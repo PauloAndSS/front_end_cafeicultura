@@ -14,6 +14,7 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dar
 import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_data.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_de_data.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_suspenso.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
@@ -27,8 +28,6 @@ class CadastrarTalhaoView extends StatefulWidget {
 
 class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
   final _formKey = GlobalKey<FormState>();
-
-  final _chaveVariedades = GlobalKey();
 
   final _nomeController = TextEditingController();
   final _tamanhoController = TextEditingController();
@@ -79,11 +78,6 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
     if (validarRevelandoCampoInvalido(_formKey)) {
       if (_dataInicio == null) {
         mostrarAviso(context, 'Selecione a data de início');
-        return;
-      }
-      if (_variedadesSelecionadas.isEmpty) {
-        revelarCampo(_chaveVariedades.currentContext);
-        mostrarAviso(context, 'Selecione pelo menos uma variedade');
         return;
       }
 
@@ -137,6 +131,83 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                   'Erro desconhecido ao cadastrar talhão.');
       }
     }
+  }
+
+  List<Variedade> get _variedadesDaEspecie {
+    final especieTalhao = _especieSelecionada?.toLowerCase().trim();
+    if (especieTalhao == null) return const [];
+
+    return _viewModel.variedades.where((variedade) {
+      final especieVar = variedade.especie.toLowerCase().trim();
+      return especieVar == especieTalhao || especieVar == 'mista';
+    }).toList();
+  }
+
+  Widget _construirVariedades(BuildContext context) {
+    if (_viewModel.isLoadingVariedades) {
+      return const Center(
+        child: Padding(
+          padding: EdgeInsets.all(12.0),
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+    if (_especieSelecionada == null) {
+      return _caixaDeDica(
+        context,
+        'Escolha a espécie para ver as variedades disponíveis.',
+      );
+    }
+
+    final variedades = _variedadesDaEspecie;
+    if (variedades.isEmpty) {
+      return _caixaDeDica(
+        context,
+        'Nenhuma variedade disponível para esta espécie.',
+      );
+    }
+
+    return Wrap(
+      spacing: 8.0,
+      runSpacing: 4.0,
+      children: variedades.map(_construirChip).toList(),
+    );
+  }
+
+  Widget _caixaDeDica(BuildContext context, String texto) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppCores.fundo,
+        borderRadius: BorderRadius.circular(AppEstilos.raioCampo),
+      ),
+      child: dicaDeSeletor(context, texto),
+    );
+  }
+
+  Widget _construirChip(Variedade variedade) {
+    final isSelected = _variedadesSelecionadas.contains(variedade);
+
+    return FilterChip(
+      label: Text(
+        variedade.descricao,
+        style: TextStyle(
+          color: isSelected ? AppCores.sobreAcao : AppCores.textoPrimario,
+        ),
+      ),
+      selected: isSelected,
+      selectedColor: AppCores.acao,
+      onSelected: (bool selected) {
+        setState(() {
+          if (selected) {
+            _variedadesSelecionadas.add(variedade);
+          } else {
+            _variedadesSelecionadas.remove(variedade);
+          }
+        });
+      },
+    );
   }
 
   @override
@@ -231,84 +302,9 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                     ),
                     const SizedBox(height: 16),
 
-                    KeyedSubtree(
-                      key: _chaveVariedades,
-                      child: const Text(
-                        'Variedades',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppCores.acao,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+                    rotuloDeCampo(context, 'Variedades', opcional: true),
 
-                    _viewModel.isLoadingVariedades
-                        ? const Center(
-                            child: Padding(
-                              padding: EdgeInsets.all(12.0),
-                              child: CircularProgressIndicator(),
-                            ),
-                          )
-                        : _especieSelecionada == null
-                        ? Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppCores.fundo,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Text(
-                              'Selecione a espécie primeiro.',
-                              style: TextStyle(color: AppCores.textoSecundario),
-                            ),
-                          )
-                        : Wrap(
-                            spacing: 8.0,
-                            runSpacing: 4.0,
-                            children: _viewModel.variedades
-                                .where((variedade) {
-                                  final especieTalhao = _especieSelecionada!
-                                      .toLowerCase()
-                                      .trim();
-                                  final especieVar = variedade.especie
-                                      .toLowerCase()
-                                      .trim();
-
-                                  return especieVar == especieTalhao ||
-                                      especieVar == 'mista';
-                                })
-                                .map((variedade) {
-                                  final isSelected = _variedadesSelecionadas
-                                      .contains(variedade);
-                                  return FilterChip(
-                                    label: Text(
-                                      variedade.descricao,
-                                      style: TextStyle(
-                                        color: isSelected
-                                            ? AppCores.sobreAcao
-                                            : AppCores.textoPrimario,
-                                      ),
-                                    ),
-                                    selected: isSelected,
-                                    selectedColor: AppCores.acao,
-                                    onSelected: (bool selected) {
-                                      setState(() {
-                                        if (selected) {
-                                          _variedadesSelecionadas.add(
-                                            variedade,
-                                          );
-                                        } else {
-                                          _variedadesSelecionadas.remove(
-                                            variedade,
-                                          );
-                                        }
-                                      });
-                                    },
-                                  );
-                                })
-                                .toList(),
-                          ),
+                    _construirVariedades(context),
 
                     const SizedBox(height: 32),
 
