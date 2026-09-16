@@ -780,9 +780,9 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
               ),
               if (_dataFim != null) ...[
                 const CaixaAvisoAtencao(
-                  mensagem: 'Informar a data de término finaliza a atividade: '
-                      'depois de salva, ela não poderá mais ser alterada nem '
-                      'excluída — apenas visualizada.',
+                  mensagem: 'Informe a data de término SOMENTE após a finalização '
+                      'da atividade. Depois de salva, ela não poderá mais ser '
+                      'alterada ou excluída, apenas visualizada.',
                 ),
                 const SizedBox(height: 8),
               ],
