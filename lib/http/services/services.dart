@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:frond_end_cafeicultura_mobile/http/ambiente.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -10,15 +11,13 @@ abstract class BaseService {
     required bool isWeb,
     required TargetPlatform platform,
   }) {
-    if (isWeb) {
-      return 'https://api.sysgrano.app/api/v1';
+    if (Ambiente.usaProducao) return Ambiente.urlProducao;
+
+    if (!isWeb && platform == TargetPlatform.android) {
+      return Ambiente.urlLocalEmulador;
     }
 
-    if (platform == TargetPlatform.android) {
-      return 'https://api.sysgrano.app/api/v1';
-    }
-
-    return 'https://api.sysgrano.app/api/v1';
+    return Ambiente.urlLocal;
   }
 
   String get baseUrl => resolveBaseUrl(

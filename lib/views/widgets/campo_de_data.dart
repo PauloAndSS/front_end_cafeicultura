@@ -34,7 +34,7 @@ class CampoDeData extends StatelessWidget {
           label: label,
           controller: controller,
           hintText: hintText,
-          readOnly: true,
+          abreSeletor: true,
           opcional: opcional,
           validator: obrigatorio ? Validator.obrigatorio : null,
         ),

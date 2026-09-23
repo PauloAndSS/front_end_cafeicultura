@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:frond_end_cafeicultura_mobile/http/services/eventos/services_evento_agricola_base.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:http/http.dart' as http;
@@ -28,13 +30,27 @@ class ServicesTratoCultural extends ServicesEventoAgricolaBase<TratoCultural> {
       acao: 'buscar os tipos de $rotulo',
     );
   }
-  Future<bool> alterarInsumos(int idTrato, List<InsumoUtilizado> insumos) {
+
+  Future<bool> inserirInsumos(int idTrato, List<InsumoUtilizado> insumos) {
     return alterar(
       id: idTrato,
       subRota: 'insumos',
       corpo: {'insumos': insumos.map((insumo) => insumo.toJson()).toList()},
-      erroMsg: 'Erro ao alterar os insumos do $rotulo.',
-      acao: 'alterar os insumos',
+      erroMsg: 'Erro ao inserir os insumos do $rotulo.',
+      acao: 'inserir os insumos',
+    );
+  }
+
+  Future<bool> removerInsumos(int idTrato, List<int> idsInsumos) {
+    return executarRequisicao(
+      enviar: () => http.delete(
+        rota('$idTrato/insumos'),
+        headers: defaultHeaders,
+        body: jsonEncode({'idInsumos': idsInsumos}),
+      ),
+      aoSucesso: (_) => true,
+      erroMsg: 'Erro ao remover os insumos do $rotulo.',
+      acao: 'remover os insumos',
     );
   }
 }

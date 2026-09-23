@@ -47,13 +47,49 @@ class DetalhesTratoCulturalViewModel
     );
   }
 
-  Future<bool> alterarInsumos(List<InsumoUtilizado> escolhidos) {
-    return executarEdicao(
-      chamada: () => _tratoService.alterarInsumos(atividade.id!, escolhidos),
-      aplicar: () {
-        atividade = atividade.copyWith(insumosUtilizados: escolhidos);
-        marcarInsumosDesatualizados();
-      },
+  Future<bool> removerInsumo(InsumoUtilizado insumo) => _removerInsumos([insumo]);
+
+  Future<bool> alterarInsumos(List<InsumoUtilizado> escolhidos) async {
+    final diferenca = DiferencaDeInsumos.entre(
+      atuais: trato.insumosUtilizados,
+      escolhidos: escolhidos,
     );
+
+    if (diferenca.semMudancas) return true;
+
+    if (diferenca.removidos.isNotEmpty) {
+      final removeu = await _removerInsumos(diferenca.removidos);
+      if (!removeu) return false;
+    }
+
+    if (diferenca.inseridos.isEmpty) return true;
+
+    return _inserirInsumos(diferenca.inseridos);
+  }
+
+  Future<bool> _removerInsumos(List<InsumoUtilizado> removidos) {
+    final ids = removidos.map((insumo) => insumo.idInsumo).toSet();
+
+    return executarEdicao(
+      chamada: () => _tratoService.removerInsumos(atividade.id!, ids.toList()),
+      aplicar: () => _atualizarInsumos(
+        trato.insumosUtilizados
+            .where((atual) => !ids.contains(atual.idInsumo))
+            .toList(),
+      ),
+    );
+  }
+
+  Future<bool> _inserirInsumos(List<InsumoUtilizado> inseridos) {
+    return executarEdicao(
+      chamada: () => _tratoService.inserirInsumos(atividade.id!, inseridos),
+      aplicar: () =>
+          _atualizarInsumos([...trato.insumosUtilizados, ...inseridos]),
+    );
+  }
+
+  void _atualizarInsumos(List<InsumoUtilizado> insumos) {
+    atividade = atividade.copyWith(insumosUtilizados: insumos);
+    marcarInsumosDesatualizados();
   }
 }

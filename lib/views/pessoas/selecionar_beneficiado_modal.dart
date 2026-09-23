@@ -152,6 +152,7 @@ class _SelecionarBeneficiadoSheetState
         papelPessoa.pessoa,
         legenda: papelPessoa.pessoa.documentoFormatado,
       ),
+      aoCadastrar: (criado) => Navigator.of(context).pop(criado.pessoa),
     );
   }
 

@@ -18,6 +18,8 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.da
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
+import 'package:frond_end_cafeicultura_mobile/views/talhao/widgets/selecionar_variedades_modal.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_multiplo.dart';
 
 class CadastrarTalhaoView extends StatefulWidget {
   const CadastrarTalhaoView({super.key});
@@ -167,11 +169,35 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
       );
     }
 
-    return Wrap(
-      spacing: 8.0,
-      runSpacing: 4.0,
-      children: variedades.map(_construirChip).toList(),
+    return SeletorMultiplo<Variedade>(
+      icone: Icons.category_outlined,
+      rotuloVazio: 'Selecionar variedades',
+      selecionados: _variedadesSelecionadas,
+      rotuloItem: (variedade) => variedade.descricao,
+      rotuloContagem: _variedadesSelecionadas.contagem,
+      aoAbrir: _abrirSelecaoDeVariedades,
+      aoRemover: _removerVariedade,
     );
+  }
+
+  Future<void> _abrirSelecaoDeVariedades() async {
+    final escolhidas = await mostrarSelecaoVariedades(
+      context: context,
+      variedades: _variedadesDaEspecie,
+      selecionadasAtuais: _variedadesSelecionadas,
+    );
+
+    if (escolhidas == null || !mounted) return;
+
+    setState(() {
+      _variedadesSelecionadas
+        ..clear()
+        ..addAll(escolhidas);
+    });
+  }
+
+  void _removerVariedade(Variedade variedade) {
+    setState(() => _variedadesSelecionadas.remove(variedade));
   }
 
   Widget _caixaDeDica(BuildContext context, String texto) {
@@ -183,30 +209,6 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
         borderRadius: BorderRadius.circular(AppEstilos.raioCampo),
       ),
       child: dicaDeSeletor(context, texto),
-    );
-  }
-
-  Widget _construirChip(Variedade variedade) {
-    final isSelected = _variedadesSelecionadas.contains(variedade);
-
-    return FilterChip(
-      label: Text(
-        variedade.descricao,
-        style: TextStyle(
-          color: isSelected ? AppCores.sobreAcao : AppCores.textoPrimario,
-        ),
-      ),
-      selected: isSelected,
-      selectedColor: AppCores.acao,
-      onSelected: (bool selected) {
-        setState(() {
-          if (selected) {
-            _variedadesSelecionadas.add(variedade);
-          } else {
-            _variedadesSelecionadas.remove(variedade);
-          }
-        });
-      },
     );
   }
 

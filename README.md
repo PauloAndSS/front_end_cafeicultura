@@ -39,17 +39,19 @@ O projeto é separado em camadas para garantir o desacoplamento entre a interfac
    git clone [https://github.com/heitorPoleze/frond_end_cafeicultura_mobile.git](https://github.com/heitorPoleze/frond_end_cafeicultura_mobile.git)
    cd frond_end_cafeicultura_mobile
 
-2. **Instalar as dependências:**   
+**Instalar as dependências:**   
   ```bash
    flutter pub get
   ```
 
 
-3. **Iniciar o emulador:**   
+**Iniciar o emulador:**   
 * Abra o Android Studio e inicie o seu emulador (Virtual Device). Certifique-se de que ele está online e que o VS Code o reconhece.
 
+**ATENÇÃO - Mudar o Ambiente de Desenvolvimento**
+* Para alternar entre desenvolvimento e produção, vá em /lib/http/ambiente.dart e alterne a variável ```emProducao``` entre true e false
 
-4. **Rodar a aplicação:**   
+**Rodar a aplicação:**   
   ```bash
    git checkout develop
    flutter run

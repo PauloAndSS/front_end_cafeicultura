@@ -14,7 +14,6 @@ import 'package:frond_end_cafeicultura_mobile/views/notificacoes/widgets/sentine
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/abas_padrao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/corpo_com_estado.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
@@ -271,8 +270,6 @@ class _NotificacoesViewState extends State<NotificacoesView> {
   Widget _construirAbaNaoLidas(NotificacoesViewModel viewModel) {
     final secoes = viewModel.secoesNaoLidas;
 
-    final temPendencia = viewModel.pendentesDeResposta.isNotEmpty;
-
     return RefreshIndicator(
       color: AppCores.acao,
       onRefresh: viewModel.recarregar,
@@ -289,20 +286,6 @@ class _NotificacoesViewState extends State<NotificacoesView> {
                 ),
               ]
             : [
-                CaixaAviso(
-                  icone: Icons.swipe,
-                  cor: AppCores.acao,
-                  corDoTexto: AppCores.acao,
-                  mensagem: 'Deslize um lembrete para o lado para marcá-lo '
-                      'como lido.',
-                  itens: temPendencia
-                      ? const [
-                          'O que precisa de resposta fica aqui até você '
-                              'responder no próprio cartão.',
-                        ]
-                      : const [],
-                ),
-                const SizedBox(height: 20),
                 for (final secao in secoes)
                   ..._construirSecao(viewModel, secao, true),
               ],

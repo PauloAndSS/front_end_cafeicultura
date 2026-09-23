@@ -9,6 +9,7 @@ import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/insumos/carregar_insumos_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/acoes_fornecedor.dart';
+import 'package:frond_end_cafeicultura_mobile/views/pessoas/acoes_pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/widgets/campo_quantidade_comprada.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_suspenso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_transacao_financeira.dart';
@@ -67,11 +68,25 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
   String? _erro;
   bool _salvando = false;
 
-  late bool _semFornecedores = widget.fornecedores.isEmpty;
+  bool get _semFornecedores =>
+      widget.catalogoDePessoas.pessoasDe(TipoPapel.fornecedor).isEmpty;
 
   Future<void> _cadastrarFornecedor() async {
-    final cadastrou = await cadastrarFornecedor(context, widget.catalogoDePessoas);
-    if (cadastrou && mounted) setState(() => _semFornecedores = false);
+    final resultado = await cadastrarFornecedor(
+      context,
+      widget.catalogoDePessoas,
+    );
+
+    if (!mounted) return;
+
+    switch (resultado) {
+      case PessoaLocalizada(:final papel):
+        setState(() => _beneficiado = papel.pessoa);
+      case SalvaSemLocalizar(:final mensagem):
+        setState(() => _erro = fornecedorSalvoSemLocalizar(mensagem));
+      case CadastroCancelado():
+        break;
+    }
   }
 
   @override

@@ -93,6 +93,23 @@ Future<void> abrirNovaSafra(BuildContext context) async {
   );
 }
 
+class AvisoSemSafraAberta extends StatelessWidget {
+  const AvisoSemSafraAberta({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return CaixaAvisoAtencao(
+      mensagem:
+          'Registre a data de início do Ciclo da sua Safra para poder registrar as atividades que acontecem nela.',
+      acao: TextButton.icon(
+        onPressed: () => abrirNovaSafra(context),
+        icon: const Icon(Icons.grass, size: 18),
+        label: const Text('Cadastrar safra'),
+      ),
+    );
+  }
+}
+
 Future<void> encerrarSafraSelecionada(BuildContext context) async {
   final viewModel = context.read<SafraViewModel>();
   final safra = viewModel.safraSelecionada;

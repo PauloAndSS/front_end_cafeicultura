@@ -44,6 +44,19 @@ mixin CarregarPessoasMixin on NotificaSeVivoMixin {
         categoriasDeResponsavel.expand((papel) => _estadoDe(papel).pessoas),
       );
 
+  PapelPessoa? localizarPorDocumento(
+    TipoPapel papel,
+    String documentoFormatado,
+  ) {
+    for (final candidato in _estadoDe(papel).pessoas) {
+      if (candidato.pessoa.documentoFormatado == documentoFormatado) {
+        return candidato;
+      }
+    }
+
+    return null;
+  }
+
   Future<void> carregarCategoria(TipoPapel papel, {bool recarregar = false}) {
     final estado = _estadoDe(papel);
 

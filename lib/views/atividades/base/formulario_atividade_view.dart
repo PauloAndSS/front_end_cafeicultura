@@ -18,7 +18,7 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.d
 import 'package:frond_end_cafeicultura_mobile/views/widgets/corpo_com_estado.dart';
 import 'package:frond_end_cafeicultura_mobile/views/pessoas/selecionar_responsaveis_modal.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_data.dart';
-import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_multiplo_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_multiplo.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:provider/provider.dart';
@@ -814,7 +814,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
             const SizedBox(height: 16),
 
             rotuloDeCampo(context, 'Responsáveis', opcional: true),
-            SeletorMultiploAtividade<Pessoa>(
+            SeletorMultiplo<Pessoa>(
               icone: Icons.group_outlined,
               rotuloVazio: 'Selecionar responsáveis',
               selecionados: _responsaveisSelecionados,
@@ -835,7 +835,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
 
             const SizedBox(height: 24),
             rotuloDeCampo(context, 'Despesas', opcional: true),
-            SeletorMultiploAtividade<Despesa>(
+            SeletorMultiplo<Despesa>(
               icone: Icons.payments_outlined,
               rotuloVazio: 'Adicionar despesa',
               selecionados: _despesas,

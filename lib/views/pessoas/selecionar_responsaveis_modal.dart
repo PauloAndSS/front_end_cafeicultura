@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_pessoas_mixin.dart';
@@ -81,6 +82,15 @@ class _SelecionarResponsaveisSheetState
     });
   }
 
+  void _confirmar() {
+    Navigator.of(context).pop(_selecionados.values.toList());
+  }
+
+  void _incluirCadastrado(PapelPessoa criado) {
+    _selecionados[criado.id!] = criado.pessoa;
+    _confirmar();
+  }
+
   @override
   Widget build(BuildContext context) {
     final alturaSheet = MediaQuery.of(context).size.height * 0.85;
@@ -118,14 +128,14 @@ class _SelecionarResponsaveisSheetState
                         termoBusca: _termoBusca,
                         construirItem: (context, papelPessoa) =>
                             _construirItem(papelPessoa.id!, papelPessoa.pessoa),
+                        aoCadastrar: _incluirCadastrado,
                       ),
                   ],
                 ),
               ),
               RodapeConfirmarModal(
                 quantidadeSelecionada: _selecionados.length,
-                aoConfirmar: () =>
-                    Navigator.of(context).pop(_selecionados.values.toList()),
+                aoConfirmar: _confirmar,
               ),
             ],
           ),

@@ -63,27 +63,27 @@ class _DetalhesTratoCulturalViewState extends State<DetalhesTratoCulturalView> {
 
     if (escolhidos == null || !mounted) return;
 
-    await _aplicarInsumos(escolhidos);
-  }
-
-  Future<void> _removerInsumo(InsumoUtilizado insumo) {
-    return _aplicarInsumos(
-      _viewModel.trato.insumosUtilizados
-          .where((atual) => atual.idInsumo != insumo.idInsumo)
-          .toList(),
-    );
-  }
-
-  Future<void> _aplicarInsumos(List<InsumoUtilizado> escolhidos) async {
     final sucesso = await _viewModel.alterarInsumos(escolhidos);
 
+    _exibirDesfecho(sucesso, 'Insumos atualizados com sucesso!');
+  }
+
+  Future<void> _removerInsumo(InsumoUtilizado insumo) async {
+    final sucesso = await _viewModel.removerInsumo(insumo);
+
+    _exibirDesfecho(sucesso, 'Insumo removido.');
+  }
+
+  void _exibirDesfecho(bool sucesso, String mensagemSucesso) {
     if (!mounted) return;
 
-    if (sucesso) {
-      mostrarSucesso(context, 'Insumos atualizados com sucesso!');
-    } else {
-      mostrarErro(context, _viewModel.mensagemErro ?? 'Erro ao alterar os insumos.');
-    }
+    mostrarResultado(
+      context,
+      sucesso
+          ? mensagemSucesso
+          : _viewModel.mensagemErro ?? 'Erro ao alterar os insumos.',
+      sucesso: sucesso,
+    );
   }
 
   Widget _construirSecaoInsumos(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/pessoas_da_categoria_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/pessoas/cadastrar_pessoa_view.dart';
@@ -52,12 +53,12 @@ class _PessoasViewState extends State<PessoasView>
   Future<void> _abrirTelaCadastro() async {
     final papel = _papelAtivo;
 
-    final cadastrou = await Navigator.push<bool>(
+    final cadastrado = await Navigator.push<PapelPessoa>(
       context,
       MaterialPageRoute(builder: (_) => CadastrarPessoaView(papel: papel)),
     );
 
-    if (cadastrou == true && mounted) _viewModels[papel]!.carregar();
+    if (cadastrado != null && mounted) _viewModels[papel]!.carregar();
   }
 
   @override

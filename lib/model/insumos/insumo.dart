@@ -121,3 +121,36 @@ class InsumoUtilizado {
 extension ResumoDeInsumosUtilizados on Iterable<InsumoUtilizado> {
   String get contagem => contarItens(length, 'insumo', 'insumos');
 }
+
+class DiferencaDeInsumos {
+  final List<InsumoUtilizado> removidos;
+
+  final List<InsumoUtilizado> inseridos;
+
+  const DiferencaDeInsumos({required this.removidos, required this.inseridos});
+
+  factory DiferencaDeInsumos.entre({
+    required List<InsumoUtilizado> atuais,
+    required List<InsumoUtilizado> escolhidos,
+  }) {
+    final atuaisPorId = {for (final insumo in atuais) insumo.idInsumo: insumo};
+    final escolhidosPorId = {
+      for (final insumo in escolhidos) insumo.idInsumo: insumo,
+    };
+
+    final removidos = atuais
+        .where((atual) => _saiuOuMudou(atual, escolhidosPorId[atual.idInsumo]))
+        .toList();
+
+    final inseridos = escolhidos
+        .where((novo) => _saiuOuMudou(novo, atuaisPorId[novo.idInsumo]))
+        .toList();
+
+    return DiferencaDeInsumos(removidos: removidos, inseridos: inseridos);
+  }
+
+  bool get semMudancas => removidos.isEmpty && inseridos.isEmpty;
+
+  static bool _saiuOuMudou(InsumoUtilizado insumo, InsumoUtilizado? par) =>
+      par == null || par.qtdUsada != insumo.qtdUsada;
+}

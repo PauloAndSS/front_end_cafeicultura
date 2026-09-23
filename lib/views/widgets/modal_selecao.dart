@@ -103,6 +103,52 @@ class CampoBuscaModal extends StatelessWidget {
   }
 }
 
+class AcaoCadastrarNoPainel extends StatelessWidget {
+  final String rotulo;
+  final VoidCallback aoTocar;
+
+  const AcaoCadastrarNoPainel({
+    super.key,
+    required this.rotulo,
+    required this.aoTocar,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+      child: InkWell(
+        onTap: aoTocar,
+        borderRadius: BorderRadius.circular(8),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: AppCores.acao),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.add_circle_outline, color: AppCores.acao),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  rotulo,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppCores.acao,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class RodapeConfirmarModal extends StatelessWidget {
   final int quantidadeSelecionada;
   final VoidCallback aoConfirmar;

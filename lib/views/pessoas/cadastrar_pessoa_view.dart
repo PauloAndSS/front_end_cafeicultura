@@ -117,15 +117,15 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
 
     FocusScope.of(context).unfocus();
 
-    final sucesso = await _viewModel.cadastrarPessoa(
-      _montarPapel(_montarPessoa()),
-    );
+    final papel = _montarPapel(_montarPessoa());
+
+    final sucesso = await _viewModel.cadastrarPessoa(papel);
 
     if (!mounted) return;
 
     if (sucesso) {
       mostrarSucesso(context, '${_papel.titulo} cadastrado com sucesso!');
-      Navigator.pop(context, true);
+      Navigator.pop(context, papel);
     } else if (_viewModel.mensagemErro != null) {
       mostrarErro(context, _viewModel.mensagemErro!);
     }

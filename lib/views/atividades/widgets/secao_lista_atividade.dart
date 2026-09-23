@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_multiplo_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_multiplo.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/blocos_detalhe.dart';
 
 class SecaoListaAtividade<T> extends StatelessWidget {
@@ -55,7 +55,7 @@ class SecaoListaAtividade<T> extends StatelessWidget {
     return SecaoEditavel(
       titulo: titulo,
       opcional: opcional,
-      conteudo: SeletorMultiploAtividade<T>(
+      conteudo: SeletorMultiplo<T>(
         icone: icone,
         rotuloVazio: rotuloVazio,
         selecionados: itens,

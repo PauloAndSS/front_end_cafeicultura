@@ -3,10 +3,28 @@ import 'package:frond_end_cafeicultura_mobile/views/propriedade/cadastrar_propri
 import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 
+const _iconeSemPropriedade = Icons.holiday_village_outlined;
+
+const _mensagemSemPropriedade =
+    'Você ainda não tem uma propriedade cadastrada.\n'
+    'Cadastre a primeira para acompanhar safras, talhões e atividades.';
+
 Future<void> abrirCadastroDePropriedade(BuildContext context) {
   return Navigator.of(context).push(
     MaterialPageRoute(builder: (_) => const CadastrarPropriedadeView()),
   );
+}
+
+class _BotaoCadastrarPropriedade extends StatelessWidget {
+  const _BotaoCadastrarPropriedade();
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomButton(
+      text: 'Cadastrar propriedade',
+      onPressed: () => abrirCadastroDePropriedade(context),
+    );
+  }
 }
 
 class EstadoSemPropriedade extends StatelessWidget {
@@ -14,18 +32,23 @@ class EstadoSemPropriedade extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return EstadoVazio(
-      icone: Icons.holiday_village_outlined,
-      mensagem:
-          'Você ainda não tem uma propriedade cadastrada.\n'
-          'Cadastre a primeira para acompanhar safras, talhões e atividades.',
-      acao: SizedBox(
-        width: 280,
-        child: CustomButton(
-          text: 'Cadastrar propriedade',
-          onPressed: () => abrirCadastroDePropriedade(context),
-        ),
-      ),
+    return const EstadoVazio(
+      icone: _iconeSemPropriedade,
+      mensagem: _mensagemSemPropriedade,
+      acao: SizedBox(width: 280, child: _BotaoCadastrarPropriedade()),
+    );
+  }
+}
+
+class CartaoSemPropriedade extends StatelessWidget {
+  const CartaoSemPropriedade({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const CartaoVazio(
+      icone: _iconeSemPropriedade,
+      mensagem: _mensagemSemPropriedade,
+      acao: _BotaoCadastrarPropriedade(),
     );
   }
 }
@@ -38,7 +61,7 @@ class EstadoPropriedadeNaoSelecionada extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return EstadoVazio(
-      icone: Icons.holiday_village_outlined,
+      icone: _iconeSemPropriedade,
       mensagem: mensagem,
     );
   }

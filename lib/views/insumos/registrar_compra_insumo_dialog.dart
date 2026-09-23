@@ -11,6 +11,7 @@ import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/blocos_detalhe.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/acoes_fornecedor.dart';
+import 'package:frond_end_cafeicultura_mobile/views/pessoas/acoes_pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/bloco_transacao_financeira.dart';
 
@@ -62,11 +63,22 @@ class _RegistrarCompraDialogState extends State<_RegistrarCompraDialog> {
   String? _erro;
   bool _salvando = false;
 
-  late bool _semFornecedores = widget.fornecedores.isEmpty;
+  bool get _semFornecedores =>
+      widget.viewModel.pessoasDe(TipoPapel.fornecedor).isEmpty;
 
   Future<void> _cadastrarFornecedor() async {
-    final cadastrou = await cadastrarFornecedor(context, widget.viewModel);
-    if (cadastrou && mounted) setState(() => _semFornecedores = false);
+    final resultado = await cadastrarFornecedor(context, widget.viewModel);
+
+    if (!mounted) return;
+
+    switch (resultado) {
+      case PessoaLocalizada(:final papel):
+        setState(() => _beneficiado = papel.pessoa);
+      case SalvaSemLocalizar(:final mensagem):
+        setState(() => _erro = fornecedorSalvoSemLocalizar(mensagem));
+      case CadastroCancelado():
+        break;
+    }
   }
 
   @override

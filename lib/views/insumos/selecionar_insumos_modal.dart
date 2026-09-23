@@ -191,36 +191,9 @@ class _SelecionarInsumosSheetState extends State<_SelecionarInsumosSheet> {
   }
 
   Widget _construirAcaoCadastrar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
-      child: InkWell(
-        onTap: _abrirCadastroInsumo,
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppCores.acao),
-          ),
-          child: const Row(
-            children: [
-              Icon(Icons.add_circle_outline, color: AppCores.acao),
-              SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  'Cadastrar novo insumo',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppCores.acao,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
+    return AcaoCadastrarNoPainel(
+      rotulo: 'Cadastrar novo insumo',
+      aoTocar: _abrirCadastroInsumo,
     );
   }
 

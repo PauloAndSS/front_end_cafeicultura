@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/retorno_a_secao.dart';
 import 'package:provider/provider.dart';
@@ -28,6 +29,12 @@ void main() async {
 
   await initializeDateFormatting('pt_BR', null);
   await dotenv.load();
+
+  if (kDebugMode) {
+    debugPrint(
+      '[API] base: ${BaseService.resolveBaseUrl(isWeb: kIsWeb, platform: defaultTargetPlatform)}',
+    );
+  }
 
   final statusDeConexao = StatusDeConexao();
   BaseService.aoPerderConexao = statusDeConexao.registrarFalha;

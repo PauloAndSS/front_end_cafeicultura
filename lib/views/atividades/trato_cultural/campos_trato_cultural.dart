@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/trato_cultural/cadastrar_trato_cultural_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
-import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/seletor_multiplo_atividade.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_multiplo.dart';
 import 'package:frond_end_cafeicultura_mobile/views/insumos/selecionar_insumos_modal.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_suspenso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
@@ -36,7 +36,7 @@ mixin CamposTratoCulturalMixin<T extends StatefulWidget> on State<T> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         rotuloDeCampo(context, 'Insumos utilizados', opcional: true),
-        SeletorMultiploAtividade<InsumoUtilizado>(
+        SeletorMultiplo<InsumoUtilizado>(
           icone: Icons.inventory_2_outlined,
           rotuloVazio: 'Selecionar insumos',
           selecionados: insumosSelecionados,

@@ -3,8 +3,8 @@ import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pe
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_pessoas_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/views/pessoas/acoes_pessoa.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/modal_selecao.dart';
 
 /// A lista de uma categoria dentro de um painel de seleção: carrega sob
 /// demanda e filtra pelo termo de busca do painel.
@@ -17,6 +17,7 @@ class ListaPapel extends StatefulWidget {
   final String termoBusca;
   final Widget Function(BuildContext contexto, PapelPessoa papelPessoa)
   construirItem;
+  final void Function(PapelPessoa criado) aoCadastrar;
 
   const ListaPapel({
     super.key,
@@ -24,6 +25,7 @@ class ListaPapel extends StatefulWidget {
     required this.papel,
     required this.termoBusca,
     required this.construirItem,
+    required this.aoCadastrar,
   });
 
   @override
@@ -57,6 +59,20 @@ class _ListaPapelState extends State<ListaPapel>
         .toList();
   }
 
+  Future<void> _cadastrar() async {
+    final resultado = await cadastrarPessoaDoPapel(
+      context,
+      widget.catalogo,
+      widget.papel,
+    );
+
+    if (!mounted) return;
+
+    if (resultado case PessoaLocalizada(:final papel)) {
+      widget.aoCadastrar(papel);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -71,27 +87,31 @@ class _ListaPapelState extends State<ListaPapel>
     final catalogo = widget.catalogo;
     final papel = widget.papel;
 
-    final carregados = catalogo.pessoasDe(papel);
-
     if (catalogo.isCarregando(papel)) {
       return const Center(child: CircularProgressIndicator());
     }
 
     final mensagemErro = catalogo.mensagemErroDe(papel);
 
-    if (mensagemErro != null && carregados.isEmpty) {
-      return EstadoVazio(
-        icone: Icons.error_outline,
-        mensagem: mensagemErro,
-        acao: CustomButton(
-          text: 'Tentar novamente',
-          onPressed: () => catalogo.carregarCategoria(papel, recarregar: true),
+    return Column(
+      children: [
+        AcaoCadastrarNoPainel(
+          rotulo: 'Cadastrar novo ${papel.rotulo}',
+          aoTocar: _cadastrar,
         ),
-      );
-    }
+        if (mensagemErro != null)
+          MensagemDeErro(
+            mensagem: mensagemErro,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            aoTentarNovamente: () =>
+                catalogo.carregarCategoria(papel, recarregar: true),
+          ),
+        Expanded(child: _construirLista(_filtrar(catalogo.pessoasDe(papel)))),
+      ],
+    );
+  }
 
-    final visiveis = _filtrar(carregados);
-
+  Widget _construirLista(List<PapelPessoa> visiveis) {
     if (visiveis.isEmpty) {
       final semBusca = widget.termoBusca.isEmpty;
 
@@ -100,16 +120,10 @@ class _ListaPapelState extends State<ListaPapel>
             ? Icons.person_add_alt_1_outlined
             : Icons.group_off_outlined,
         mensagem: semBusca
-            ? 'Nenhum ${papel.rotulo} cadastrado.\n'
-                  'Cadastre o primeiro para selecioná-lo aqui.'
-            : 'Nenhum ${papel.rotulo} encontrado com "${widget.termoBusca}".',
-        acao: semBusca
-            ? CustomButton(
-                text: 'Cadastrar ${papel.titulo}',
-                onPressed: () =>
-                    cadastrarPessoaDoPapel(context, catalogo, papel),
-              )
-            : null,
+            ? 'Nenhum ${widget.papel.rotulo} cadastrado.\n'
+                  'Use "Cadastrar novo" acima para selecioná-lo aqui.'
+            : 'Nenhum ${widget.papel.rotulo} encontrado com '
+                  '"${widget.termoBusca}".',
       );
     }
 

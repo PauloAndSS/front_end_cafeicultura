@@ -63,9 +63,6 @@ class NotificacoesViewModel extends ChangeNotifier
       .where((grupo) => grupo.lida && !aguardaResposta(grupo))
       .toList();
 
-  List<NotificacaoAgrupada> get pendentesDeResposta =>
-      naoLidas.where(aguardaResposta).toList();
-
   List<NotificacaoAgrupada> get naoLidasSemPendencia =>
       naoLidas.where((grupo) => !aguardaResposta(grupo)).toList();
 
@@ -344,11 +341,6 @@ class NotificacoesViewModel extends ChangeNotifier
     final comecadas = _comHorizonte(lembretes, HorizonteDaNotificacao.vencido);
 
     return [
-      if (pendentes.isNotEmpty)
-        SecaoDeNotificacoes(
-          'Precisa de resposta',
-          _ordenar(pendentes, crescente: false),
-        ),
       if (deHoje.isNotEmpty)
         SecaoDeNotificacoes(
           'Acontece hoje',
@@ -368,6 +360,11 @@ class NotificacoesViewModel extends ChangeNotifier
         SecaoDeNotificacoes(
           'Já começaram',
           _ordenar(comecadas, crescente: false),
+        ),
+      if (pendentes.isNotEmpty)
+        SecaoDeNotificacoes(
+          'Precisa de resposta',
+          _ordenar(pendentes, crescente: false),
         ),
     ];
   }

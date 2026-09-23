@@ -43,6 +43,8 @@ class SafraViewModel extends ChangeNotifier
   int? get propriedadeIdAtual => _propriedadeIdAtual;
   bool get dadosCarregados => _dadosCarregados;
 
+  bool get temSafraAberta => _safras.any((safra) => !safra.encerrada);
+
   List<Safra> safrasAbertasEm(DateTime dia) => _safras
       .where((safra) => safra.id != null)
       .where((safra) => safra.periodo?.contem(dia) ?? false)

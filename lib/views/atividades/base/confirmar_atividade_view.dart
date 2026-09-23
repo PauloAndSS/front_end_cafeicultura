@@ -287,7 +287,7 @@ class _ConfirmarAtividadeViewState<T extends EventoAgricola>
           label: rotulo,
           controller: controller,
           hintText: dica,
-          readOnly: true,
+          abreSeletor: true,
         ),
       ),
     );

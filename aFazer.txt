@@ -1,1 +1,5 @@
--> atualizar documentação -> focar em programadores novos que querem entender o código. Por onde começar? O Readme.md faz sentido para isso? Deve ser implementado algum plugin para isso?
+Todas as telas de cadastro com "selecionar [papel da pessoa]", mesmo que já haja pessoas cadastradas, devem ir para tela de cadastro desse papel, e após cadastrada, voltar ao cadastro sem perder os dados
+
+- Fazer fluxo de cadastro de pessoas dentro das telas de cadastros
+
+- Verificar... Notificações de aviso devem vir ANTES das notificações de resposta. Pode tirar o AVISO de deslizar para ler a notificação

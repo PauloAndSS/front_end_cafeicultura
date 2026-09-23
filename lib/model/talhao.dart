@@ -40,6 +40,8 @@ class Variedade {
     };
   }
 
+  bool get ehGenerica => descricao.trim().toLowerCase() == 'outras';
+
   @override
   String toString() => descricao;
 }
@@ -167,4 +169,8 @@ String get nomeExibicao {
         'variedadesCafe': variedadesCafe!.map((v) => v.toJson()).toList(),
     };
   }
+}
+
+extension ResumoDeVariedades on Iterable<Variedade> {
+  String get contagem => contarItens(length, 'variedade', 'variedades');
 }

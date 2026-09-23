@@ -95,7 +95,9 @@ class WeatherViewModel extends ChangeNotifier
 
   Future<void> _buscarPrevisaoDe(Propriedade? propriedade) async {
     if (propriedade == null || propriedade.endereco.cidade.trim().isEmpty) {
-      await _buscarPelaLocalizacaoDoAparelho();
+      await _buscarPelaLocalizacaoDoAparelho(
+        semPropriedade: propriedade == null,
+      );
       return;
     }
 
@@ -106,11 +108,13 @@ class WeatherViewModel extends ChangeNotifier
     await _carregarPara(ponto);
   }
 
-  Future<void> _buscarPelaLocalizacaoDoAparelho() async {
+  Future<void> _buscarPelaLocalizacaoDoAparelho({
+    required bool semPropriedade,
+  }) async {
     origem = OrigemDaPrevisao.aparelho;
     localidade = null;
 
-    final ponto = await _coordenadasDoAparelho();
+    final ponto = await _coordenadasDoAparelho(semPropriedade: semPropriedade);
     await _carregarPara(ponto);
   }
 
@@ -263,12 +267,20 @@ class WeatherViewModel extends ChangeNotifier
   double _media(List<double> valores) =>
       valores.reduce((a, b) => a + b) / valores.length;
 
-  Future<_Coordenadas> _coordenadasDoAparelho() async {
+  String _saidaSugerida(bool semPropriedade) => semPropriedade
+      ? 'cadastre uma propriedade com cidade'
+      : 'cadastre a cidade da propriedade';
+
+  Future<_Coordenadas> _coordenadasDoAparelho({
+    required bool semPropriedade,
+  }) async {
+    final saida = _saidaSugerida(semPropriedade);
+
     final servicoAtivo = await Geolocator.isLocationServiceEnabled();
     if (!servicoAtivo) {
       throw ApiException(
-        'A propriedade não tem cidade cadastrada e a localização do aparelho '
-        'está desligada. Ligue a localização ou cadastre a cidade.',
+        'A localização do aparelho está desligada. Ligue a localização ou '
+        '$saida.',
       );
     }
 
@@ -281,14 +293,13 @@ class WeatherViewModel extends ChangeNotifier
       permissaoDeLocalizacaoNegada = true;
       throw ApiException(
         'Sem acesso à localização. Libere a permissão nas configurações ou '
-        'cadastre a cidade da propriedade.',
+        '$saida.',
       );
     }
 
     if (permissao == LocationPermission.denied) {
       throw ApiException(
-        'Sem acesso à localização. Permita o acesso ou cadastre a cidade da '
-        'propriedade.',
+        'Sem acesso à localização. Permita o acesso ou $saida.',
       );
     }
 
@@ -307,7 +318,7 @@ class WeatherViewModel extends ChangeNotifier
       debugPrint('Localização do aparelho falhou: $e');
       throw ApiException(
         'O aparelho não conseguiu obter a localização. Tente novamente ou '
-        'cadastre a cidade da propriedade.',
+        '$saida.',
       );
     }
   }

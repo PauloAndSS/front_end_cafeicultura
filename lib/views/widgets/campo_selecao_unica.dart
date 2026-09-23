@@ -1,46 +1,88 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
-class CampoSelecaoUnica<T> extends StatelessWidget {
-  final T? valor;
+class CampoSelecaoUnica<T> extends FormField<T> {
   final IconData icone;
   final String dica;
   final String Function(T valor) rotuloDoValor;
   final Future<T?> Function() aoAbrir;
   final ValueChanged<T> aoSelecionar;
-  final FormFieldValidator<T>? validator;
   final bool habilitado;
 
-  const CampoSelecaoUnica({
+  CampoSelecaoUnica({
     super.key,
-    required this.valor,
+    required T? valor,
     required this.icone,
     required this.dica,
     required this.rotuloDoValor,
     required this.aoAbrir,
     required this.aoSelecionar,
-    this.validator,
+    super.validator,
     this.habilitado = true,
+  }) : super(
+          initialValue: valor,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          builder: (estado) => _CorpoDoCampo<T>(
+            estado: estado,
+            icone: icone,
+            dica: dica,
+            rotuloDoValor: rotuloDoValor,
+            aoTocar: habilitado ? () => _abrir(estado, aoAbrir, aoSelecionar) : null,
+          ),
+        );
+
+  static Future<void> _abrir<T>(
+    FormFieldState<T> estado,
+    Future<T?> Function() aoAbrir,
+    ValueChanged<T> aoSelecionar,
+  ) async {
+    final escolhido = await aoAbrir();
+
+    if (escolhido == null) return;
+
+    estado.didChange(escolhido);
+    aoSelecionar(escolhido);
+  }
+
+  @override
+  FormFieldState<T> createState() => _CampoSelecaoUnicaState<T>();
+}
+
+class _CampoSelecaoUnicaState<T> extends FormFieldState<T> {
+  @override
+  void didUpdateWidget(FormField<T> oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (oldWidget.initialValue != widget.initialValue) {
+      setValue(widget.initialValue);
+    }
+  }
+}
+
+class _CorpoDoCampo<T> extends StatelessWidget {
+  final FormFieldState<T> estado;
+  final IconData icone;
+  final String dica;
+  final String Function(T valor) rotuloDoValor;
+  final VoidCallback? aoTocar;
+
+  const _CorpoDoCampo({
+    required this.estado,
+    required this.icone,
+    required this.dica,
+    required this.rotuloDoValor,
+    required this.aoTocar,
   });
 
   @override
   Widget build(BuildContext context) {
-    return FormField<T>(
-      initialValue: valor,
-      validator: validator,
-      autovalidateMode: AutovalidateMode.onUserInteraction,
-      builder: _construirCampo,
-    );
-  }
-
-  Widget _construirCampo(FormFieldState<T> estado) {
     final selecionado = estado.value;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         InkWell(
-          onTap: habilitado ? () => _abrir(estado) : null,
+          onTap: aoTocar,
           borderRadius: BorderRadius.circular(8),
           child: Container(
             width: double.infinity,
@@ -61,8 +103,9 @@ class CampoSelecaoUnica<T> extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 14,
-                      color:
-                          selecionado == null ? AppCores.textoTerciario : AppCores.textoPrimario,
+                      color: selecionado == null
+                          ? AppCores.textoTerciario
+                          : AppCores.textoPrimario,
                     ),
                   ),
                 ),
@@ -83,14 +126,5 @@ class CampoSelecaoUnica<T> extends StatelessWidget {
         ],
       ],
     );
-  }
-
-  Future<void> _abrir(FormFieldState<T> estado) async {
-    final escolhido = await aoAbrir();
-
-    if (escolhido == null) return;
-
-    estado.didChange(escolhido);
-    aoSelecionar(escolhido);
   }
 }

@@ -11,6 +11,7 @@ class CustomTextField extends StatefulWidget {
   final String? hintText;
   final List<TextInputFormatter>? inputFormatters;
   final bool readOnly;
+  final bool abreSeletor;
   final bool opcional;
   final bool habilitado;
 
@@ -24,6 +25,7 @@ class CustomTextField extends StatefulWidget {
     this.keyboardType = TextInputType.text,
     this.inputFormatters,
     this.readOnly = false,
+    this.abreSeletor = false,
     this.opcional = false,
     this.habilitado = true,
   });
@@ -63,7 +65,7 @@ class _CustomTextFieldState extends State<CustomTextField> {
           keyboardType: widget.keyboardType,
           validator: widget.validator,
           autovalidateMode: AutovalidateMode.onUserInteraction,
-          readOnly: widget.readOnly,
+          readOnly: widget.readOnly || widget.abreSeletor,
           inputFormatters: widget.inputFormatters,
           decoration: InputDecoration(
             hintText: widget.hintText,

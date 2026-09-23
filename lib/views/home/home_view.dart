@@ -28,8 +28,6 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/financeiro/financeiro_m
 import 'package:frond_end_cafeicultura_mobile/viewmodels/navegacao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/reinicio_de_secao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/retorno_a_secao.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/button_widget.dart';
-import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
 import 'package:frond_end_cafeicultura_mobile/views/safra/acoes_safra.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
@@ -144,8 +142,8 @@ class _HomeViewState extends State<HomeView>
         });
       }
 
-      if (idPropriedade != safraVM.propriedadeIdAtual ||
-          !safraVM.dadosCarregados) {
+      if (_safraAindaNaoCarregadaPara(safraVM, idPropriedade) &&
+          !safraVM.isLoading) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
           safraVM.carregarDadosDaPropriedade(idPropriedade);
         });
@@ -179,7 +177,7 @@ class _HomeViewState extends State<HomeView>
               child: TabBarView(
                 controller: _abas,
                 children: [
-                  _buildVisaoGeralTab(propriedadesVM, context),
+                  _buildVisaoGeralTab(propriedadesVM),
                   _buildSafraTab(context),
                 ],
               ),
@@ -190,32 +188,26 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  Widget _buildVisaoGeralTab(
-    PropriedadesUsuarioViewModel propriedadesVM,
-    BuildContext context,
-  ) {
+  Widget _buildVisaoGeralTab(PropriedadesUsuarioViewModel propriedadesVM) {
     if (propriedadesVM.isLoading && propriedadesVM.propriedades.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (propriedadesVM.propriedades.isEmpty) {
-      return const EstadoSemPropriedade();
-    }
+    final propriedade = propriedadesVM.propriedadeSelecionada;
 
-    if (propriedadesVM.idPropriedadeSelecionada == null) {
+    if (propriedadesVM.propriedades.isNotEmpty && propriedade == null) {
       return const EstadoPropriedadeNaoSelecionada(
         mensagem: 'Selecione uma propriedade no seletor do topo da tela.',
       );
     }
 
-    final propriedadeSelecionada = propriedadesVM.propriedades.firstWhere(
-      (p) => p.id == propriedadesVM.idPropriedadeSelecionada,
-      orElse: () => propriedadesVM.propriedades.first,
-    );
+    return _construirPaginaVisaoGeral(propriedade);
+  }
 
+  Widget _construirPaginaVisaoGeral(Propriedade? propriedade) {
     return RefreshIndicator(
       color: AppCores.acao,
-      onRefresh: () => _recarregarTudo(propriedadeSelecionada),
+      onRefresh: () => _recarregarVisaoGeral(propriedade),
       child: SingleChildScrollView(
         controller: _rolagemVisaoGeral,
         physics: const AlwaysScrollableScrollPhysics(),
@@ -223,22 +215,7 @@ class _HomeViewState extends State<HomeView>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            ResumoPropriedade(propriedade: propriedadeSelecionada),
-
-            const SizedBox(height: 24),
-
-            const Text(
-              'Atividades',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppCores.acao,
-              ),
-            ),
-            const SizedBox(height: 12),
-
-            _construirSecaoAtividades(propriedadeSelecionada.id),
-
+            _construirTopoDaVisaoGeral(propriedade),
             const SizedBox(height: 24),
             ChangeNotifierProvider.value(
               value: _weatherViewModel,
@@ -256,65 +233,90 @@ class _HomeViewState extends State<HomeView>
     );
   }
 
-  Widget _construirSecaoAtividades(int? idPropriedade) {
-    return Consumer<TalhoesViewModel>(
-      builder: (context, talhoesVM, child) {
-        if (talhoesVM.isLoading && talhoesVM.talhoes.isEmpty) {
+  Widget _construirTopoDaVisaoGeral(Propriedade? propriedade) {
+    if (propriedade == null) return const CartaoSemPropriedade();
+
+    return _construirBlocoDaPropriedade(propriedade);
+  }
+
+  Widget _construirBlocoDaPropriedade(Propriedade propriedade) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ResumoPropriedade(propriedade: propriedade),
+        const SizedBox(height: 24),
+        const Text(
+          'Atividades',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppCores.acao,
+          ),
+        ),
+        const SizedBox(height: 12),
+        _construirSecaoAtividades(propriedade.id!),
+      ],
+    );
+  }
+
+  bool _safraAindaNaoCarregadaPara(SafraViewModel safraVM, int idPropriedade) {
+    return safraVM.propriedadeIdAtual != idPropriedade ||
+        !safraVM.dadosCarregados;
+  }
+
+  bool _talhoesAindaNaoCarregadosPara(
+    TalhoesViewModel talhoesVM,
+    int idPropriedade,
+  ) {
+    return talhoesVM.idPropriedadeAtual != idPropriedade ||
+        (talhoesVM.isLoading && talhoesVM.talhoes.isEmpty);
+  }
+
+  Widget _construirSecaoAtividades(int idPropriedade) {
+    return Consumer2<TalhoesViewModel, SafraViewModel>(
+      builder: (context, talhoesVM, safraVM, child) {
+        if (_talhoesAindaNaoCarregadosPara(talhoesVM, idPropriedade) ||
+            _safraAindaNaoCarregadaPara(safraVM, idPropriedade)) {
           return const Padding(
             padding: EdgeInsets.symmetric(vertical: 48),
             child: Center(child: CircularProgressIndicator()),
           );
         }
 
-        if (talhoesVM.talhoes.isEmpty) {
-          return _construirAtalhosDoPrimeiroCadastro();
+        final erro =
+            (talhoesVM.talhoes.isEmpty ? talhoesVM.mensagemErro : null) ??
+            (safraVM.safras.isEmpty ? safraVM.mensagemErro : null);
+
+        if (erro != null) {
+          return MensagemDeErro(
+            mensagem: erro,
+            aoTentarNovamente: () => _recarregarPendencias(idPropriedade),
+          );
         }
+
+        final pendencias = <Widget>[
+          if (talhoesVM.talhoes.isEmpty) const AvisoSemTalhao(),
+          if (!safraVM.temSafraAberta) const AvisoSemSafraAberta(),
+        ];
+
+        if (pendencias.isNotEmpty) return _construirPendencias(pendencias);
 
         return _construirCalendario(idPropriedade);
       },
     );
   }
 
-  Widget _construirAtalhosDoPrimeiroCadastro() {
-    final textos = Theme.of(context).textTheme;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 24, 20, 20),
-      decoration: AppEstilos.cartao(),
-      child: Column(
-        children: [
-          const Icon(Icons.eco_outlined, size: 40, color: AppCores.acao),
-          const SizedBox(height: 12),
-          Text(
-            'Nenhum talhão cadastrado nesta propriedade',
-            textAlign: TextAlign.center,
-            style: textos.titleSmall,
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Cadastre um talhão e abra uma safra para começar a lançar as '
-            'atividades no calendário.',
-            textAlign: TextAlign.center,
-            style: textos.bodyMedium?.copyWith(color: AppCores.textoSecundario),
-          ),
-          const SizedBox(height: 20),
-          CustomButton(
-            text: 'Cadastrar Novo Talhão',
-            onPressed: () => abrirCadastroDeTalhao(context),
-          ),
-          const SizedBox(height: 12),
-          CustomButton(
-            text: 'Cadastrar Safra',
-            contornado: true,
-            onPressed: _irParaSafra,
-          ),
+  Widget _construirPendencias(List<Widget> pendencias) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        for (var i = 0; i < pendencias.length; i++) ...[
+          if (i > 0) const SizedBox(height: 12),
+          pendencias[i],
         ],
-      ),
+      ],
     );
   }
-
-  void _irParaSafra() => _abas.animateTo(1);
 
   Widget _construirCalendario(int? idPropriedade) {
     return ListenableBuilder(
@@ -411,14 +413,29 @@ class _HomeViewState extends State<HomeView>
     }
   }
 
-  Future<void> _recarregarTudo(Propriedade propriedade) async {
-    final idPropriedade = propriedade.id;
-    if (idPropriedade == null) return;
-
-    await Future.wait([
-      _agendaViewModel.recarregarMesVisivel(),
-      context.read<TalhoesViewModel>().carregarTalhoes(idPropriedade),
+  Future<void> _recarregarVisaoGeral(Propriedade? propriedade) {
+    final comuns = [
       _weatherViewModel.carregarPrevisao(propriedade, forcar: true),
+      _cotacaoCafeViewModel.carregar(),
+    ];
+
+    final idPropriedade = propriedade?.id;
+    if (idPropriedade == null) return Future.wait(comuns);
+
+    return Future.wait([
+      ...comuns,
+      _agendaViewModel.recarregarMesVisivel(),
+      _recarregarPendencias(idPropriedade),
+    ]);
+  }
+
+  Future<void> _recarregarPendencias(int idPropriedade) {
+    return Future.wait([
+      context.read<TalhoesViewModel>().carregarTalhoes(idPropriedade),
+      context.read<SafraViewModel>().carregarDadosDaPropriedade(
+        idPropriedade,
+        forcarAtualizacao: true,
+      ),
     ]);
   }
 
