@@ -379,3 +379,11 @@ abstract class BaseService {
     return dados.whereType<Map<String, dynamic>>().map(fromJson).toList();
   }
 }
+
+abstract class ServiceExterno extends BaseService {
+  @override
+  String get baseUrl;
+
+  @override
+  Map<String, String> get defaultHeaders => const {'Accept': 'application/json'};
+}
