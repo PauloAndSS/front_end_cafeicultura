@@ -4,9 +4,7 @@ import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/uf_dropdown.dart';
-
-// Importe o seu serviço aqui
-// import 'package:seu_app/services/service_viacep.dart';
+import 'package:frond_end_cafeicultura_mobile/http/services/viaCEP/services_via_cep.dart';
 
 class BlocoEndereco extends StatefulWidget {
   final TextEditingController controllerCep;
@@ -40,7 +38,7 @@ class BlocoEndereco extends StatefulWidget {
 }
 
 class _BlocoEnderecoState extends State<BlocoEndereco> {
-  final ServiceVIACEP _serviceViaCep = ServiceVIACEP();
+  final ServiceViaCep _serviceViaCep = ServiceViaCep();
   bool _buscandoCep = false;
 
   bool get _exigido => widget.exigirPreenchimento?.call() ?? true;
