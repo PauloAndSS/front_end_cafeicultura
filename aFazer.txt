@@ -1,5 +1,18 @@
 Todas as telas de cadastro com "selecionar [papel da pessoa]", mesmo que já haja pessoas cadastradas, devem ir para tela de cadastro desse papel, e após cadastrada, voltar ao cadastro sem perder os dados
-
 - Fazer fluxo de cadastro de pessoas dentro das telas de cadastros
 
 - Verificar... Notificações de aviso devem vir ANTES das notificações de resposta. Pode tirar o AVISO de deslizar para ler a notificação
+
+- Usuário pode alterar data de início de Talhão e Safra. Mude o FRONTEND para permitir que seja possível editar
+
+- Ao mudar nome da pessoa, não altera e dá mensagem de sucesso. Verifique se essa mensagem de sucesso é falsa e você programou para url not found dar sucesso. Deve rodar todas as requisições para ver se outras dão falso sucesso
+
+- Widget de propriedade pode ter um botãozinho de visualizar a propriedade - Fazer após refatorar edição da propriedade: Ver DETALHES da propriedade como as atividades estão dispostas atualmente e o lápis para edição. Abaixo dos detalhes de cadastro, devem aparecer Os talhões da propriedade (Cujo widget deve ser semehante ao das pessoas nas páginas de pessoas) e as safras - que clicando no seu widget vai para a página de safra daquela selecionada
+
+- Refatoracao de ambiente.dart para fazer singleton? pesquisar sobre
+
+- na documentação, atualizar a refatoracao de ambiente.dart e inserção de chaves do .env
+
+- adicionar o APK no repositório?
+
+- Avisar de salvar cada versão do APK no drive com o nome (1.0.0; 1.0.1 etc)
