@@ -50,6 +50,8 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  # The "flutter_lints" package below contains a 
   flutter_launcher_icons: ^0.13.1
 
   # The "flutter_lints" package below contains a set of recommended lints to
@@ -68,14 +70,13 @@ flutter:
   assets:
     - .env
     - assets/images/banner_cafe.png
-    - assets/images/logo_sem_nome_4x4.png
+    - assets/images/Logo.svg
+    - assets/images/logo_sem_nome.svg
     - assets/images/icons/clima/
-flutter_icons:
-  android: true
-  ios: true
-  image_path: "assets/images/logo_4x4.png"
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/images/logo_4x4.png"
-  min_sdk_android: 21 
+  image_path: "assets/images/icone_legado.png"
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/icone_adaptativo_frente.png"
+  min_sdk_android: 21

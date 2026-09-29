@@ -2,18 +2,25 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
-const _caminhoDaLogo = 'assets/images/logo_sem_nome.svg';
+const _caminhoDaLogoComNome = 'assets/images/Logo.svg';
+const _caminhoDaLogoSemNome = 'assets/images/logo_sem_nome.svg';
 
 class LogoSysgrano extends StatelessWidget {
   final double? altura;
   final double? largura;
+  final bool comNome;
 
-  const LogoSysgrano({super.key, this.altura, this.largura});
+  const LogoSysgrano({
+    super.key,
+    this.altura,
+    this.largura,
+    this.comNome = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     return SvgPicture.asset(
-      _caminhoDaLogo,
+      comNome ? _caminhoDaLogoComNome : _caminhoDaLogoSemNome,
       height: altura,
       width: largura,
       fit: BoxFit.contain,

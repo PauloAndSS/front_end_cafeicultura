@@ -19,10 +19,10 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/status_de_conexao.dart'
 import 'package:frond_end_cafeicultura_mobile/http/ambiente.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/tela_sem_conexao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/tela_de_abertura.dart';
 
 import 'package:frond_end_cafeicultura_mobile/views/auth/first_acess.dart';
 import 'package:frond_end_cafeicultura_mobile/views/home/main_screen_view.dart';
-import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_tema.dart';
 
 void main() async {
@@ -120,12 +120,7 @@ class AuthWrapper extends StatelessWidget {
     final session = context.watch<SessionViewModel>();
 
     if (session.isInitializing) {
-      return const Scaffold(
-        backgroundColor: AppCores.fundo,
-        body: Center(
-          child: CircularProgressIndicator(color: AppCores.acao),
-        ),
-      );
+      return const TelaDeAbertura();
     }
     
     return session.isLoggedIn ? const MainScreenView() : const FirstAcess();
