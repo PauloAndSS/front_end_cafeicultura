@@ -252,9 +252,7 @@ class _NotificacoesViewState extends State<NotificacoesView> {
                       viewModel: viewModel,
                       secoes: viewModel.secoesLidas,
                       podeDispensar: false,
-                      mensagemVazia:
-                          'Nenhuma notificação lida ainda. Deslize um cartão da '
-                          'aba ao lado para marcá-lo como lido.',
+                      mensagemVazia: 'Nenhuma notificação lida ainda.',
                       iconeVazio: Icons.done_all,
                     ),
                   ],

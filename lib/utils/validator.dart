@@ -1,4 +1,5 @@
 import 'package:frond_end_cafeicultura_mobile/model/auth/usuario.dart';
+import 'package:frond_end_cafeicultura_mobile/model/eventos/evento.dart';
 import 'package:frond_end_cafeicultura_mobile/model/financeiro/transacao_financeira.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
@@ -118,7 +119,17 @@ class Validator {
 
   static final RegExp _regexNome = RegExp(r"^[a-zA-ZÀ-ÖØ-öø-ÿ' -]+$");
 
-  static String? validarNome(String? value) {
+  static const int maximoCaracteresNome = 100;
+
+  static const int maximoCaracteresNomeDeInsumo = 25;
+
+  static String? validarNome(String? value) =>
+      _validarNomeAte(value, maximoCaracteresNome);
+
+  static String? validarNomeDeInsumo(String? value) =>
+      _validarNomeAte(value, maximoCaracteresNomeDeInsumo);
+
+  static String? _validarNomeAte(String? value, int maximo) {
     if (value == null || value.trim().isEmpty) {
       return 'O nome é obrigatório';
     }
@@ -126,8 +137,8 @@ class Validator {
     if (nome.length < 3) {
       return 'O nome deve conter pelo menos 3 caracteres';
     }
-    if (nome.length > 100) {
-      return 'O nome deve ter no máximo 100 caracteres';
+    if (nome.length > maximo) {
+      return 'O nome deve ter no máximo $maximo caracteres';
     }
 
     return null;
@@ -177,14 +188,44 @@ class Validator {
 
   static const int minimoCaracteresDescricao = 3;
 
-  static String? descricaoDeTransacao(String? value) {
-    final texto = value?.trim() ?? '';
+  static const int maximoCaracteresDescricao = 255;
 
-    if (texto.isEmpty) {
+  static String? descricaoObrigatoria(String? value) {
+    if (value == null || value.trim().isEmpty) {
       return 'Obrigatório';
     }
+    return _tamanhoDaDescricao(value.trim());
+  }
+
+  static String? descricaoOpcional(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+    return _tamanhoDaDescricao(value.trim());
+  }
+
+  static String? descricaoDeAtividade(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+    final texto = value.trim();
+    final erroDeTamanho = _tamanhoDaDescricao(texto);
+    if (erroDeTamanho != null) {
+      return erroDeTamanho;
+    }
+    if (!Evento.descricaoValida(texto)) {
+      return 'Use pelo menos ${Evento.minimoLetrasDescricao} letras; '
+          'só números ou sinais não descrevem a atividade';
+    }
+    return null;
+  }
+
+  static String? _tamanhoDaDescricao(String texto) {
     if (texto.length < minimoCaracteresDescricao) {
       return 'Descreva com pelo menos $minimoCaracteresDescricao caracteres';
+    }
+    if (texto.length > maximoCaracteresDescricao) {
+      return 'A descrição deve ter no máximo $maximoCaracteresDescricao caracteres';
     }
     return null;
   }

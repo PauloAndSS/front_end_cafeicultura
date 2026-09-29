@@ -10,6 +10,7 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedad
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/detalhes_talhao_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/relatorio_talhao_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/talhao/talhoes_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/registro_atividades.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/trato_cultural/detalhes_trato_cultural_view.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/atividade_card.dart';
@@ -48,6 +49,8 @@ class DetalhesTalhaoView extends StatefulWidget {
 class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     with SingleTickerProviderStateMixin {
   final _viewModel = DetalhesTalhaoViewModel();
+
+  late Talhao _talhao = widget.talhao;
 
   final _atividadesViewModel = TratosCulturaisDoTalhaoViewModel();
 
@@ -129,7 +132,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     final idPropriedade = context
         .read<PropriedadesUsuarioViewModel>()
         .idPropriedadeSelecionada;
-    final idTalhao = widget.talhao.id;
+    final idTalhao = _talhao.id;
 
     if (idPropriedade == null || idTalhao == null) return;
 
@@ -144,7 +147,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     final idPropriedade = context
         .read<PropriedadesUsuarioViewModel>()
         .idPropriedadeSelecionada;
-    final idTalhao = widget.talhao.id;
+    final idTalhao = _talhao.id;
 
     if (idPropriedade == null || idTalhao == null) return;
 
@@ -169,7 +172,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     final idPropriedade = context
         .read<PropriedadesUsuarioViewModel>()
         .idPropriedadeSelecionada;
-    final idTalhao = widget.talhao.id;
+    final idTalhao = _talhao.id;
 
     if (safra == null || idPropriedade == null || idTalhao == null) return;
 
@@ -185,7 +188,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
       context,
       MaterialPageRoute(
         builder: (_) =>
-            DetalhesTratoCulturalView(trato: trato, talhao: widget.talhao),
+            DetalhesTratoCulturalView(trato: trato, talhao: _talhao),
       ),
     );
 
@@ -201,11 +204,49 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     Navigator.of(context).pop(true);
   }
 
+  Future<void> _alterarDataInicio() async {
+    final novaData = await selecionarData(
+      context: context,
+      ajuda: 'Selecione a nova data de início do talhão',
+      inicial: _talhao.dataInicio,
+      maxima: _talhao.dataFim,
+    );
+
+    if (novaData == null || !mounted) return;
+    if (novaData == _talhao.dataInicio) return;
+
+    final sucesso = await _viewModel.editarDataInicio(_talhao.id!, novaData);
+
+    if (!mounted) return;
+
+    if (!sucesso) {
+      mostrarErro(
+        context,
+        _viewModel.mensagemErro ?? 'Erro ao alterar a data de início.',
+      );
+      return;
+    }
+
+    setState(() => _talhao = _talhao.comDataInicio(novaData));
+    mostrarSucesso(context, 'Data de início do talhão alterada.');
+    _recarregarListaDeTalhoes();
+  }
+
+  void _recarregarListaDeTalhoes() {
+    final idPropriedade = context
+        .read<PropriedadesUsuarioViewModel>()
+        .idPropriedadeSelecionada;
+
+    if (idPropriedade == null) return;
+
+    context.read<TalhoesViewModel>().carregarTalhoes(idPropriedade);
+  }
+
   Future<void> _confirmarEncerramento() async {
     final dataFimEscolhida = await selecionarData(
       context: context,
       ajuda: 'Selecione a data de encerramento do talhão',
-      minima: widget.talhao.dataInicio,
+      minima: _talhao.dataInicio,
     );
 
     if (dataFimEscolhida == null) return;
@@ -215,7 +256,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
       context,
       titulo: 'Encerrar talhão?',
       mensagem:
-          'Deseja encerrar o talhão "${widget.talhao.nomeExibicao}" '
+          'Deseja encerrar o talhão "${_talhao.nomeExibicao}" '
           'na data ${formatarDataBr(dataFimEscolhida)}?',
       rotuloConfirmar: 'Encerrar talhão',
       corConfirmar: AppCores.aviso,
@@ -231,10 +272,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
     );
 
     if (confirmar) {
-      final sucesso = await _viewModel.encerrar(
-        widget.talhao.id!,
-        dataFimEscolhida,
-      );
+      final sucesso = await _viewModel.encerrar(_talhao.id!, dataFimEscolhida);
 
       if (!mounted) return;
 
@@ -250,7 +288,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
   }
 
   Future<void> _excluir() async {
-    final sucesso = await _viewModel.excluir(widget.talhao.id!);
+    final sucesso = await _viewModel.excluir(_talhao.id!);
 
     if (!mounted) return;
 
@@ -266,7 +304,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
 
   @override
   Widget build(BuildContext context) {
-    final bool estaEncerrado = widget.talhao.encerrado;
+    final bool estaEncerrado = _talhao.encerrado;
 
     final geracaoDoCache = context.watch<AtividadesMudaram>().geracao;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -275,7 +313,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
 
     return Scaffold(
       backgroundColor: AppCores.fundo,
-      appBar: AppBarPadrao(titulo: widget.talhao.nomeExibicao),
+      appBar: AppBarPadrao(titulo: _talhao.nomeExibicao),
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           SliverPadding(
@@ -327,44 +365,47 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
           conteudo: [
             LinhaInfo(
               rotulo: 'Nome:',
-              valor: widget.talhao.nomeExibicao,
+              valor: _talhao.nomeExibicao,
               padding: EdgeInsets.zero,
             ),
             const SizedBox(height: 12),
             LinhaInfo(
               rotulo: 'Espécie:',
-              valor: widget.talhao.especieFormatada,
+              valor: _talhao.especieFormatada,
               padding: EdgeInsets.zero,
             ),
             const SizedBox(height: 12),
             LinhaInfo(
               rotulo: 'Variedades de Café:',
-              valor: widget.talhao.variedadesTexto,
+              valor: _talhao.variedadesTexto,
               padding: EdgeInsets.zero,
             ),
             const SizedBox(height: 12),
             LinhaInfo(
               rotulo: 'Quantidade de Pés:',
-              valor: widget.talhao.qtdPeCafeFormatada,
+              valor: _talhao.qtdPeCafeFormatada,
               padding: EdgeInsets.zero,
             ),
             const SizedBox(height: 12),
             LinhaInfo(
               rotulo: 'Tamanho:',
-              valor: widget.talhao.tamanhoFormatado,
+              valor: _talhao.tamanhoFormatado,
               padding: EdgeInsets.zero,
             ),
             const SizedBox(height: 12),
             LinhaInfo(
               rotulo: 'Data de Início:',
-              valor: widget.talhao.dataInicioFormatada,
+              valor: _talhao.dataInicioFormatada,
               padding: EdgeInsets.zero,
+              onEditar: estaEncerrado || _viewModel.isLoading
+                  ? null
+                  : _alterarDataInicio,
             ),
-            if (widget.talhao.dataFimFormatada != null) ...[
+            if (_talhao.dataFimFormatada != null) ...[
               const SizedBox(height: 12),
               LinhaInfo(
                 rotulo: 'Data de Encerramento:',
-                valor: widget.talhao.dataFimFormatada!,
+                valor: _talhao.dataFimFormatada!,
                 padding: EdgeInsets.zero,
               ),
             ],
@@ -410,7 +451,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
                   titulo: 'Excluir Talhão?',
                   mensagem:
                       'Tem certeza que deseja excluir permanentemente o '
-                      'talhão "${widget.talhao.nomeExibicao}"? '
+                      'talhão "${_talhao.nomeExibicao}"? '
                       'Esta ação não poderá ser desfeita.',
                   bloqueado: _viewModel.isLoading,
                   aoConfirmar: _excluir,
@@ -598,7 +639,7 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
       itemBuilder: (context, indice) => indice < atividades.length
           ? AtividadeCard(
               atividade: atividades[indice],
-              nomeTalhao: widget.talhao.nomeExibicao,
+              nomeTalhao: _talhao.nomeExibicao,
               icone: Icons.grass,
               onTap: () => _abrirDetalhesTrato(atividades[indice]),
             )

@@ -484,6 +484,8 @@ class _HomeViewState extends State<HomeView>
               onNovaSafra: () => abrirNovaSafra(context),
               onEncerrarSafra: () => encerrarSafraSelecionada(context),
               onReativarSafra: () => reativarSafraSelecionada(context),
+              onEditarDataInicio: () =>
+                  alterarDataInicioDaSafraSelecionada(context),
             ),
 
             const SizedBox(height: 16),

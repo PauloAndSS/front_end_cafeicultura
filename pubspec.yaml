@@ -63,16 +63,14 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
-  # O uso do Material Design garante o funcionamento dos ícones padrão.
   uses-material-design: true
 
-  # Configuração dos seus assets de imagem do café
   assets:
     - .env
     - assets/images/banner_cafe.png
-    - assets/images/logo_cafe.png
+    - assets/images/logo_sem_nome.svg
     - assets/images/icons/clima/
 flutter_icons:
   android: true
   ios: true
-  image_path: "assets/images/logo_realinhada.png"
+  image_path: "assets/images/logo_sem_nome.svg"

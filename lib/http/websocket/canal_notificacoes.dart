@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
+import 'package:frond_end_cafeicultura_mobile/http/ambiente.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/notificacoes/notificacao.dart';
 import 'package:web_socket_channel/io.dart';
@@ -89,7 +90,7 @@ class CanalNotificacoes {
     if (cookie == null) return;
 
     final endereco = uriDoSocket(
-      BaseService.resolveBaseUrl(
+      Ambiente.urlBase(
         isWeb: kIsWeb,
         platform: defaultTargetPlatform,
       ),
@@ -97,7 +98,7 @@ class CanalNotificacoes {
 
     final canal = IOWebSocketChannel.connect(
       endereco,
-      headers: {'Cookie': cookie},
+      headers: {...BaseService.headersDeAutenticacaoDaApi, 'Cookie': cookie},
       pingInterval: intervaloDePing,
     );
 

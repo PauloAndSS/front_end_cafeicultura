@@ -16,6 +16,7 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/atividades_m
 import 'package:frond_end_cafeicultura_mobile/viewmodels/notificacoes/notificacoes_viewmodel.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/status_de_conexao.dart';
+import 'package:frond_end_cafeicultura_mobile/http/ambiente.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/tela_sem_conexao.dart';
 
@@ -31,9 +32,15 @@ void main() async {
   await dotenv.load();
 
   if (kDebugMode) {
-    debugPrint(
-      '[API] base: ${BaseService.resolveBaseUrl(isWeb: kIsWeb, platform: defaultTargetPlatform)}',
+    final urlBase = Ambiente.urlBase(
+      isWeb: kIsWeb,
+      platform: defaultTargetPlatform,
     );
+    final estadoDaChave =
+        Ambiente.chaveDaApi == null ? 'AUSENTE no .env' : 'presente';
+
+    debugPrint('[API] alvo: ${Ambiente.alvoEfetivo.name} | base: $urlBase');
+    debugPrint('[API] ${BaseService.headerDaChaveDaApi}: $estadoDaChave');
   }
 
   final statusDeConexao = StatusDeConexao();

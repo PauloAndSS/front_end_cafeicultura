@@ -7,20 +7,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 abstract class BaseService {
-  static String resolveBaseUrl({
-    required bool isWeb,
-    required TargetPlatform platform,
-  }) {
-    if (Ambiente.usaProducao) return Ambiente.urlProducao;
-
-    if (!isWeb && platform == TargetPlatform.android) {
-      return Ambiente.urlLocalEmulador;
-    }
-
-    return Ambiente.urlLocal;
-  }
-
-  String get baseUrl => resolveBaseUrl(
+  String get baseUrl => Ambiente.urlBase(
         isWeb: kIsWeb,
         platform: defaultTargetPlatform,
       );
@@ -37,6 +24,14 @@ abstract class BaseService {
   }
 
   static String? sessionCookie;
+
+  static const String headerDaChaveDaApi = 'x-api-key';
+
+  static Map<String, String> get headersDeAutenticacaoDaApi {
+    final chave = Ambiente.chaveDaApi;
+
+    return chave == null ? const {} : {headerDaChaveDaApi: chave};
+  }
 
   static void Function()? aoPerderConexao;
 
@@ -57,7 +52,7 @@ abstract class BaseService {
   static Future<bool> servidorRespondeu() async {
     try {
       final base = Uri.parse(
-        resolveBaseUrl(isWeb: kIsWeb, platform: defaultTargetPlatform),
+        Ambiente.urlBase(isWeb: kIsWeb, platform: defaultTargetPlatform),
       );
 
       await http.get(base).timeout(const Duration(seconds: 6));
@@ -77,6 +72,7 @@ abstract class BaseService {
     final headers = {
       'Content-Type': 'application/json; charset=UTF-8',
       'Accept': 'application/json',
+      ...headersDeAutenticacaoDaApi,
     };
 
     if (sessionCookie != null) {

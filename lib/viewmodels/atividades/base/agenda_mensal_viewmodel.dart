@@ -58,6 +58,21 @@ abstract class AgendaMensalViewModel<T extends EventoAgricola>
       aoFalhar: () {},
       aoFinalizar: () => _carregouAlgumaVez = true,
     );
+
+    await _carregarMesVisivelSeFaltar();
+  }
+
+  Future<void> _carregarMesVisivelSeFaltar() {
+    final idPropriedade = _idPropriedade;
+    final mes = _mesVisivel;
+
+    if (idPropriedade == null || mes == null) return Future.value();
+    if (mensagemErro != null) return Future.value();
+    if (_cachePorMes.containsKey(_chave(idPropriedade, mes))) {
+      return Future.value();
+    }
+
+    return carregarMes(idPropriedade, mes);
   }
 
   Future<void> recarregarMesVisivel() {
@@ -72,6 +87,7 @@ abstract class AgendaMensalViewModel<T extends EventoAgricola>
     if (geracaoDoCache == _geracaoDoCacheVista) return;
 
     _geracaoDoCacheVista = geracaoDoCache;
+    _cachePorMes.clear();
     recarregarMesVisivel();
   }
 

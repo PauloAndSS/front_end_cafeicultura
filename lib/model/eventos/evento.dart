@@ -86,6 +86,14 @@ abstract class Evento {
   String? get dataCadastroFormatada =>
       dataCadastro == null ? null : formatarDataBr(dataCadastro!);
 
+  static const int minimoLetrasDescricao = 4;
+
+  static final RegExp _regexDescricaoValida =
+      RegExp(r'^(?![0-9.]+$)(?=(?:[^a-zA-Z]*[a-zA-Z]){4}).*$');
+
+  static bool descricaoValida(String texto) =>
+      _regexDescricaoValida.hasMatch(texto);
+
   String get descricaoTexto {
     final texto = descricao?.trim() ?? '';
     return texto.isEmpty ? 'Sem descrição' : texto;

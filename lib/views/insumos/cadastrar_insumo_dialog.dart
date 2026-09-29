@@ -175,7 +175,7 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
                 label: 'Nome do insumo',
                 controller: _nomeController,
                 hintText: 'Ex: Ureia Agrícola 46% N',
-                validator: Validator.validarNome,
+                validator: Validator.validarNomeDeInsumo,
                 habilitado: !_salvando,
               ),
               CampoSuspenso<MedidaInsumo>(

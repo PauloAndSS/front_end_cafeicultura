@@ -130,6 +130,21 @@ String get nomeExibicao {
     return '$nome $dataFormatada';
   }
   
+  Talhao comDataInicio(DateTime novaDataInicio) {
+    return Talhao(
+      id: id,
+      nome: nome,
+      idPropriedade: idPropriedade,
+      qtdPeCafe: qtdPeCafe,
+      dataInicio: apenasData(novaDataInicio),
+      dataFim: dataFim,
+      tamanho: tamanho,
+      especie: especie,
+      variedadesIds: variedadesIds,
+      variedadesCafe: variedadesCafe,
+    );
+  }
+
   factory Talhao.fromJson(Map<String, dynamic> json) {
     return Talhao(
       id: json['id'],

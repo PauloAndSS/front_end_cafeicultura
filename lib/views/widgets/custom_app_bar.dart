@@ -10,12 +10,35 @@ import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/logo_circular.dart';
+
+const _larguraMinimaDoSeletor = 110.0;
+const _margemEsquerdaDoSeletor = 12.0;
+const _larguraDoMenuDoSeletor = 220.0;
+const _larguraMinimaDaLogo = 40.0;
+const _espacoDoTitulo = 4.0;
+const _margemVerticalDaLogo = 4.0;
+const _alturaDaLogo = kToolbarHeight - 2 * _margemVerticalDaLogo;
+const _quantidadeDeAcoes = 3;
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({super.key});
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
+
+  double _larguraDoSeletor(BuildContext context) {
+    final larguraDaTela = MediaQuery.sizeOf(context).width;
+    final larguraDasAcoes = _quantidadeDeAcoes * kMinInteractiveDimension;
+    final larguraMaxima = larguraDasAcoes + _margemEsquerdaDoSeletor;
+    final sobra =
+        larguraDaTela -
+        larguraDasAcoes -
+        _espacoDoTitulo * 2 -
+        _larguraMinimaDaLogo;
+
+    return sobra.clamp(_larguraMinimaDoSeletor, larguraMaxima);
+  }
 
   void _navegarSubstituindo(BuildContext context, Widget novaTela) {
     final rotaAtual = ModalRoute.of(context);
@@ -101,21 +124,25 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
 
     return AppBar(
       centerTitle: true,
+      titleSpacing: _espacoDoTitulo,
       title: Tooltip(
         message: 'Início',
         child: InkWell(
           borderRadius: BorderRadius.circular(8),
           onTap: () => _irParaInicio(context),
-          child: Image.asset(
-            'assets/images/logo_cafe.png',
-            height: 80,
-            fit: BoxFit.contain,
+          child: const Padding(
+            padding: EdgeInsets.symmetric(vertical: _margemVerticalDaLogo),
+            child: LogoSysgrano(altura: _alturaDaLogo),
           ),
         ),
       ),
-      leadingWidth: 190,
+      leadingWidth: _larguraDoSeletor(context),
       leading: Padding(
-        padding: const EdgeInsets.only(left: 12.0, top: 10.0, bottom: 10.0),
+        padding: const EdgeInsets.only(
+          left: _margemEsquerdaDoSeletor,
+          top: 10.0,
+          bottom: 10.0,
+        ),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
@@ -128,6 +155,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               : DropdownButtonHideUnderline(
                   child: DropdownButton<int>(
                     isExpanded: true,
+                    menuWidth: _larguraDoMenuDoSeletor,
                     dropdownColor: AppCores.superficie,
                     icon: Icon(
                       Icons.keyboard_arrow_down,
@@ -173,9 +201,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                                 color: AppCores.acao,
                               ),
                               SizedBox(width: 8),
-                              Text(
-                                'Editar Atual',
-                                style: TextStyle(color: AppCores.acao),
+                              Flexible(
+                                child: Text(
+                                  'Editar Atual',
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(color: AppCores.acao),
+                                ),
                               ),
                             ],
                           ),
@@ -187,11 +218,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
                           children: [
                             Icon(Icons.add, size: 18, color: AppCores.acao),
                             SizedBox(width: 8),
-                            Text(
-                              'Nova Propriedade',
-                              style: TextStyle(
-                                color: AppCores.acao,
-                                fontWeight: FontWeight.bold,
+                            Flexible(
+                              child: Text(
+                                'Nova Propriedade',
+                                overflow: TextOverflow.ellipsis,
+                                style: TextStyle(
+                                  color: AppCores.acao,
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ],

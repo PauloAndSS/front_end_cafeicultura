@@ -102,6 +102,7 @@ class _FinanceiroViewState extends State<FinanceiroView>
       context: context,
       idPropriedade: idPropriedade,
       catalogoDePessoas: financeiroVM,
+      descricaoObrigatoria: true,
     );
 
     if (despesa == null || !mounted) return;

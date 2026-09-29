@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
@@ -15,54 +16,18 @@ DateTime get _pisoDeSafra => DateTime(DateTime.now().year - 1);
 DateTime get _tetoDeSafra => DateTime(DateTime.now().year + 5, 12, 31);
 
 Future<void> abrirNovaSafra(BuildContext context) async {
-  final hoje = DateTime.now();
-  var dataInicio = DateTime(hoje.year, hoje.month, hoje.day);
-
-  final confirmado = await showDialog<bool>(
-    context: context,
-    builder: (contextoDoDialogo) {
-      return StatefulBuilder(
-        builder: (_, redesenhar) {
-          return AlertDialog(
-            title: const Text('Nova safra'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Defina a data de início da safra para registrar o ciclo.',
-                ),
-                const SizedBox(height: 12),
-                SeletorDataEmBloco(
-                  data: dataInicio,
-                  aoTocar: () async {
-                    final selecionada = await selecionarData(
-                      context: contextoDoDialogo,
-                      ajuda: 'Selecione a data de início da safra',
-                      inicial: dataInicio,
-                      minima: _pisoDeSafra,
-                      maxima: _tetoDeSafra,
-                    );
-                    if (selecionada != null) {
-                      redesenhar(() => dataInicio = selecionada);
-                    }
-                  },
-                ),
-              ],
-            ),
-            actions: acoesDeDialogo(
-              context: contextoDoDialogo,
-              rotuloConfirmar: 'Salvar',
-              aoConfirmar: () => Navigator.of(contextoDoDialogo).pop(true),
-              aoCancelar: () => Navigator.of(contextoDoDialogo).pop(false),
-            ),
-          );
-        },
-      );
-    },
+  final dataInicio = await _perguntarData(
+    context,
+    titulo: 'Nova safra',
+    descricao: 'Defina a data de início da safra para registrar o ciclo.',
+    rotuloConfirmar: 'Salvar',
+    ajuda: 'Selecione a data de início da safra',
+    inicial: hoje(),
+    minima: _pisoDeSafra,
+    maxima: _tetoDeSafra,
   );
 
-  if (confirmado != true || !context.mounted) return;
+  if (dataInicio == null || !context.mounted) return;
 
   final idPropriedade = context
       .read<PropriedadesUsuarioViewModel>()
@@ -154,11 +119,113 @@ Future<void> encerrarSafraSelecionada(BuildContext context) async {
   );
 }
 
-Future<DateTime?> _perguntarDataDeFim(BuildContext context, Safra safra) async {
-  var dataFim = DateTime.now();
+Future<DateTime?> _perguntarDataDeFim(BuildContext context, Safra safra) {
   final inicio = safra.dataInicio ?? _pisoDeSafra;
 
-  if (dataFim.isBefore(inicio)) dataFim = inicio;
+  return _perguntarData(
+    context,
+    titulo: 'Encerrar safra',
+    descricao: 'Deseja encerrar a ${safra.nomeExibicao}?',
+    rotuloConfirmar: 'Encerrar safra',
+    corConfirmar: AppCores.aviso,
+    rotuloDaData: 'Data de fim da safra',
+    ajuda: 'Selecione a data de fim da safra',
+    inicial: hoje(),
+    minima: inicio,
+    maxima: _tetoDeSafra,
+    complemento: const CaixaAvisoAtencao(
+      mensagem:
+          'A safra deixa de aparecer no cadastro de novas '
+          'atividades e nenhum dado dela poderá ser alterado. '
+          'Ela continua na lista com o selo "Encerrada" e pode '
+          'ser reativada quando você quiser.',
+    ),
+  );
+}
+
+Future<void> alterarDataInicioDaSafraSelecionada(BuildContext context) async {
+  final viewModel = context.read<SafraViewModel>();
+  final safra = viewModel.safraSelecionada;
+
+  if (safra == null) {
+    mostrarAviso(context, 'Selecione uma safra para alterar a data de início.');
+    return;
+  }
+
+  if (safra.encerrada) {
+    mostrarAviso(context, 'Reative a safra antes de alterar a data de início.');
+    return;
+  }
+
+  final dataInicio = await _perguntarDataDeInicio(context, safra);
+
+  if (dataInicio == null || !context.mounted) return;
+
+  final idPropriedade = context
+      .read<PropriedadesUsuarioViewModel>()
+      .idPropriedadeSelecionada;
+
+  if (idPropriedade == null) {
+    mostrarErro(context, 'Não foi possível localizar a propriedade atual.');
+    return;
+  }
+
+  final sucesso = await viewModel.editarDataInicioDaSafra(
+    idPropriedade: idPropriedade,
+    idSafra: safra.id ?? 0,
+    dataInicio: dataInicio,
+  );
+
+  if (!context.mounted) return;
+
+  mostrarResultado(
+    context,
+    sucesso
+        ? 'Data de início da safra alterada.'
+        : viewModel.mensagemErro ??
+              'Não foi possível alterar a data de início da safra.',
+    sucesso: sucesso,
+  );
+}
+
+Future<DateTime?> _perguntarDataDeInicio(BuildContext context, Safra safra) {
+  final inicioAtual = safra.dataInicio ?? hoje();
+
+  return _perguntarData(
+    context,
+    titulo: 'Alterar data de início',
+    descricao: 'Informe a nova data de início da ${safra.nomeExibicao}.',
+    rotuloConfirmar: 'Salvar',
+    rotuloDaData: 'Data de início da safra',
+    ajuda: 'Selecione a nova data de início da safra',
+    inicial: inicioAtual,
+    minima: menorData(_pisoDeSafra, inicioAtual)!,
+    maxima: safra.dataFim ?? hoje(),
+    complemento: const CaixaAvisoAtencao(
+      mensagem:
+          'A nova data não pode ser posterior à atividade mais antiga já '
+          'registrada nesta safra.',
+    ),
+  );
+}
+
+Future<DateTime?> _perguntarData(
+  BuildContext context, {
+  required String titulo,
+  required String descricao,
+  required String rotuloConfirmar,
+  required String ajuda,
+  required DateTime inicial,
+  required DateTime minima,
+  required DateTime maxima,
+  String? rotuloDaData,
+  Widget? complemento,
+  Color corConfirmar = AppCores.acao,
+}) async {
+  var data = apenasData(inicial);
+
+  if (data.isBefore(minima)) data = apenasData(minima);
+  if (data.isAfter(maxima)) data = apenasData(maxima);
 
   final confirmado = await showDialog<bool>(
     context: context,
@@ -166,35 +233,33 @@ Future<DateTime?> _perguntarDataDeFim(BuildContext context, Safra safra) async {
       return StatefulBuilder(
         builder: (_, redesenhar) {
           return AlertDialog(
-            title: const Text('Encerrar safra'),
+            title: Text(titulo),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Deseja encerrar a ${safra.nomeExibicao}?'),
+                Text(descricao),
+                if (complemento != null) ...[
+                  const SizedBox(height: 12),
+                  complemento,
+                ],
                 const SizedBox(height: 12),
-                const CaixaAvisoAtencao(
-                  mensagem:
-                      'A safra deixa de aparecer no cadastro de novas '
-                      'atividades e nenhum dado dela poderá ser alterado. '
-                      'Ela continua na lista com o selo "Encerrada" e pode '
-                      'ser reativada quando você quiser.',
-                ),
-                const SizedBox(height: 12),
-                const Text('Data de fim da safra'),
-                const SizedBox(height: 8),
+                if (rotuloDaData != null) ...[
+                  Text(rotuloDaData),
+                  const SizedBox(height: 8),
+                ],
                 SeletorDataEmBloco(
-                  data: dataFim,
+                  data: data,
                   aoTocar: () async {
                     final selecionada = await selecionarData(
                       context: contextoDoDialogo,
-                      ajuda: 'Selecione a data de fim da safra',
-                      inicial: dataFim,
-                      minima: inicio,
-                      maxima: _tetoDeSafra,
+                      ajuda: ajuda,
+                      inicial: data,
+                      minima: minima,
+                      maxima: maxima,
                     );
                     if (selecionada != null) {
-                      redesenhar(() => dataFim = selecionada);
+                      redesenhar(() => data = selecionada);
                     }
                   },
                 ),
@@ -202,8 +267,8 @@ Future<DateTime?> _perguntarDataDeFim(BuildContext context, Safra safra) async {
             ),
             actions: acoesDeDialogo(
               context: contextoDoDialogo,
-              rotuloConfirmar: 'Encerrar safra',
-              corConfirmar: AppCores.aviso,
+              rotuloConfirmar: rotuloConfirmar,
+              corConfirmar: corConfirmar,
               aoConfirmar: () => Navigator.of(contextoDoDialogo).pop(true),
               aoCancelar: () => Navigator.of(contextoDoDialogo).pop(false),
             ),
@@ -213,7 +278,7 @@ Future<DateTime?> _perguntarDataDeFim(BuildContext context, Safra safra) async {
     },
   );
 
-  return confirmado == true ? dataFim : null;
+  return confirmado == true ? data : null;
 }
 
 Future<void> reativarSafraSelecionada(BuildContext context) async {

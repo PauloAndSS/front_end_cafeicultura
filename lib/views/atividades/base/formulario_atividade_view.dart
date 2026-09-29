@@ -12,6 +12,7 @@ import 'package:frond_end_cafeicultura_mobile/model/safra/safra.dart';
 import 'package:frond_end_cafeicultura_mobile/model/talhao.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/cadastrar_atividade_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
@@ -400,6 +401,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
       context: context,
       idPropriedade: idPropriedade,
       catalogoDePessoas: _viewModel,
+      descricaoObrigatoria: false,
       responsaveis: _responsaveisSelecionados,
     );
 
@@ -808,6 +810,7 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
               opcional: true,
               controller: _descricaoController,
               hintText: 'O que foi feito no talhão',
+              validator: Validator.descricaoDeAtividade,
             ),
 
             const Divider(),

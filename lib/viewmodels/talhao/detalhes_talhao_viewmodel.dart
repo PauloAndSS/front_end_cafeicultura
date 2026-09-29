@@ -12,6 +12,12 @@ class DetalhesTalhaoViewModel extends ChangeNotifier
         aoFalhar: () => false,
       );
 
+  Future<bool> editarDataInicio(int idTalhao, DateTime dataInicio) =>
+      cargaPrincipal.executar(
+        chamada: () => _talhaoService.editarDataInicio(idTalhao, dataInicio),
+        aoFalhar: () => false,
+      );
+
   Future<bool> excluir(int id) => cargaPrincipal.executar(
         chamada: () => _talhaoService.excluir(id),
         aoFalhar: () => false,

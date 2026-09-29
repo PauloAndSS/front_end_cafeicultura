@@ -275,6 +275,28 @@ class SafraViewModel extends ChangeNotifier
     );
   }
 
+  Future<bool> editarDataInicioDaSafra({
+    required int idPropriedade,
+    required int idSafra,
+    required DateTime dataInicio,
+  }) {
+    if (idSafra <= 0) {
+      mensagemErro =
+          'Selecione uma safra válida para alterar a data de início.';
+      notificarSeVivo();
+      return Future.value(false);
+    }
+
+    return cargaPrincipal.executar(
+      chamada: () async {
+        await _service.editarDataInicio(idSafra, dataInicio);
+        await _refreshSafrasAfterMutation(idPropriedade);
+        return true;
+      },
+      aoFalhar: () => false,
+    );
+  }
+
   Future<bool> reativarSafra({
     required int idPropriedade,
     required int idSafra,

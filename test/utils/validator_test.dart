@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frond_end_cafeicultura_mobile/model/auth/usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
+import 'package:frond_end_cafeicultura_mobile/model/eventos/evento.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
@@ -101,6 +102,108 @@ void main() {
         );
       });
     }
+  });
+
+  group('validarNomeDeInsumo herda o piso e troca o teto pelo da coluna', () {
+    test('aceita o exemplo do proprio campo', () {
+      expect(Validator.validarNomeDeInsumo('Ureia Agrícola 46% N'), isNull);
+    });
+
+    test('mantem obrigatoriedade e minimo de 3', () {
+      expect(Validator.validarNomeDeInsumo('  '), 'O nome é obrigatório');
+      expect(
+        Validator.validarNomeDeInsumo('Jo'),
+        'O nome deve conter pelo menos 3 caracteres',
+      );
+    });
+
+    test('recusa acima de 25, que e o VarChar de insumos.descricao', () {
+      expect(Validator.validarNomeDeInsumo('a' * 25), isNull);
+      expect(
+        Validator.validarNomeDeInsumo('a' * 26),
+        'O nome deve ter no máximo 25 caracteres',
+        reason: 'validarNome aceitaria ate 100 e o MySQL devolveria 500',
+      );
+    });
+  });
+
+  group('descricao: obrigatoria e opcional divergem so no campo em branco', () {
+    test('em branco', () {
+      expect(Validator.descricaoObrigatoria(null), 'Obrigatório');
+      expect(Validator.descricaoObrigatoria('   '), 'Obrigatório');
+      expect(Validator.descricaoOpcional(null), isNull);
+      expect(Validator.descricaoOpcional('   '), isNull);
+    });
+
+    test('preenchida, as duas exigem 3 caracteres apos trim', () {
+      const mensagem = 'Descreva com pelo menos 3 caracteres';
+      expect(Validator.descricaoObrigatoria(' ab '), mensagem);
+      expect(Validator.descricaoOpcional(' ab '), mensagem);
+      expect(Validator.descricaoObrigatoria('abc'), isNull);
+      expect(Validator.descricaoOpcional('abc'), isNull);
+    });
+
+    test('preenchida, as duas param em 255', () {
+      const mensagem = 'A descrição deve ter no máximo 255 caracteres';
+      expect(Validator.descricaoObrigatoria('a' * 255), isNull);
+      expect(Validator.descricaoOpcional('a' * 255), isNull);
+      expect(Validator.descricaoObrigatoria('a' * 256), mensagem);
+      expect(Validator.descricaoOpcional('a' * 256), mensagem);
+    });
+  });
+
+  group('descricaoDeAtividade espelha a regex do evento no backend', () {
+    const mensagemDeLetras =
+        'Use pelo menos 4 letras; só números ou sinais não descrevem a atividade';
+
+    test('vazia e opcional', () {
+      expect(Validator.descricaoDeAtividade(null), isNull);
+      expect(Validator.descricaoDeAtividade('  '), isNull);
+    });
+
+    const recusadas = ['1234', '12.5.3', '---', 'Abc', 'a1b2c3', 'Pod 1'];
+
+    for (final texto in recusadas) {
+      test('recusa "$texto" como o backend (DESCRICAO_INVALIDA)', () {
+        expect(Evento.descricaoValida(texto), isFalse);
+        expect(Validator.descricaoDeAtividade(texto), mensagemDeLetras);
+      });
+    }
+
+    const aceitas = [
+      'Poda',
+      'Adubação de cobertura',
+      'a b c d',
+      'Km 12 pulverizado',
+      'Poda 1',
+    ];
+
+    for (final texto in aceitas) {
+      test('aceita "$texto"', () {
+        expect(Evento.descricaoValida(texto), isTrue);
+        expect(Validator.descricaoDeAtividade(texto), isNull);
+      });
+    }
+
+    test('letra acentuada nao conta, porque a regex do backend e ASCII', () {
+      expect(
+        Validator.descricaoDeAtividade('Açaí'),
+        mensagemDeLetras,
+        reason: 'evento.entity.ts conta [a-zA-Z]; "Açaí" tem duas letras '
+            'ASCII e o backend recusa. Paridade, nao divergencia',
+      );
+    });
+
+    test('tamanho vem antes das letras', () {
+      expect(
+        Validator.descricaoDeAtividade('12'),
+        'Descreva com pelo menos 3 caracteres',
+      );
+      expect(
+        Validator.descricaoDeAtividade('Poda ' * 60),
+        'A descrição deve ter no máximo 255 caracteres',
+      );
+    });
   });
 
   group('selecaoObrigatoria', () {

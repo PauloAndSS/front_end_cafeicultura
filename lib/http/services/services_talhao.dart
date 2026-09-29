@@ -71,6 +71,19 @@ class ServicesTalhao extends BaseService {
     );
   }
 
+  Future<bool> editarDataInicio(int idTalhao, DateTime dataInicio) {
+    return executarRequisicao(
+      enviar: () => http.patch(
+        rota('$idTalhao/editar-data-inicio'),
+        headers: defaultHeaders,
+        body: jsonEncode({'dataInicio': dataParaJson(dataInicio)}),
+      ),
+      aoSucesso: (_) => true,
+      erroMsg: 'Erro ao alterar a data de início do talhão.',
+      acao: 'alterar a data de início do talhão',
+    );
+  }
+
   Future<bool> excluir(int idTalhao) {
     return executarRequisicao(
       enviar: () => http.delete(rota('$idTalhao'), headers: defaultHeaders),

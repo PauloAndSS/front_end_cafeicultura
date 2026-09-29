@@ -111,6 +111,19 @@ class ServicesSafra extends BaseService {
     );
   }
 
+  Future<bool> editarDataInicio(int idSafra, DateTime dataInicio) {
+    return executarRequisicao(
+      enviar: () => http.patch(
+        rota('$idSafra/editar-data-inicio'),
+        headers: defaultHeaders,
+        body: jsonEncode({'dataInicio': dataParaJson(dataInicio)}),
+      ),
+      aoSucesso: (_) => true,
+      erroMsg: 'Erro ao alterar a data de início da safra.',
+      acao: 'alterar a data de início da safra',
+    );
+  }
+
   Future<bool> reativar(int idSafra) {
     return executarRequisicao(
       enviar: () => http.patch(rota('$idSafra/reativar'), headers: defaultHeaders),

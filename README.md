@@ -49,7 +49,7 @@ O projeto é separado em camadas para garantir o desacoplamento entre a interfac
 * Abra o Android Studio e inicie o seu emulador (Virtual Device). Certifique-se de que ele está online e que o VS Code o reconhece.
 
 **ATENÇÃO - Mudar o Ambiente de Desenvolvimento**
-* Para alternar entre desenvolvimento e produção, vá em /lib/http/ambiente.dart e alterne a variável ```emProducao``` entre true e false
+* Para alternar entre desenvolvimento e produção, vá em /lib/http/ambiente.dart e alterne a constante AlvoDaApi alvo entre AlvoDaApi.dev, AlvoDaApi.producao, AlvoDaApi.local;
 
 **Rodar a aplicação:**   
   ```bash

@@ -15,6 +15,7 @@ Future<Despesa?> mostrarCadastroTransacao({
   required BuildContext context,
   required int idPropriedade,
   required CarregarPessoasMixin catalogoDePessoas,
+  required bool descricaoObrigatoria,
   List<Pessoa> responsaveis = const [],
 }) {
   return showDialog<Despesa>(
@@ -23,6 +24,7 @@ Future<Despesa?> mostrarCadastroTransacao({
     builder: (_) => _TransacaoFinanceiraDialog(
       idPropriedade: idPropriedade,
       catalogoDePessoas: catalogoDePessoas,
+      descricaoObrigatoria: descricaoObrigatoria,
       responsaveis: responsaveis,
     ),
   );
@@ -31,11 +33,13 @@ Future<Despesa?> mostrarCadastroTransacao({
 class _TransacaoFinanceiraDialog extends StatefulWidget {
   final int idPropriedade;
   final CarregarPessoasMixin catalogoDePessoas;
+  final bool descricaoObrigatoria;
   final List<Pessoa> responsaveis;
 
   const _TransacaoFinanceiraDialog({
     required this.idPropriedade,
     required this.catalogoDePessoas,
+    required this.descricaoObrigatoria,
     required this.responsaveis,
   });
 
@@ -80,9 +84,12 @@ class _TransacaoFinanceiraDialogState
             children: [
               CustomTextField(
                 label: 'Descrição',
+                opcional: !widget.descricaoObrigatoria,
                 controller: _descricaoController,
                 hintText: 'Ex: Pagamento de diária do tratorista',
-                validator: Validator.descricaoDeTransacao,
+                validator: widget.descricaoObrigatoria
+                    ? Validator.descricaoObrigatoria
+                    : Validator.descricaoOpcional,
               ),
               BlocoTransacaoFinanceira(
                 tipoOperacao: _tipoOperacao,

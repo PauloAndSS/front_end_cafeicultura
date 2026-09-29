@@ -116,6 +116,7 @@ class SecaoDespesasAtividade<T extends EventoAgricola>
       context: context,
       idPropriedade: idPropriedade,
       catalogoDePessoas: viewModel,
+      descricaoObrigatoria: false,
       responsaveis: viewModel.atividade.responsaveis,
     );
 
