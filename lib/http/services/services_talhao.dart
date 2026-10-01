@@ -74,7 +74,7 @@ class ServicesTalhao extends BaseService {
   Future<bool> editarDataInicio(int idTalhao, DateTime dataInicio) {
     return executarRequisicao(
       enviar: () => http.patch(
-        rota('$idTalhao/editar-data-inicio'),
+        rota('$idTalhao/data-inicio'),
         headers: defaultHeaders,
         body: jsonEncode({'dataInicio': dataParaJson(dataInicio)}),
       ),

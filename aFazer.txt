@@ -7,6 +7,4 @@ Todas as telas de cadastro com "selecionar [papel da pessoa]", mesmo que já haj
 
 - Widget de propriedade pode ter um botãozinho de visualizar a propriedade - Fazer após refatorar edição da propriedade: Ver DETALHES da propriedade como as atividades estão dispostas atualmente e o lápis para edição. Abaixo dos detalhes de cadastro, devem aparecer Os talhões da propriedade (Cujo widget deve ser semehante ao das pessoas nas páginas de pessoas) e as safras - que clicando no seu widget vai para a página de safra daquela selecionada
 
-footer será deslizável apenas quando a tela não comportar todos os ícones dele.
-
 - Relatório de despesas deve ter link para as atividades, quando for uma despesa de atividade. E quando for, a descrição deve ser o nome da atividade (ou no caso do trato cultural, do Tipo de Trato)

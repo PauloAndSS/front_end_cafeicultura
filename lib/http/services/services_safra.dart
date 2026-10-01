@@ -114,7 +114,7 @@ class ServicesSafra extends BaseService {
   Future<bool> editarDataInicio(int idSafra, DateTime dataInicio) {
     return executarRequisicao(
       enviar: () => http.patch(
-        rota('$idSafra/editar-data-inicio'),
+        rota('$idSafra/data-inicio'),
         headers: defaultHeaders,
         body: jsonEncode({'dataInicio': dataParaJson(dataInicio)}),
       ),
