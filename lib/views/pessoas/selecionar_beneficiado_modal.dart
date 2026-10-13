@@ -150,7 +150,7 @@ class _SelecionarBeneficiadoSheetState
       termoBusca: _termoBusca,
       construirItem: (context, papelPessoa) => _construirItem(
         papelPessoa.pessoa,
-        legenda: papelPessoa.pessoa.documentoFormatado,
+        legenda: papelPessoa.pessoa.documentoParaExibicao,
       ),
       aoCadastrar: (criado) => Navigator.of(context).pop(criado.pessoa),
     );

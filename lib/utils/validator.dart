@@ -53,6 +53,20 @@ class Validator {
     return null;
   }
 
+  static String? validarCPFOpcional(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+    return validarCPF(value);
+  }
+
+  static String? validarCNPJOpcional(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return null;
+    }
+    return validarCNPJ(value);
+  }
+
 
   static String? validarInscEstadual(String? value) {
     // opcional
@@ -209,9 +223,8 @@ class Validator {
       return null;
     }
     final texto = value.trim();
-    final erroDeTamanho = _tamanhoDaDescricao(texto);
-    if (erroDeTamanho != null) {
-      return erroDeTamanho;
+    if (texto.length > maximoCaracteresDescricao) {
+      return _mensagemDoTetoDaDescricao;
     }
     if (!Evento.descricaoValida(texto)) {
       return 'Use pelo menos ${Evento.minimoLetrasDescricao} letras; '
@@ -220,15 +233,25 @@ class Validator {
     return null;
   }
 
+  static String? descricaoDeAtividadeObrigatoria(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Obrigatório';
+    }
+    return descricaoDeAtividade(value);
+  }
+
   static String? _tamanhoDaDescricao(String texto) {
     if (texto.length < minimoCaracteresDescricao) {
       return 'Descreva com pelo menos $minimoCaracteresDescricao caracteres';
     }
     if (texto.length > maximoCaracteresDescricao) {
-      return 'A descrição deve ter no máximo $maximoCaracteresDescricao caracteres';
+      return _mensagemDoTetoDaDescricao;
     }
     return null;
   }
+
+  static const String _mensagemDoTetoDaDescricao =
+      'A descrição deve ter no máximo $maximoCaracteresDescricao caracteres';
 
   static String? selecaoObrigatoria(Object? valor) =>
       valor == null ? 'Obrigatório' : null;

@@ -66,6 +66,7 @@ class _EditarTratoCulturalViewState extends State<EditarTratoCulturalView>
       mensagemSemJanela:
           'Nenhum período com talhão e safra abertos ao mesmo tempo. Confira as datas dos talhões e das safras antes de alterar o trato cultural.',
       camposEspecificosPreenchidos: camposDoTratoPreenchidos,
+      motivoDescricaoObrigatoria: motivoDescricaoDoTratoObrigatoria,
       construirCamposEspecificos: construirSeletorTipoTrato,
       construirCamposFinais: construirSeletorInsumos,
       aoSalvar: (dados) => _viewModel.submeterEdicao(

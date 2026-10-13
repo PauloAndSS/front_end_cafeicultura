@@ -38,9 +38,9 @@ Future<ResultadoCadastroPessoa> cadastrarPessoaDoPapel(
 
   await catalogoDePessoas.carregarCategoria(papel, recarregar: true);
 
-  final localizado = catalogoDePessoas.localizarPorDocumento(
+  final localizado = catalogoDePessoas.localizarRecemCadastrada(
     papel,
-    montado.pessoa.documentoFormatado,
+    montado.pessoa,
   );
 
   if (localizado != null) return PessoaLocalizada(localizado);

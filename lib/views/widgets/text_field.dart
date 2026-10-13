@@ -14,6 +14,7 @@ class CustomTextField extends StatefulWidget {
   final bool abreSeletor;
   final bool opcional;
   final bool habilitado;
+  final String? textoDeAjuda;
 
   const CustomTextField({
     super.key,
@@ -28,6 +29,7 @@ class CustomTextField extends StatefulWidget {
     this.abreSeletor = false,
     this.opcional = false,
     this.habilitado = true,
+    this.textoDeAjuda,
   });
 
   @override
@@ -69,6 +71,8 @@ class _CustomTextFieldState extends State<CustomTextField> {
           inputFormatters: widget.inputFormatters,
           decoration: InputDecoration(
             hintText: widget.hintText,
+            helperText: widget.textoDeAjuda,
+            helperMaxLines: 2,
             filled: widget.readOnly || !widget.habilitado,
             suffixIcon: _botaoDeVisibilidade(),
           ),

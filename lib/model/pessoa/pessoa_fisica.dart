@@ -14,6 +14,11 @@ class CPF {
     return CPF._(numerosLimpos);
   }
 
+  static CPF? criarSeInformado(String? valor) {
+    if (valor == null || valor.trim().isEmpty) return null;
+    return CPF.criar(valor);
+  }
+
 static bool isValid(String valor) {
 
     final cpfLimpo = valor.replaceAll(RegExp(r'[^0-9]'), '');
@@ -68,7 +73,7 @@ static bool _todosOsNumerosSaoIguais(String cpf) {
 
 class PessoaFisica extends Pessoa {
   final String nome;
-  final CPF cpf;
+  final CPF? cpf;
 
   PessoaFisica({
     super.id,
@@ -81,7 +86,7 @@ class PessoaFisica extends Pessoa {
     return PessoaFisica(
       id: json['id'],
       nome: json['nome'] ?? '',
-      cpf: CPF.criar(json['cpf'] ?? ''),
+      cpf: CPF.criarSeInformado(json['cpf']?.toString()),
       endereco: json['endereco'] != null ? Endereco.fromJson(json['endereco']) : null,
     );
   }
@@ -92,7 +97,7 @@ class PessoaFisica extends Pessoa {
       if (id != null) 'id': id,
       'tipoPessoa': 'fisica',
       'nome': nome,
-      'cpf': cpf.formatado,
+      if (cpf != null) 'cpf': cpf!.formatado,
       if (endereco != null) 'endereco': endereco!.toJson(),
     };
   }
@@ -101,5 +106,8 @@ class PessoaFisica extends Pessoa {
   String get nomeParaExibicao => nome;
 
   @override
-  String get documentoFormatado => cpf.formatado;
-}
+  String? get documentoFormatado => cpf?.formatado;
+
+  @override
+  String get documentoParaExibicao => cpf?.formatado ?? 'CPF não informado';
+}

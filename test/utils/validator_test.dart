@@ -194,11 +194,11 @@ void main() {
       );
     });
 
-    test('tamanho vem antes das letras', () {
-      expect(
-        Validator.descricaoDeAtividade('12'),
-        'Descreva com pelo menos 3 caracteres',
-      );
+    test('sem piso de caracteres: curta cai na regra das letras', () {
+      expect(Validator.descricaoDeAtividade('12'), mensagemDeLetras);
+    });
+
+    test('teto vem antes das letras', () {
       expect(
         Validator.descricaoDeAtividade('Poda ' * 60),
         'A descrição deve ter no máximo 255 caracteres',
@@ -320,6 +320,26 @@ void main() {
       expect(Telefone.isValid('2733334444'), isTrue);
       expect(Telefone.isValid('0999998888'), isFalse);
       expect(Telefone.isValid('279999888'), isFalse);
+    });
+  });
+
+  group('documento: obrigatorio no usuario, opcional nos papeis', () {
+    test('a variante obrigatoria recusa o vazio', () {
+      expect(Validator.validarCPF(''), 'O CPF é obrigatório');
+      expect(Validator.validarCNPJ('  '), 'O CNPJ é obrigatório');
+    });
+
+    test('a variante opcional aceita o vazio', () {
+      expect(Validator.validarCPFOpcional(null), isNull);
+      expect(Validator.validarCPFOpcional('   '), isNull);
+      expect(Validator.validarCNPJOpcional(''), isNull);
+    });
+
+    test('a variante opcional ainda confere o digito verificador', () {
+      expect(Validator.validarCPFOpcional('111.444.777-34'), 'CPF inválido');
+      expect(Validator.validarCPFOpcional('111.444.777-35'), isNull);
+      expect(Validator.validarCNPJOpcional('11.222.333/0001-82'), 'CNPJ inválido');
+      expect(Validator.validarCNPJOpcional('11.222.333/0001-81'), isNull);
     });
   });
 }

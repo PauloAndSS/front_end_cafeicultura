@@ -19,6 +19,13 @@ mixin CamposTratoCulturalMixin<T extends StatefulWidget> on State<T> {
   bool get camposDoTratoPreenchidos =>
       tipoTratoSelecionado != null || insumosSelecionados.isNotEmpty;
 
+  String? get motivoDescricaoDoTratoObrigatoria {
+    final tipo = tipoTratoSelecionado;
+    if (tipo == null || !tipo.exigeDescricao) return null;
+    return 'Obrigatória quando o tipo de trato é "${tipo.descricao}": '
+        'informe o que foi feito.';
+  }
+
   Widget construirSeletorTipoTrato(BuildContext context) {
     return CampoSuspenso<TipoTrato>(
       rotulo: 'Tipo de trato',

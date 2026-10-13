@@ -289,7 +289,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                     const SizedBox(height: 16),
 
                     CampoSuspenso<String>(
-                      rotulo: 'Espécie',
+                      rotulo: 'Espécie de Café',
                       valor: _especieSelecionada,
                       itens: _opcoesEspecie,
                       rotuloItem: (especie) => especie,

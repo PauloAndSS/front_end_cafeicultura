@@ -16,12 +16,18 @@ class PessoaFactory {
   static Pessoa fromJson(Map<String, dynamic> json) {
     final tipo = json['tipoPessoa']?.toString().toLowerCase();
 
-    if (tipo == 'juridica' || (json['cnpj'] != null && json['cnpj'].toString().isNotEmpty)) {
+    if (tipo == 'juridica') return PessoaJuridica.fromJson(json);
+    if (tipo == 'fisica') return PessoaFisica.fromJson(json);
+
+    if (_preenchido(json['cnpj']) || _preenchido(json['razaoSocial'])) {
       return PessoaJuridica.fromJson(json);
     }
-    
+
     return PessoaFisica.fromJson(json);
   }
+
+  static bool _preenchido(Object? valor) =>
+      valor != null && valor.toString().trim().isNotEmpty;
 
   static TipoPapel obterTipoPapel(PapelPessoa papel) {
     if (papel is Funcionario) return TipoPapel.funcionario;

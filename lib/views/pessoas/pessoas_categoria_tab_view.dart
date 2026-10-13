@@ -90,7 +90,7 @@ class _PessoasCategoriaTabViewState extends State<PessoasCategoriaTabView>
               return PessoaCardWidget(
                 nome: papelPessoa.pessoa.nomeParaExibicao,
                 iniciais: papelPessoa.pessoa.iniciais,
-                subtitulo: papelPessoa.pessoa.documentoFormatado,
+                subtitulo: papelPessoa.pessoa.documentoParaExibicao,
                 onTap: () => _abrirDetalhes(papelPessoa),
               );
             },

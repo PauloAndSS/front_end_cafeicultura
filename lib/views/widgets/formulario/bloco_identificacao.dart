@@ -5,6 +5,7 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 
 class BlocoIdentificacao extends StatelessWidget {
   final bool pessoaFisica;
+  final bool documentoObrigatorio;
 
   final TextEditingController controllerNome;
   final TextEditingController controllerRazaoSocial;
@@ -18,6 +19,7 @@ class BlocoIdentificacao extends StatelessWidget {
   const BlocoIdentificacao({
     super.key,
     required this.pessoaFisica,
+    this.documentoObrigatorio = true,
     required this.controllerNome,
     required this.controllerRazaoSocial,
     required this.controllerCpf,
@@ -40,9 +42,12 @@ class BlocoIdentificacao extends StatelessWidget {
           ),
           CustomTextField(
             label: 'CPF',
+            opcional: !documentoObrigatorio,
             controller: controllerCpf,
             keyboardType: TextInputType.number,
-            validator: Validator.validarCPF,
+            validator: documentoObrigatorio
+                ? Validator.validarCPF
+                : Validator.validarCPFOpcional,
             inputFormatters: [AppMasks.cpf],
             hintText: '000.000.000-00',
           ),
@@ -60,9 +65,12 @@ class BlocoIdentificacao extends StatelessWidget {
         ),
         CustomTextField(
           label: 'CNPJ',
+          opcional: !documentoObrigatorio,
           controller: controllerCnpj,
           keyboardType: TextInputType.number,
-          validator: Validator.validarCNPJ,
+          validator: documentoObrigatorio
+              ? Validator.validarCNPJ
+              : Validator.validarCNPJOpcional,
           inputFormatters: [AppMasks.cnpj],
           hintText: '00.000.000/0000-00',
         ),

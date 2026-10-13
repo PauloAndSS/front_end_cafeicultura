@@ -14,6 +14,11 @@ class CNPJ {
     return CNPJ._(numerosLimpos);
   }
 
+  static CNPJ? criarSeInformado(String? valor) {
+    if (valor == null || valor.trim().isEmpty) return null;
+    return CNPJ.criar(valor);
+  }
+
   static bool isValid(String valor) {
     final cnpjLimpo = valor.replaceAll(RegExp(r'[^0-9]'), '');
 
@@ -65,7 +70,7 @@ class CNPJ {
 }
 
 class PessoaJuridica extends Pessoa {
-  final CNPJ cnpj;
+  final CNPJ? cnpj;
   final String razaoSocial;
   final String? inscricaoEstadual;
 
@@ -81,7 +86,7 @@ class PessoaJuridica extends Pessoa {
     return PessoaJuridica(
       id: json['id'],
       razaoSocial: json['razaoSocial'] ?? '',
-      cnpj: CNPJ.criar(json['cnpj'] ?? ''),
+      cnpj: CNPJ.criarSeInformado(json['cnpj']?.toString()),
       inscricaoEstadual: json['inscrEstadual'] ?? json['inscricaoEstadual'],
       endereco: json['endereco'] != null ? Endereco.fromJson(json['endereco']) : null,
     );
@@ -93,7 +98,7 @@ class PessoaJuridica extends Pessoa {
       if (id != null) 'id': id,
       'tipoPessoa': 'juridica',
       'razaoSocial': razaoSocial,
-      'cnpj': cnpj.formatado,
+      if (cnpj != null) 'cnpj': cnpj!.formatado,
       if (inscricaoEstadual != null) 'inscrEstadual': inscricaoEstadual,
       if (endereco != null) 'endereco': endereco!.toJson(),
     };
@@ -103,5 +108,8 @@ class PessoaJuridica extends Pessoa {
   String get nomeParaExibicao => razaoSocial;
 
   @override
-  String get documentoFormatado => cnpj.formatado;
-}
+  String? get documentoFormatado => cnpj?.formatado;
+
+  @override
+  String get documentoParaExibicao => cnpj?.formatado ?? 'CNPJ não informado';
+}

@@ -86,9 +86,9 @@ abstract class Usuario {
 
   String get identificadorPrincipal {
     if (pessoa is PessoaFisica) {
-      return (pessoa as PessoaFisica).cpf.formatado;
+      return (pessoa as PessoaFisica).cpf?.formatado ?? email.endereco;
     } else if (pessoa is PessoaJuridica) {
-      return (pessoa as PessoaJuridica).cnpj.formatado;
+      return (pessoa as PessoaJuridica).cnpj?.formatado ?? email.endereco;
     }
     return email.endereco;
   }

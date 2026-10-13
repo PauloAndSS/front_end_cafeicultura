@@ -140,11 +140,11 @@ class _AtualizarDadosViewState extends State<AtualizarDadosView> {
         if (_isPessoaFisica) {
           final pf = dados.pessoa as PessoaFisica;
           _nomeController.text = pf.nome;
-          _cpfController.text = AppMasks.cpf.maskText(pf.cpf.numero);
+          _cpfController.text = AppMasks.cpf.maskText(pf.cpf?.numero ?? '');
         } else {
           final pj = dados.pessoa as PessoaJuridica;
           _nomeController.text = pj.razaoSocial;
-          _cnpjController.text = AppMasks.cnpj.maskText(pj.cnpj.numero);
+          _cnpjController.text = AppMasks.cnpj.maskText(pj.cnpj?.numero ?? '');
           _inscricaoEstadualController.text = pj.inscricaoEstadual ?? '';
         }
 

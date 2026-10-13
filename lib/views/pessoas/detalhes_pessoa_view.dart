@@ -245,7 +245,7 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
 
                           _buildInfoRow(
                             pessoaBase is PessoaJuridica ? 'CNPJ :' : 'CPF :',
-                            pessoaBase.documentoFormatado,
+                            pessoaBase.documentoParaExibicao,
                           ),
 
                           if (pessoaBase is PessoaJuridica &&

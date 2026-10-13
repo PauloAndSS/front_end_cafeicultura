@@ -150,7 +150,7 @@ class _SelecionarResponsaveisSheetState
       activeColor: AppCores.acao,
       title: Text(pessoa.nomeParaExibicao),
       subtitle: Text(
-        pessoa.documentoFormatado,
+        pessoa.documentoParaExibicao,
         style: const TextStyle(fontSize: 12, color: AppCores.textoSecundario),
       ),
       onChanged: (marcado) => _alternar(id, pessoa, marcado == true),

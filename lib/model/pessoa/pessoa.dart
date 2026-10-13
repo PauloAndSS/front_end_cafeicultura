@@ -12,7 +12,8 @@ abstract class Pessoa {
 
   Map<String, dynamic> toJson();
   String get nomeParaExibicao;
-  String get documentoFormatado;
+  String? get documentoFormatado;
+  String get documentoParaExibicao;
 
   String get iniciais {
     final palavras = nomeParaExibicao

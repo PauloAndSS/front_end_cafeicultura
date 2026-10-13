@@ -67,6 +67,8 @@ class FormularioAtividadeView extends StatefulWidget {
 
   final bool camposEspecificosPreenchidos;
 
+  final String? motivoDescricaoObrigatoria;
+
   final Future<bool> Function(DadosFormularioAtividade dados) aoSalvar;
 
   const FormularioAtividadeView({
@@ -89,6 +91,7 @@ class FormularioAtividadeView extends StatefulWidget {
     this.construirCamposFinais,
     this.validarCamposEspecificos,
     this.camposEspecificosPreenchidos = false,
+    this.motivoDescricaoObrigatoria,
   });
 
   @override
@@ -187,6 +190,8 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
 
     _semeouEscopo = true;
   }
+
+  bool get _descricaoObrigatoria => widget.motivoDescricaoObrigatoria != null;
 
   void _aoDigitarDescricao() {
     final preenchida = _descricaoController.text.trim().isNotEmpty;
@@ -807,10 +812,13 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
 
             CustomTextField(
               label: 'Descrição',
-              opcional: true,
+              opcional: !_descricaoObrigatoria,
               controller: _descricaoController,
               hintText: 'O que foi feito no talhão',
-              validator: Validator.descricaoDeAtividade,
+              textoDeAjuda: widget.motivoDescricaoObrigatoria,
+              validator: _descricaoObrigatoria
+                  ? Validator.descricaoDeAtividadeObrigatoria
+                  : Validator.descricaoDeAtividade,
             ),
 
             const Divider(),

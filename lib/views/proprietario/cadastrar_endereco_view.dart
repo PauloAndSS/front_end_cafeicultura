@@ -145,7 +145,7 @@ class CadastrarEnderecoViewState extends State<CadastrarEnderecoView> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     CustomButton(
-                      text: "Finalizar Cadastro",
+                      text: "Cadastrar endereço",
                       onPressed: _finalizarCadastroComEndereco,
                     ),
 

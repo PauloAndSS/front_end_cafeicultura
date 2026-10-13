@@ -12,6 +12,10 @@ class TipoTrato {
     return TipoTrato(json['descricao'] ?? '');
   }
 
+  static const _tipoQueExigeDescricao = 'Outros';
+
+  bool get exigeDescricao => descricao.trim() == _tipoQueExigeDescricao;
+
   @override
   bool operator ==(Object other) =>
       other is TipoTrato && other.descricao == descricao;

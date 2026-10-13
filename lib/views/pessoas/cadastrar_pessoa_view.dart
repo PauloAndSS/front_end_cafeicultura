@@ -81,13 +81,13 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
     if (_isPessoaFisica) {
       return PessoaFisica(
         nome: _nomeController.text.trim(),
-        cpf: CPF.criar(_cpfController.text),
+        cpf: CPF.criarSeInformado(_cpfController.text),
       );
     }
 
     return PessoaJuridica(
       razaoSocial: _razaoSocialController.text.trim(),
-      cnpj: CNPJ.criar(_cnpjController.text),
+      cnpj: CNPJ.criarSeInformado(_cnpjController.text),
       inscricaoEstadual: _inscricaoEstadualController.text.isNotEmpty
           ? _inscricaoEstadualController.text.trim()
           : null,
@@ -181,6 +181,7 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
 
                     BlocoIdentificacao(
                       pessoaFisica: _isPessoaFisica,
+                      documentoObrigatorio: false,
                       controllerNome: _nomeController,
                       controllerRazaoSocial: _razaoSocialController,
                       controllerCpf: _cpfController,

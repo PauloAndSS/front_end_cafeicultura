@@ -45,6 +45,7 @@ class _CadastrarTratoCulturalViewState extends State<CadastrarTratoCulturalView>
       mensagemSemJanela:
           'Nenhum período com talhão e safra abertos ao mesmo tempo. Confira as datas dos talhões e das safras antes de lançar um trato cultural.',
       camposEspecificosPreenchidos: camposDoTratoPreenchidos,
+      motivoDescricaoObrigatoria: motivoDescricaoDoTratoObrigatoria,
       construirCamposEspecificos: construirSeletorTipoTrato,
       construirCamposFinais: construirSeletorInsumos,
       aoSalvar: (dados) => _viewModel.submeterFormulario(
