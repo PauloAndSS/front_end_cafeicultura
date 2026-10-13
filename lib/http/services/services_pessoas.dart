@@ -30,8 +30,6 @@ class ServicesPessoa extends BaseService {
         extrairDadosPaginados(resposta.bodyBytes),
         PapelPessoaFactory.fromJson,
       ),
-      // Proprietário sem nenhuma pessoa cadastrada: 404 com corpo JSON.
-      // `totalPaginas` igual à página pedida encerra a rolagem de quem consome.
       aoListaVazia: () => ResultadoPaginadoDTO<PapelPessoa>(
         data: const [],
         total: 0,
