@@ -14,6 +14,7 @@ import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/cadastrar_atividade_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/corpo_com_estado.dart';
@@ -390,6 +391,34 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
     setState(() => _responsaveisSelecionados = escolhidos);
   }
 
+  Future<bool> _garantirResponsavel() async {
+    if (_responsaveisSelecionados.isNotEmpty) return true;
+
+    final usuario = context.read<SessionViewModel>().usuarioComoResponsavel;
+
+    if (usuario == null) return true;
+
+    final assumir = await confirmarAcao(
+      context,
+      titulo: 'Nenhum responsável selecionado',
+      mensagem:
+          'Ninguém mais vai conduzir esta atividade? Ela será registrada com você, ${usuario.nomeParaExibicao}, como responsável.',
+      rotuloCancelar: 'Escolher responsáveis',
+      rotuloConfirmar: 'Ser o responsável',
+      corConfirmar: AppCores.acao,
+    );
+
+    if (!mounted) return false;
+
+    if (!assumir) {
+      await _abrirSelecaoResponsaveis();
+      return false;
+    }
+
+    setState(() => _responsaveisSelecionados = [usuario]);
+    return true;
+  }
+
   Future<void> _abrirCadastroTransacao() async {
     final idPropriedade =
         context.read<PropriedadesUsuarioViewModel>().idPropriedadeSelecionada;
@@ -479,6 +508,8 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
       );
       return;
     }
+
+    if (!await _garantirResponsavel() || !mounted) return;
 
     FocusScope.of(context).unfocus();
 
@@ -829,7 +860,9 @@ class _FormularioAtividadeViewState extends State<FormularioAtividadeView> {
               icone: Icons.group_outlined,
               rotuloVazio: 'Selecionar responsáveis',
               selecionados: _responsaveisSelecionados,
-              rotuloItem: (pessoa) => pessoa.nomeParaExibicao,
+              rotuloItem: (pessoa) => pessoa.rotuloComoResponsavel(
+                context.read<SessionViewModel>().idUsuario,
+              ),
               rotuloContagem: _responsaveisSelecionados.contagem,
               aoAbrir: _abrirSelecaoResponsaveis,
               aoRemover: (pessoa) => setState(() {

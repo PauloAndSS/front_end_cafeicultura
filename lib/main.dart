@@ -36,11 +36,7 @@ void main() async {
       isWeb: kIsWeb,
       platform: defaultTargetPlatform,
     );
-    final estadoDaChave =
-        Ambiente.chaveDaApi == null ? 'AUSENTE no .env' : 'presente';
-
     debugPrint('[API] alvo: ${Ambiente.alvoEfetivo.name} | base: $urlBase');
-    debugPrint('[API] ${BaseService.headerDaChaveDaApi}: $estadoDaChave');
   }
 
   final statusDeConexao = StatusDeConexao();

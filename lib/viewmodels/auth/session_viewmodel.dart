@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_auth.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionViewModel extends ChangeNotifier {
@@ -13,6 +15,12 @@ class SessionViewModel extends ChangeNotifier {
   String get nomeUsuario => _nomeUsuario;
   bool get isInitializing => _isInitializing;
   int? get idUsuario => _idUsuario;
+
+  Pessoa? get usuarioComoResponsavel {
+    if (_idUsuario == null) return null;
+
+    return PessoaFisica(id: _idUsuario, nome: _nomeUsuario, cpf: null);
+  }
 
   SessionViewModel() {
     _verificarSessaoSalva();

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/atividades/base/detalhes_atividade_viewmodel.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/detalhes_despesa_dialog.dart';
 import 'package:frond_end_cafeicultura_mobile/views/atividades/widgets/secao_lista_atividade.dart';
@@ -67,6 +68,8 @@ class SecaoResponsaveisAtividade<T extends EventoAgricola>
 
     final habilitado = podeEditar && viewModel.podeAlterarResponsaveis;
 
+    final idUsuario = context.read<SessionViewModel>().idUsuario;
+
     return SecaoListaAtividade<Pessoa>(
       titulo: 'Responsáveis',
       opcional: opcional,
@@ -75,7 +78,7 @@ class SecaoResponsaveisAtividade<T extends EventoAgricola>
       textoVazio: 'Nenhum responsável',
       rotuloContagem: responsaveis.contagem,
       itens: responsaveis,
-      rotuloItem: (pessoa) => pessoa.nomeParaExibicao,
+      rotuloItem: (pessoa) => pessoa.rotuloComoResponsavel(idUsuario),
       aoAbrir: habilitado ? () => _editar(context) : null,
       aoRemover: (pessoa) => _remover(context, pessoa),
     );

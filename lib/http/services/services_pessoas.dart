@@ -53,13 +53,6 @@ abstract class ServicePapelPessoa<T extends PapelPessoa> extends BaseService {
       '${tipoPapel.titulo} possui atividades e/ou despesas cadastradas '
       'e não pode ser excluído.';
 
-  /// Lista completa da própria rota do papel (`/meeiros`, `/clientes`, ...).
-  ///
-  /// A rota **não pagina**: devolve `{ dados: [...] }` com tudo o que existe.
-  ///
-  /// Desserializa com `montar`, e não com `PapelPessoaFactory`: a rota já diz
-  /// qual é o papel, e o payload dela **não traz o campo `papel`** — a factory
-  /// lançaria em todo item.
   Future<List<T>> listar() {
     return executarRequisicao(
       requisicao: RequisicaoHttp.get(url),

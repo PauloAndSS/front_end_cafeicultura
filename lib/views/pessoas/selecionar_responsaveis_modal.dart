@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/auth/session_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_pessoas_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/views/pessoas/widgets/lista_papel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/abas_padrao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/modal_selecao.dart';
+import 'package:provider/provider.dart';
 
 Future<List<Pessoa>?> mostrarSelecaoResponsaveis({
   required BuildContext context,
@@ -48,6 +50,16 @@ class _SelecionarResponsaveisSheetState
   final Map<int, Pessoa> _selecionados = {};
 
   String _termoBusca = '';
+
+  late final Pessoa? _usuario =
+      context.read<SessionViewModel>().usuarioComoResponsavel;
+
+  bool get _exibirUsuario {
+    final usuario = _usuario;
+    if (usuario == null) return false;
+
+    return usuario.nomeParaExibicao.toLowerCase().contains(_termoBusca);
+  }
 
   @override
   void initState() {
@@ -110,6 +122,7 @@ class _SelecionarResponsaveisSheetState
                 controller: _buscaController,
                 dica: 'Buscar por nome',
               ),
+              if (_exibirUsuario) _construirLinhaDoUsuario(_usuario!),
               BarraDeAbas(
                 corDeFundo: AppCores.superficie,
                 rolavel: true,
@@ -141,6 +154,30 @@ class _SelecionarResponsaveisSheetState
           ),
         ),
       ),
+    );
+  }
+
+  Widget _construirLinhaDoUsuario(Pessoa usuario) {
+    return CheckboxListTile(
+      value: _selecionados.containsKey(usuario.id),
+      activeColor: AppCores.acao,
+      title: Text.rich(
+        TextSpan(
+          text: usuario.nomeParaExibicao,
+          children: const [
+            TextSpan(
+              text: ' (você)',
+              style: TextStyle(color: AppCores.textoSecundario),
+            ),
+          ],
+        ),
+      ),
+      subtitle: const Text(
+        'Proprietário',
+        style: TextStyle(fontSize: 12, color: AppCores.textoSecundario),
+      ),
+      onChanged: (marcado) =>
+          _alternar(usuario.id!, usuario, marcado == true),
     );
   }
 

@@ -15,6 +15,12 @@ abstract class Pessoa {
   String? get documentoFormatado;
   String get documentoParaExibicao;
 
+  bool ehUsuario(int? idUsuario) => id != null && id == idUsuario;
+
+  String rotuloComoResponsavel(int? idUsuario) => ehUsuario(idUsuario)
+      ? '$nomeParaExibicao (você)'
+      : nomeParaExibicao;
+
   String get iniciais {
     final palavras = nomeParaExibicao
         .split(RegExp(r'\s+'))
