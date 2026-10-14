@@ -87,8 +87,8 @@ class _CalendarioAtividadesState<T extends Evento>
     final escolhido = await selecionarMesAno(
       context: context,
       inicial: _diaFocado,
-      primeiroAno: _primeiroDia,
-      ultimoAno: _ultimoDia,
+      minimo: _primeiroDia,
+      maximo: _ultimoDia,
     );
 
     if (escolhido == null || !mounted) return;

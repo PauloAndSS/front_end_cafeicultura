@@ -7,10 +7,6 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
 const semFornecedorMensagem =
     'Nenhum fornecedor cadastrado. A compra precisa de um fornecedor.';
 
-String fornecedorSalvoSemLocalizar(String motivo) =>
-    'Fornecedor cadastrado, mas a lista não pôde ser atualizada: $motivo '
-    'Toque no campo Fornecedor para tentar de novo.';
-
 Future<ResultadoCadastroPessoa> cadastrarFornecedor(
   BuildContext context,
   CarregarPessoasMixin catalogoDePessoas,

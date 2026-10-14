@@ -5,11 +5,13 @@ import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 class SeletorDataEmBloco extends StatelessWidget {
   final DateTime data;
   final VoidCallback aoTocar;
+  final bool apenasMes;
 
   const SeletorDataEmBloco({
     super.key,
     required this.data,
     required this.aoTocar,
+    this.apenasMes = false,
   });
 
   @override
@@ -31,7 +33,7 @@ class SeletorDataEmBloco extends StatelessWidget {
               color: AppCores.acao,
             ),
             const SizedBox(width: 10),
-            Text(formatarDataBr(data)),
+            Text(apenasMes ? formatarMesAnoExtenso(data) : formatarDataBr(data)),
           ],
         ),
       ),

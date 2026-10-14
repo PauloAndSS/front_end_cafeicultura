@@ -28,6 +28,8 @@ import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_data.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/calendario/seletor_mes_ano.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/blocos_detalhe.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_detalhe.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/cartao_entidade.dart';
@@ -205,11 +207,12 @@ class _DetalhesTalhaoViewState extends State<DetalhesTalhaoView>
   }
 
   Future<void> _alterarDataInicio() async {
-    final novaData = await selecionarData(
+    final novaData = await selecionarMesAno(
       context: context,
-      ajuda: 'Selecione a nova data de início do talhão',
+      titulo: 'Novo mês de início do talhão',
       inicial: _talhao.dataInicio,
-      maxima: _talhao.dataFim,
+      minimo: menorData(DateTime(2000), _talhao.dataInicio)!,
+      maximo: _talhao.dataFim ?? hoje(),
     );
 
     if (novaData == null || !mounted) return;

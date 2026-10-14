@@ -44,33 +44,13 @@ mixin CarregarPessoasMixin on NotificaSeVivoMixin {
         categoriasDeResponsavel.expand((papel) => _estadoDe(papel).pessoas),
       );
 
-  PapelPessoa? localizarRecemCadastrada(TipoPapel papel, Pessoa cadastrada) {
-    final documento = cadastrada.documentoFormatado;
+  void incluirCadastrada(TipoPapel papel, PapelPessoa cadastrada) {
+    final pessoas = _estadoDe(papel).pessoas;
 
-    final candidatos = _estadoDe(papel).pessoas.where(
-          (candidato) => documento != null
-              ? candidato.pessoa.documentoFormatado == documento
-              : _mesmaPessoaSemDocumento(candidato.pessoa, cadastrada),
-        );
+    if (pessoas.any((existente) => existente.id == cadastrada.id)) return;
 
-    return _maisRecente(candidatos);
-  }
-
-  bool _mesmaPessoaSemDocumento(Pessoa candidata, Pessoa cadastrada) =>
-      candidata.documentoFormatado == null &&
-      candidata.nomeParaExibicao.trim().toLowerCase() ==
-          cadastrada.nomeParaExibicao.trim().toLowerCase();
-
-  PapelPessoa? _maisRecente(Iterable<PapelPessoa> candidatos) {
-    PapelPessoa? maisRecente;
-
-    for (final candidato in candidatos) {
-      if (maisRecente == null || candidato.id! > maisRecente.id!) {
-        maisRecente = candidato;
-      }
-    }
-
-    return maisRecente;
+    pessoas.add(cadastrada);
+    notificarSeVivo();
   }
 
   Future<void> carregarCategoria(TipoPapel papel, {bool recarregar = false}) {

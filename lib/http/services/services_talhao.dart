@@ -1,9 +1,7 @@
-import 'dart:convert';
-
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/talhao.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
-import 'package:http/http.dart' as http;
+import 'package:frond_end_cafeicultura_mobile/http/requisicao_http.dart';
 
 class ServicesTalhao extends BaseService {
   @override
@@ -13,11 +11,7 @@ class ServicesTalhao extends BaseService {
 
   Future<bool> cadastrar(Talhao talhao) {
     return executarRequisicao(
-      enviar: () => http.post(
-        url,
-        headers: defaultHeaders,
-        body: jsonEncode(talhao.toJson()),
-      ),
+      requisicao: RequisicaoHttp.post(url, corpo: talhao.toJson()),
       aoSucesso: (_) => true,
       errosPorStatus: {
         409: 'Erro ao cadastrar talhão. Talhão com esse mesmo nome já foi cadastrado e está ativo.',
@@ -32,12 +26,11 @@ class ServicesTalhao extends BaseService {
     int pagina = 1,
   }) {
     return executarRequisicao(
-      enviar: () => http.get(
+      requisicao: RequisicaoHttp.get(
         rota('propriedade/todos/$idPropriedade', {
           'pagina': '$pagina',
           'limite': '$limitePorPagina',
         }),
-        headers: defaultHeaders,
       ),
       aoSucesso: (resposta) =>
           extrairListaNomeada(resposta.bodyBytes, 'talhoes', Talhao.fromJson),
@@ -49,7 +42,7 @@ class ServicesTalhao extends BaseService {
 
   Future<List<Variedade>> buscarVariedades() {
     return executarRequisicao(
-      enviar: () => http.get(rota('variedades'), headers: defaultHeaders),
+      requisicao: RequisicaoHttp.get(rota('variedades')),
       aoSucesso: (resposta) =>
           extrairLista(resposta.bodyBytes, Variedade.fromJson),
       aoListaVazia: () => const [],
@@ -60,10 +53,9 @@ class ServicesTalhao extends BaseService {
 
   Future<bool> encerrar(int idTalhao, DateTime dataFim) {
     return executarRequisicao(
-      enviar: () => http.patch(
+      requisicao: RequisicaoHttp.patch(
         rota('$idTalhao/encerrar'),
-        headers: defaultHeaders,
-        body: jsonEncode({'dataFim': dataParaJson(dataFim)}),
+        corpo: {'dataFim': dataParaJson(dataFim)},
       ),
       aoSucesso: (_) => true,
       erroMsg: 'Erro ao encerrar talhão.',
@@ -73,10 +65,9 @@ class ServicesTalhao extends BaseService {
 
   Future<bool> editarDataInicio(int idTalhao, DateTime dataInicio) {
     return executarRequisicao(
-      enviar: () => http.patch(
+      requisicao: RequisicaoHttp.patch(
         rota('$idTalhao/data-inicio'),
-        headers: defaultHeaders,
-        body: jsonEncode({'dataInicio': dataParaJson(dataInicio)}),
+        corpo: {'dataInicio': dataParaJson(dataInicio)},
       ),
       aoSucesso: (_) => true,
       erroMsg: 'Erro ao alterar a data de início do talhão.',
@@ -86,7 +77,7 @@ class ServicesTalhao extends BaseService {
 
   Future<bool> excluir(int idTalhao) {
     return executarRequisicao(
-      enviar: () => http.delete(rota('$idTalhao'), headers: defaultHeaders),
+      requisicao: RequisicaoHttp.delete(rota('$idTalhao')),
       aoSucesso: (_) => true,
       errosPorStatus: {
         403: 'Talhão não pode ser excluído pois há atividades cadastradas nele.',

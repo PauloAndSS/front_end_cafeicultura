@@ -119,13 +119,13 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
 
     final papel = _montarPapel(_montarPessoa());
 
-    final sucesso = await _viewModel.cadastrarPessoa(papel);
+    final cadastrado = await _viewModel.cadastrarPessoa(papel);
 
     if (!mounted) return;
 
-    if (sucesso) {
+    if (cadastrado != null) {
       mostrarSucesso(context, '${_papel.titulo} cadastrado com sucesso!');
-      Navigator.pop(context, papel);
+      Navigator.pop(context, cadastrado);
     } else if (_viewModel.mensagemErro != null) {
       mostrarErro(context, _viewModel.mensagemErro!);
     }
@@ -202,13 +202,15 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                       const Divider(height: 32),
 
                       CustomTextField(
-                        label: 'CTPS (Opcional)',
+                        label: 'CTPS',
+                        opcional: true,
                         controller: _ctpsController,
                         hintText: 'Número da carteira de trabalho',
                         keyboardType: TextInputType.number,
                       ),
                       CustomTextField(
-                        label: 'Salário Base (R\$) (Opcional)',
+                        label: 'Salário Base (R\$)',
+                        opcional: true,
                         controller: _salarioController,
                         hintText: '0.00',
                         keyboardType: const TextInputType.numberWithOptions(

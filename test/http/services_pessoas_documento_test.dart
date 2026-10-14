@@ -12,7 +12,7 @@ import 'package:http/http.dart' as http;
 import 'mock_http.dart';
 
 Future<Map<String, dynamic>> corpoEnviadoAo(
-  Future<bool> Function() cadastrar,
+  Future<int?> Function() cadastrar,
 ) async {
   late http.Request enviada;
 
@@ -92,6 +92,49 @@ void main() {
       expect(clientes[2].pessoa, isA<PessoaJuridica>());
       expect(clientes[2].pessoa.nomeParaExibicao, 'Sem CNPJ Ltda');
       expect(clientes[2].pessoa.documentoParaExibicao, 'CNPJ não informado');
+    });
+  });
+
+  group('cadastrar papel devolve o id do 201', () {
+    Fornecedor fornecedor() =>
+        Fornecedor(pessoa: PessoaFisica(nome: 'Joao', cpf: null));
+
+    test('le o id numerico do corpo', () async {
+      final id = await comRespostaFixa(
+        () => ServicesFornecedor().cadastrar(fornecedor()),
+        respostaJson({'mensagem': 'ok', 'id': 42}, 201),
+      );
+
+      expect(id, 42);
+    });
+
+    test('le o id dentro do envelope data', () async {
+      final id = await comRespostaFixa(
+        () => ServicesFornecedor().cadastrar(fornecedor()),
+        respostaJson({
+          'data': {'id': '7'},
+        }, 201),
+      );
+
+      expect(id, 7);
+    });
+
+    test('sem id no corpo devolve null', () async {
+      final id = await comRespostaFixa(
+        () => ServicesFornecedor().cadastrar(fornecedor()),
+        respostaJson({'mensagem': 'ok'}, 201),
+      );
+
+      expect(id, isNull);
+    });
+
+    test('sem corpo devolve null', () async {
+      final id = await comRespostaFixa(
+        () => ServicesFornecedor().cadastrar(fornecedor()),
+        respostaSemCorpo(201),
+      );
+
+      expect(id, isNull);
     });
   });
 }

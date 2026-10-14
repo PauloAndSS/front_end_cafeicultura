@@ -1,8 +1,6 @@
-import 'dart:convert';
-
 import 'package:frond_end_cafeicultura_mobile/http/dtos/auth_dto.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
-import 'package:http/http.dart' as http;
+import 'package:frond_end_cafeicultura_mobile/http/requisicao_http.dart';
 
 class ServicesAuth extends BaseService {
   @override
@@ -13,11 +11,7 @@ class ServicesAuth extends BaseService {
 
   Future<LoginResponseDTO> autenticar(LoginRequestDTO dto) {
     return executarRequisicao(
-      enviar: () => http.post(
-        rota('autenticar'),
-        headers: defaultHeaders,
-        body: jsonEncode(dto.toJson()),
-      ),
+      requisicao: RequisicaoHttp.post(rota('autenticar'), corpo: dto.toJson()),
       aoSucesso: (resposta) {
         BaseService.atualizarCookie(resposta);
 
@@ -30,7 +24,7 @@ class ServicesAuth extends BaseService {
 
   Future<void> sair() {
     return executarRequisicao<void>(
-      enviar: () => http.post(rota('logout'), headers: defaultHeaders),
+      requisicao: RequisicaoHttp.post(rota('logout')),
       aoSucesso: (_) => BaseService.sessionCookie = null,
       erroMsg: 'Erro ao sair. Verifique sua conexão.',
       acao: 'sair',

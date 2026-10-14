@@ -11,7 +11,9 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/text_field.dart';
 import 'package:provider/provider.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_data.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/calendario/seletor_mes_ano.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_de_data.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campo_suspenso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/campos_formulario.dart';
@@ -20,6 +22,8 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart'
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
 import 'package:frond_end_cafeicultura_mobile/views/talhao/widgets/selecionar_variedades_modal.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_multiplo.dart';
+
+final _pisoDoTalhao = DateTime(2000);
 
 class CadastrarTalhaoView extends StatefulWidget {
   const CadastrarTalhaoView({super.key});
@@ -61,17 +65,18 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
   }
 
   Future<void> _selecionarData(BuildContext context) async {
-    final dataEscolhida = await selecionarData(
+    final mesEscolhido = await selecionarMesAno(
       context: context,
-      ajuda: 'Selecione a data de início do talhão',
-      inicial: _dataInicio,
+      titulo: 'Mês de início do talhão',
+      inicial: _dataInicio ?? hoje(),
+      minimo: _pisoDoTalhao,
+      maximo: hoje(),
     );
 
-    if (dataEscolhida != null && dataEscolhida != _dataInicio) {
+    if (mesEscolhido != null && mesEscolhido != _dataInicio) {
       setState(() {
-        _dataInicio = dataEscolhida;
-        _dataController.text =
-            '${dataEscolhida.day.toString().padLeft(2, '0')}/${dataEscolhida.month.toString().padLeft(2, '0')}/${dataEscolhida.year}';
+        _dataInicio = mesEscolhido;
+        _dataController.text = formatarMesAnoExtenso(mesEscolhido);
       });
     }
   }
@@ -79,7 +84,7 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
   Future<void> _salvar() async {
     if (validarRevelandoCampoInvalido(_formKey)) {
       if (_dataInicio == null) {
-        mostrarAviso(context, 'Selecione a data de início');
+        mostrarAviso(context, 'Selecione o mês de início');
         return;
       }
 
@@ -280,7 +285,8 @@ class _CadastrarTalhaoViewState extends State<CadastrarTalhaoView> {
                     ),
 
                     CampoDeData(
-                      label: 'Data de Início',
+                      label: 'Mês de Início',
+                      hintText: 'Selecione o mês',
                       controller: _dataController,
                       aoTocar: () => _selecionarData(context),
                     ),

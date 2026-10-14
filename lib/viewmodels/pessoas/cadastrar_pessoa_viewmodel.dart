@@ -15,13 +15,13 @@ class CadastrarPessoaViewModel extends ChangeNotifier
       {ServicePapelPessoa<PapelPessoa>? service})
       : _service = service ?? servicoDoPapel(papel);
 
-  Future<bool> cadastrarPessoa(PapelPessoa objetoPapel) {
+  Future<PapelPessoa?> cadastrarPessoa(PapelPessoa objetoPapel) {
     return cargaPrincipal.executar(
       chamada: () async {
-        await _service.cadastrar(objetoPapel);
-        return true;
+        final id = await _service.cadastrar(objetoPapel);
+        return id == null ? objetoPapel : objetoPapel.comId(id);
       },
-      aoFalhar: () => false,
+      aoFalhar: () => null,
     );
   }
 }

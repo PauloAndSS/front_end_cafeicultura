@@ -108,7 +108,7 @@ class Talhao {
       especie.isEmpty ? 'Não informada' : capitalizar(especie);
 
   String get dataInicioFormatada {
-    return formatarDataBr(dataInicio);
+    return formatarMesAnoExtenso(dataInicio);
   }
 
   String? get dataFimFormatada {

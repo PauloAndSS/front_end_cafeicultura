@@ -14,4 +14,7 @@ class Meeiro extends PapelPessoa {
       pessoa: PessoaFactory.fromJson(json),
     );
   }
+
+  @override
+  Meeiro comId(int id) => Meeiro(id: id, pessoa: pessoa);
 }

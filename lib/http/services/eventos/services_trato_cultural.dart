@@ -1,8 +1,6 @@
-import 'dart:convert';
-
 import 'package:frond_end_cafeicultura_mobile/http/services/eventos/services_evento_agricola_base.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/tratos_culturais/trato_cultural.dart';
-import 'package:http/http.dart' as http;
+import 'package:frond_end_cafeicultura_mobile/http/requisicao_http.dart';
 
 class ServicesTratoCultural extends ServicesEventoAgricolaBase<TratoCultural> {
   @override
@@ -23,7 +21,7 @@ class ServicesTratoCultural extends ServicesEventoAgricolaBase<TratoCultural> {
 
   Future<List<TipoTrato>> buscarTiposTrato() {
     return executarRequisicao(
-      enviar: () => http.get(rota('tipos'), headers: defaultHeaders),
+      requisicao: RequisicaoHttp.get(rota('tipos')),
       aoSucesso: (resposta) =>
           extrairLista(resposta.bodyBytes, TipoTrato.fromJson),
       erroMsg: 'Erro ao buscar tipos de $rotulo.',
@@ -43,10 +41,9 @@ class ServicesTratoCultural extends ServicesEventoAgricolaBase<TratoCultural> {
 
   Future<bool> removerInsumos(int idTrato, List<int> idsInsumos) {
     return executarRequisicao(
-      enviar: () => http.delete(
+      requisicao: RequisicaoHttp.delete(
         rota('$idTrato/insumos'),
-        headers: defaultHeaders,
-        body: jsonEncode({'idInsumos': idsInsumos}),
+        corpo: {'idInsumos': idsInsumos},
       ),
       aoSucesso: (_) => true,
       erroMsg: 'Erro ao remover os insumos do $rotulo.',

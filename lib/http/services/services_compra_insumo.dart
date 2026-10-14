@@ -1,8 +1,6 @@
-import 'dart:convert';
-
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/financeiro/compra_insumo.dart';
-import 'package:http/http.dart' as http;
+import 'package:frond_end_cafeicultura_mobile/http/requisicao_http.dart';
 
 class ServicesCompraInsumo extends BaseService {
   @override
@@ -10,11 +8,7 @@ class ServicesCompraInsumo extends BaseService {
 
   Future<bool> cadastrar(CompraDeInsumos compra) {
     return executarRequisicao(
-      enviar: () => http.post(
-        url,
-        headers: defaultHeaders,
-        body: jsonEncode(compra.toJson()),
-      ),
+      requisicao: RequisicaoHttp.post(url, corpo: compra.toJson()),
       aoSucesso: (_) => true,
       resultadosPorStatus: {if (compra.conflitaPorDescricao) 409: () => false},
       erroMsg: 'Erro ao registrar a compra do insumo.',

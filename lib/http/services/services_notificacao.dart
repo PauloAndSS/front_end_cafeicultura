@@ -1,8 +1,6 @@
-import 'dart:convert';
-
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/notificacoes/notificacao.dart';
-import 'package:http/http.dart' as http;
+import 'package:frond_end_cafeicultura_mobile/http/requisicao_http.dart';
 
 class ServicesNotificacao extends BaseService {
   @override
@@ -10,10 +8,7 @@ class ServicesNotificacao extends BaseService {
 
   Future<List<Notificacao>> buscarDaPropriedade(int idPropriedade) {
     return executarRequisicao(
-      enviar: () => http.get(
-        rota('propriedades/$idPropriedade'),
-        headers: defaultHeaders,
-      ),
+      requisicao: RequisicaoHttp.get(rota('propriedades/$idPropriedade')),
       aoSucesso: (resposta) =>
           extrairLista(resposta.bodyBytes, Notificacao.fromJson),
       aoListaVazia: () => const [],
@@ -24,9 +19,8 @@ class ServicesNotificacao extends BaseService {
 
   Future<List<Notificacao>> buscarNaoLidasDaPropriedade(int idPropriedade) {
     return executarRequisicao(
-      enviar: () => http.get(
+      requisicao: RequisicaoHttp.get(
         rota('nao-lidas/propriedades/$idPropriedade'),
-        headers: defaultHeaders,
       ),
       aoSucesso: (resposta) =>
           extrairLista(resposta.bodyBytes, Notificacao.fromJson),
@@ -38,10 +32,9 @@ class ServicesNotificacao extends BaseService {
 
   Future<bool> marcarComoLidas(List<int> ids) {
     return executarRequisicao(
-      enviar: () => http.patch(
+      requisicao: RequisicaoHttp.patch(
         rota('lida'),
-        headers: defaultHeaders,
-        body: jsonEncode({'idsNotificacoes': ids}),
+        corpo: {'idsNotificacoes': ids},
       ),
       aoSucesso: (_) => true,
       erroMsg: 'Erro ao marcar as notificações como lidas.',

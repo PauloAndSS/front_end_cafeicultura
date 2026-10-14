@@ -1,5 +1,3 @@
-import 'dart:convert';
-
 import 'package:frond_end_cafeicultura_mobile/http/dtos/paginacao_dto.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/cliente.dart';
@@ -10,7 +8,7 @@ import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pe
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/prestador.dart';
-import 'package:http/http.dart' as http;
+import 'package:frond_end_cafeicultura_mobile/http/requisicao_http.dart';
 
 
 class ServicesPessoa extends BaseService {
@@ -22,9 +20,8 @@ class ServicesPessoa extends BaseService {
     int limite = 20,
   }) {
     return executarRequisicao(
-      enviar: () => http.get(
+      requisicao: RequisicaoHttp.get(
         rota('', {'pagina': '$pagina', 'limite': '$limite'}),
-        headers: defaultHeaders,
       ),
       aoSucesso: (resposta) => ResultadoPaginadoDTO<PapelPessoa>.fromJson(
         extrairDadosPaginados(resposta.bodyBytes),
@@ -65,7 +62,7 @@ abstract class ServicePapelPessoa<T extends PapelPessoa> extends BaseService {
   /// lançaria em todo item.
   Future<List<T>> listar() {
     return executarRequisicao(
-      enviar: () => http.get(url, headers: defaultHeaders),
+      requisicao: RequisicaoHttp.get(url),
       aoSucesso: (resposta) => extrairListaDeDados(resposta.bodyBytes, montar),
       aoListaVazia: () => <T>[],
       erroMsg: 'Erro ao buscar a lista de ${tipoPapel.rotuloPlural}.',
@@ -73,23 +70,31 @@ abstract class ServicePapelPessoa<T extends PapelPessoa> extends BaseService {
     );
   }
 
-  Future<bool> cadastrar(T papel) {
+  Future<int?> cadastrar(T papel) {
     return executarRequisicao(
-      enviar: () => http.post(
-        url,
-        headers: defaultHeaders,
-        body: jsonEncode(papel.toJson()),
-      ),
-      aoSucesso: (_) => true,
+      requisicao: RequisicaoHttp.post(url, corpo: papel.toJson()),
+      aoSucesso: (resposta) => _idDoCadastro(resposta.bodyBytes),
       errosPorStatus: {409: ?conflitoDeCadastro},
       erroMsg: 'Erro ao cadastrar $rotulo.',
       acao: 'cadastrar $rotulo',
     );
   }
 
+  int? _idDoCadastro(List<int> bodyBytes) {
+    if (bodyBytes.isEmpty) return null;
+
+    final dados = extrairDadosResposta(bodyBytes);
+
+    if (dados is! Map<String, dynamic>) return null;
+
+    final id = dados['id'];
+
+    return id is num ? id.toInt() : int.tryParse('${id ?? ''}');
+  }
+
   Future<T> buscarPorId(int id) {
     return executarRequisicao(
-      enviar: () => http.get(rota('$id'), headers: defaultHeaders),
+      requisicao: RequisicaoHttp.get(rota('$id')),
       aoSucesso: (resposta) => extrairObjeto(resposta.bodyBytes, montar),
       errosPorStatus: {404: '${tipoPapel.titulo} não encontrado.'},
       erroMsg: 'Erro ao buscar dados do $rotulo.',
@@ -99,7 +104,7 @@ abstract class ServicePapelPessoa<T extends PapelPessoa> extends BaseService {
 
   Future<bool> excluir(int id) {
     return executarRequisicao(
-      enviar: () => http.delete(rota('$id'), headers: defaultHeaders),
+      requisicao: RequisicaoHttp.delete(rota('$id')),
       aoSucesso: (_) => true,
       errosPorStatus: {403: impedimentoDeExclusao},
       erroMsg: 'Erro ao excluir $rotulo.',
@@ -143,10 +148,9 @@ class ServicesFuncionario extends ServicePapelPessoa<Funcionario> {
 
   Future<bool> atualizarSalario(int id, double salario) {
     return executarRequisicao(
-      enviar: () => http.put(
+      requisicao: RequisicaoHttp.put(
         rota('$id/salario'),
-        headers: defaultHeaders,
-        body: jsonEncode({'salario': salario}),
+        corpo: {'salario': salario},
       ),
       aoSucesso: (_) => true,
       erroMsg: 'Erro ao atualizar salário do funcionário.',

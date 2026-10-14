@@ -2,6 +2,8 @@ DateTime apenasData(DateTime data) => DateTime(data.year, data.month, data.day);
 
 DateTime hoje() => apenasData(DateTime.now());
 
+DateTime inicioDoMes(DateTime data) => DateTime(data.year, data.month);
+
 bool ehFutura(DateTime data) => apenasData(data).isAfter(hoje());
 
 int diasEntre(DateTime de, DateTime ate) {

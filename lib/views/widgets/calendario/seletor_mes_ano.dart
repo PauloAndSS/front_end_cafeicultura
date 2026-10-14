@@ -1,32 +1,41 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 
 Future<DateTime?> selecionarMesAno({
   required BuildContext context,
   required DateTime inicial,
-  required DateTime primeiroAno,
-  required DateTime ultimoAno,
+  required DateTime minimo,
+  required DateTime maximo,
+  String titulo = 'Escolher mês',
 }) {
+  final primeiro = inicioDoMes(minimo);
+  final ultimoInformado = inicioDoMes(maximo);
+  final ultimo = ultimoInformado.isBefore(primeiro) ? primeiro : ultimoInformado;
+
   return showDialog<DateTime>(
     context: context,
     builder: (context) => _DialogoMesAno(
-      inicial: inicial,
-      anoMinimo: primeiroAno.year,
-      anoMaximo: ultimoAno.year,
+      inicial: inicioDoMes(inicial),
+      primeiro: primeiro,
+      ultimo: ultimo,
+      titulo: titulo,
     ),
   );
 }
 
 class _DialogoMesAno extends StatefulWidget {
   final DateTime inicial;
-  final int anoMinimo;
-  final int anoMaximo;
+  final DateTime primeiro;
+  final DateTime ultimo;
+  final String titulo;
 
   const _DialogoMesAno({
     required this.inicial,
-    required this.anoMinimo,
-    required this.anoMaximo,
+    required this.primeiro,
+    required this.ultimo,
+    required this.titulo,
   });
 
   @override
@@ -34,18 +43,24 @@ class _DialogoMesAno extends StatefulWidget {
 }
 
 class _DialogoMesAnoState extends State<_DialogoMesAno> {
-  late int _ano = widget.inicial.year;
+  late int _ano = widget.inicial.year.clamp(
+    widget.primeiro.year,
+    widget.ultimo.year,
+  );
 
-  bool get _podeVoltarAno => _ano > widget.anoMinimo;
-  bool get _podeAvancarAno => _ano < widget.anoMaximo;
+  bool get _podeVoltarAno => _ano > widget.primeiro.year;
+  bool get _podeAvancarAno => _ano < widget.ultimo.year;
+
+  bool _disponivel(DateTime mes) =>
+      !mes.isBefore(widget.primeiro) && !mes.isAfter(widget.ultimo);
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       backgroundColor: AppCores.superficie,
-      title: const Text(
-        'Escolher mês',
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+      title: Text(
+        widget.titulo,
+        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
       ),
       contentPadding: const EdgeInsets.fromLTRB(24, 12, 24, 0),
       content: SizedBox(
@@ -103,29 +118,35 @@ class _DialogoMesAnoState extends State<_DialogoMesAno> {
       mainAxisSpacing: 8,
       crossAxisSpacing: 8,
       children: List.generate(12, (indice) {
-        final mes = indice + 1;
-        final selecionado =
-            mes == widget.inicial.month && _ano == widget.inicial.year;
+        final mes = DateTime(_ano, indice + 1);
 
-        return _construirBotaoDeMes(mes: mes, selecionado: selecionado);
+        return _construirBotaoDeMes(
+          mes: mes,
+          selecionado: mes == widget.inicial,
+          disponivel: _disponivel(mes),
+        );
       }),
     );
   }
 
-  Widget _construirBotaoDeMes({required int mes, required bool selecionado}) {
-    final rotulo = formatarMesAbreviado(DateTime(_ano, mes));
+  Widget _construirBotaoDeMes({
+    required DateTime mes,
+    required bool selecionado,
+    required bool disponivel,
+  }) {
+    final rotulo = formatarMesAbreviado(mes);
 
     return Material(
       color: selecionado ? AppCores.acao : AppCores.fundo,
       borderRadius: BorderRadius.circular(8),
       child: InkWell(
         borderRadius: BorderRadius.circular(8),
-        onTap: () => Navigator.pop(context, DateTime(_ano, mes)),
+        onTap: disponivel ? () => Navigator.pop(context, mes) : null,
         child: Center(
           child: Text(
             rotulo,
             style: TextStyle(
-              color: selecionado ? AppCores.sobreAcao : AppCores.textoPrimario,
+              color: _corDoRotulo(selecionado: selecionado, disponivel: disponivel),
               fontWeight: selecionado ? FontWeight.bold : FontWeight.normal,
               fontSize: 14,
             ),
@@ -133,5 +154,11 @@ class _DialogoMesAnoState extends State<_DialogoMesAno> {
         ),
       ),
     );
+  }
+
+  Color _corDoRotulo({required bool selecionado, required bool disponivel}) {
+    if (selecionado) return AppCores.sobreAcao;
+    if (!disponivel) return AppCores.textoInativo;
+    return AppCores.textoPrimario;
   }
 }

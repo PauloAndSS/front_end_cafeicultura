@@ -1,10 +1,8 @@
-import 'dart:convert';
-
 import 'package:frond_end_cafeicultura_mobile/http/dtos/cadastro_proprietario_dto.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/endereco.dart';
 import 'package:frond_end_cafeicultura_mobile/model/proprietario.dart';
-import 'package:http/http.dart' as http;
+import 'package:frond_end_cafeicultura_mobile/http/requisicao_http.dart';
 
 class ServicesProprietario extends BaseService {
   @override
@@ -17,11 +15,7 @@ class ServicesProprietario extends BaseService {
     final dto = CadastroProprietarioDTO(proprietario: proprietario, senha: senha);
 
     return executarRequisicao(
-      enviar: () => http.post(
-        url,
-        headers: defaultHeaders,
-        body: jsonEncode(dto.cadastrar()),
-      ),
+      requisicao: RequisicaoHttp.post(url, corpo: dto.cadastrar()),
       aoSucesso: (resposta) {
         BaseService.atualizarCookie(resposta);
 
@@ -40,10 +34,9 @@ class ServicesProprietario extends BaseService {
     required Endereco endereco,
   }) {
     return executarRequisicao(
-      enviar: () => http.post(
+      requisicao: RequisicaoHttp.post(
         rota('$idProprietario/endereco'),
-        headers: defaultHeaders,
-        body: jsonEncode(endereco.toJson()),
+        corpo: endereco.toJson(),
       ),
       aoSucesso: (_) => true,
       erroMsg: 'Erro ao cadastrar endereço do proprietário.',
@@ -53,7 +46,7 @@ class ServicesProprietario extends BaseService {
 
   Future<Proprietario> buscarPorId(int id) {
     return executarRequisicao(
-      enviar: () => http.get(rota('$id'), headers: defaultHeaders),
+      requisicao: RequisicaoHttp.get(rota('$id')),
       aoSucesso: (resposta) =>
           extrairObjeto(resposta.bodyBytes, Proprietario.fromJson),
       errosPorStatus: {404: 'Proprietário não encontrado.'},
@@ -64,10 +57,9 @@ class ServicesProprietario extends BaseService {
 
   Future<bool> atualizarEndereco(int id, Endereco endereco) {
     return executarRequisicao(
-      enviar: () => http.put(
+      requisicao: RequisicaoHttp.put(
         rota('$id/endereco'),
-        headers: defaultHeaders,
-        body: jsonEncode(endereco.toJson()),
+        corpo: endereco.toJson(),
       ),
       aoSucesso: (_) => true,
       erroMsg: 'Erro ao atualizar endereço do proprietário.',
@@ -77,10 +69,9 @@ class ServicesProprietario extends BaseService {
 
   Future<bool> atualizarEmail(int id, String email) {
     return executarRequisicao(
-      enviar: () => http.put(
+      requisicao: RequisicaoHttp.put(
         rota('$id/email'),
-        headers: defaultHeaders,
-        body: jsonEncode({'email': email}),
+        corpo: {'email': email},
       ),
       aoSucesso: (_) => true,
       erroMsg: 'Erro ao atualizar e-mail do proprietário.',
@@ -90,10 +81,9 @@ class ServicesProprietario extends BaseService {
 
   Future<bool> atualizarTelefone(int id, String telefone) {
     return executarRequisicao(
-      enviar: () => http.put(
+      requisicao: RequisicaoHttp.put(
         rota('$id/telefone'),
-        headers: defaultHeaders,
-        body: jsonEncode({'telefone': telefone}),
+        corpo: {'telefone': telefone},
       ),
       aoSucesso: (_) => true,
       erroMsg: 'Erro ao atualizar telefone do proprietário.',
@@ -107,13 +97,12 @@ class ServicesProprietario extends BaseService {
     String? razaoSocial,
   }) {
     return executarRequisicao(
-      enviar: () => http.put(
+      requisicao: RequisicaoHttp.put(
         rota('$id/identificacao'),
-        headers: defaultHeaders,
-        body: jsonEncode({
+        corpo: {
           'nome': ?nome,
           'razaoSocial': ?razaoSocial,
-        }),
+        },
       ),
       aoSucesso: (_) => true,
       erroMsg: 'Erro ao atualizar dados do proprietário.',
@@ -127,13 +116,12 @@ class ServicesProprietario extends BaseService {
     required String cnpj,
   }) {
     return executarRequisicao(
-      enviar: () => http.put(
+      requisicao: RequisicaoHttp.put(
         rota('$id/inscricao-estadual'),
-        headers: defaultHeaders,
-        body: jsonEncode({
+        corpo: {
           'inscricaoEstadual': inscEstadual,
           'cnpj': cnpj,
-        }),
+        },
       ),
       aoSucesso: (_) => true,
       erroMsg: 'Erro ao atualizar inscrição estadual.',

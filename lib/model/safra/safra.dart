@@ -70,11 +70,11 @@ class Safra {
     }
 
     if (dataInicio != null && dataFim != null) {
-      return '${formatarDataBr(dataInicio!)} até ${formatarDataBr(dataFim!)}';
+      return '${formatarMesAnoExtenso(dataInicio!)} até ${formatarDataBr(dataFim!)}';
     }
 
     if (dataInicio != null) {
-      return 'Início em ${formatarDataBr(dataInicio!)}';
+      return 'Início em ${formatarMesAnoExtenso(dataInicio!)}';
     }
 
     return 'Finalizada em ${formatarDataBr(dataFim!)}';

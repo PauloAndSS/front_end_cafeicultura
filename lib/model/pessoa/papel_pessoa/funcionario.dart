@@ -22,6 +22,10 @@ class Funcionario extends PapelPessoa {
   }
 
   @override
+  Funcionario comId(int id) =>
+      Funcionario(id: id, pessoa: pessoa, ctps: ctps, salario: salario);
+
+  @override
   Map<String, dynamic> toJson() {
     return {
       ...super.toJson(),

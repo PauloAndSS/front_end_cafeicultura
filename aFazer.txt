@@ -1,12 +1,7 @@
-- VERIFICAR Notificações de aviso devem vir ANTES das notificações de resposta. Pode tirar o AVISO de deslizar para ler a notificação
+Ao cadastrar um insumo/despesa/atividade, e clicar em selecionar responsável/recebedor, e cadastrar um nesse momento, deve voltar como este um dos selecionados. Falhas encontradas: Após cadastrar um fornecedor dentro de insumos, não estou conseguindo colocá-lo no insumo. O botão não vai. O fluxo correto seria, ao cadastrar esse fornecedor dentro de insumos, ou qualquer papel de pessoa dentro de cadastro na atividade, voltar e já ter essa pessoa cadastrada como a selecionada.
+    -> o front deve esperar o id da pessoa ao cadastrar um papel de pessoa
 
-Todas as telas de cadastro com "selecionar [papel da pessoa]", mesmo que já haja pessoas cadastradas, devem ir para tela de cadastro desse papel, e após cadastrada, voltar ao cadastro sem perder os dados
-- Fazer fluxo de cadastro de pessoas dentro das telas de cadastros
+- Definir proprietário como encarregado da atividade quando não há um responsável selecionado. Penso em fazer um diálogo após clicar em fazer cadastro da atividade explicando (Tem certeza que não há responsáveis para esse [Atividade]? Você então será o responsável por ela). O usuário pode se selecionar como responsável, estando o nome dele lá em cima como a primeira sugestão.
+Para isso, coletar na sessão o _nomeUsuario e mostrar [Nome] (você)
 
-- Ao mudar nome do proprietário, não altera e dá mensagem de sucesso. Verifique se essa mensagem de sucesso é falsa e você programou para url not found dar sucesso. Deve rodar todas as requisições para ver se outras dão falso sucesso
-
-- Widget de propriedade pode ter um botãozinho de visualizar a propriedade - Fazer após refatorar edição da propriedade: Ver DETALHES da propriedade como as atividades estão dispostas atualmente e o lápis para edição. Abaixo dos detalhes de cadastro, devem aparecer Os talhões da propriedade (Cujo widget deve ser semehante ao das pessoas nas páginas de pessoas) e as safras - que clicando no seu widget vai para a página de safra daquela selecionada
-
-- Relatório de despesas deve ter link para as atividades, quando for uma despesa de atividade. E quando for, a descrição deve ser o nome da atividade (ou no caso do trato cultural, do Tipo de Trato)
-
- /plan Após cadastrar um fornecedor dentro de insumos, não estou conseguindo colocá-lo no insumo. O botão não vai. O fluxo correto seria, ao cadastrar esse fornecedor dentro de insumos, ou qualquer papel de pessoa dentro de cadastro na atividade, voltar e já ter essa pessoa cadastrada como a selecionada.
+- 

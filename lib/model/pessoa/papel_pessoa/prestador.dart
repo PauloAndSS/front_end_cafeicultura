@@ -14,4 +14,7 @@ class PrestadorDeServico extends PapelPessoa {
       pessoa: PessoaFactory.fromJson(json),
     );
   }
+
+  @override
+  PrestadorDeServico comId(int id) => PrestadorDeServico(id: id, pessoa: pessoa);
 }

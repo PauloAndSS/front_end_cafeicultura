@@ -9,6 +9,8 @@ abstract class PapelPessoa {
     required this.pessoa,
   });
 
+  PapelPessoa comId(int id);
+
   Map<String, dynamic> toJson() {
     return {
       if (id != null) 'id': id,

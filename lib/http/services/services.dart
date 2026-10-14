@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:frond_end_cafeicultura_mobile/http/ambiente.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
+import 'package:frond_end_cafeicultura_mobile/http/requisicao_http.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
@@ -109,7 +110,7 @@ abstract class BaseService {
 
   @protected
   Future<R> executarRequisicao<R>({
-    required Future<http.Response> Function() enviar,
+    required RequisicaoHttp requisicao,
     required R Function(http.Response resposta) aoSucesso,
     R Function()? aoListaVazia,
     Map<int, R Function()>? resultadosPorStatus,
@@ -118,7 +119,7 @@ abstract class BaseService {
     required String acao,
   }) async {
     try {
-      final response = await enviar();
+      final response = await requisicao.enviar(defaultHeaders);
 
       if (sucesso(response)) {
         _logarSucesso(response, acao);
@@ -158,17 +159,38 @@ abstract class BaseService {
       }
       rethrow;
     } catch (e, rastro) {
-      _logarExcecao(acao, e, rastro);
+      _logarExcecao(requisicao, acao, e, rastro);
 
-      if (ehFalhaDeConexao(e)) {
-        aoPerderConexao?.call();
-        throw SemConexaoException(
-          'Falha na comunicação ao $acao. Tente novamente mais tarde.',
-        );
+      if (!ehFalhaDeConexao(e)) {
+        throw ApiException('Não foi possível $acao. Tente novamente.');
       }
 
-      throw ApiException('Não foi possível $acao. Tente novamente.');
+      aoPerderConexao?.call();
+      throw _falhaDeConexao(e, requisicao, acao);
     }
+  }
+
+  SemConexaoException _falhaDeConexao(
+    Object erro,
+    RequisicaoHttp requisicao,
+    String acao,
+  ) {
+    if (erro is TimeoutException) return _tempoEsgotado(requisicao, acao);
+
+    return SemConexaoException(
+      'Falha na comunicação ao $acao. Tente novamente mais tarde.',
+    );
+  }
+
+  TempoEsgotadoException _tempoEsgotado(RequisicaoHttp requisicao, String acao) {
+    final orientacao = requisicao.alteraDados
+        ? 'A operação pode ter sido concluída: confira antes de repetir.'
+        : 'Tente novamente.';
+
+    return TempoEsgotadoException(
+      'O servidor demorou a responder ao $acao. $orientacao',
+      podeTerSidoConcluida: requisicao.alteraDados,
+    );
   }
 
   void _logarResposta(http.Response response, String acao) {
@@ -213,9 +235,15 @@ abstract class BaseService {
     return corpo.isEmpty ? null : corpo;
   }
 
-  void _logarExcecao(String acao, Object erro, StackTrace rastro) {
+  void _logarExcecao(
+    RequisicaoHttp requisicao,
+    String acao,
+    Object erro,
+    StackTrace rastro,
+  ) {
     if (!kDebugMode) return;
 
+    debugPrint('[API] ${requisicao.verbo.name.toUpperCase()} ${requisicao.rota}');
     debugPrint('[API] exceção ao $acao | ${erro.runtimeType}: $erro');
     debugPrint('$rastro');
   }

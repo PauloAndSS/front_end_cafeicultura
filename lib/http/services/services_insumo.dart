@@ -1,6 +1,6 @@
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/insumos/insumo.dart';
-import 'package:http/http.dart' as http;
+import 'package:frond_end_cafeicultura_mobile/http/requisicao_http.dart';
 
 class ServicesInsumo extends BaseService {
   @override
@@ -8,9 +8,8 @@ class ServicesInsumo extends BaseService {
 
   Future<List<Insumo>> buscarPorPropriedade({required int idPropriedade}) {
     return executarRequisicao(
-      enviar: () => http.get(
+      requisicao: RequisicaoHttp.get(
         rota('', {'idPropriedade': '$idPropriedade'}),
-        headers: defaultHeaders,
       ),
       aoSucesso: (resposta) =>
           extrairLista(resposta.bodyBytes, Insumo.fromJson),
@@ -25,12 +24,11 @@ class ServicesInsumo extends BaseService {
     required int idPropriedade,
   }) {
     return executarRequisicao(
-      enviar: () => http.get(
+      requisicao: RequisicaoHttp.get(
         rota('buscar', {
           'descricao': descricao,
           'idPropriedade': '$idPropriedade',
         }),
-        headers: defaultHeaders,
       ),
       aoSucesso: (resposta) => _primeiroInsumo(resposta.bodyBytes),
       aoListaVazia: () => null,
@@ -41,9 +39,8 @@ class ServicesInsumo extends BaseService {
 
   Future<Insumo?> buscarPorId(int id, {required int idPropriedade}) {
     return executarRequisicao(
-      enviar: () => http.get(
+      requisicao: RequisicaoHttp.get(
         rota('$id', {'idPropriedade': '$idPropriedade'}),
-        headers: defaultHeaders,
       ),
       aoSucesso: (resposta) =>
           extrairObjetoOuNulo(resposta.bodyBytes, Insumo.fromJson),

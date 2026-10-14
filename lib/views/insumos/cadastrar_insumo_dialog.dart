@@ -80,10 +80,12 @@ class _CadastrarInsumoDialogState extends State<_CadastrarInsumoDialog> {
     if (!mounted) return;
 
     switch (resultado) {
-      case PessoaLocalizada(:final papel):
+      case PessoaCadastrada(:final papel):
         setState(() => _beneficiado = papel.pessoa);
-      case SalvaSemLocalizar(:final mensagem):
-        setState(() => _erro = fornecedorSalvoSemLocalizar(mensagem));
+      case CadastradaSemId():
+        setState(
+          () => _erro = cadastradaSemIdMensagem(TipoPapel.fornecedor),
+        );
       case CadastroCancelado():
         break;
     }

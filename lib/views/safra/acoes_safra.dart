@@ -5,6 +5,7 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedad
 import 'package:frond_end_cafeicultura_mobile/viewmodels/safra/safra_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/calendario/seletor_mes_ano.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/seletor_data.dart';
@@ -19,12 +20,13 @@ Future<void> abrirNovaSafra(BuildContext context) async {
   final dataInicio = await _perguntarData(
     context,
     titulo: 'Nova safra',
-    descricao: 'Defina a data de início da safra para registrar o ciclo.',
+    descricao: 'Defina o mês de início da safra para registrar o ciclo.',
     rotuloConfirmar: 'Salvar',
-    ajuda: 'Selecione a data de início da safra',
+    ajuda: 'Mês de início da safra',
     inicial: hoje(),
     minima: _pisoDeSafra,
     maxima: _tetoDeSafra,
+    apenasMes: true,
   );
 
   if (dataInicio == null || !context.mounted) return;
@@ -193,17 +195,18 @@ Future<DateTime?> _perguntarDataDeInicio(BuildContext context, Safra safra) {
 
   return _perguntarData(
     context,
-    titulo: 'Alterar data de início',
-    descricao: 'Informe a nova data de início da ${safra.nomeExibicao}.',
+    titulo: 'Alterar mês de início',
+    descricao: 'Informe o novo mês de início da ${safra.nomeExibicao}.',
     rotuloConfirmar: 'Salvar',
-    rotuloDaData: 'Data de início da safra',
-    ajuda: 'Selecione a nova data de início da safra',
+    rotuloDaData: 'Mês de início da safra',
+    ajuda: 'Novo mês de início da safra',
     inicial: inicioAtual,
     minima: menorData(_pisoDeSafra, inicioAtual)!,
     maxima: safra.dataFim ?? hoje(),
+    apenasMes: true,
     complemento: const CaixaAvisoAtencao(
       mensagem:
-          'A nova data não pode ser posterior à atividade mais antiga já '
+          'O novo mês não pode ser posterior à atividade mais antiga já '
           'registrada nesta safra.',
     ),
   );
@@ -221,11 +224,13 @@ Future<DateTime?> _perguntarData(
   String? rotuloDaData,
   Widget? complemento,
   Color corConfirmar = AppCores.acao,
+  bool apenasMes = false,
 }) async {
-  var data = apenasData(inicial);
+  final normalizar = apenasMes ? inicioDoMes : apenasData;
+  var data = normalizar(inicial);
 
-  if (data.isBefore(minima)) data = apenasData(minima);
-  if (data.isAfter(maxima)) data = apenasData(maxima);
+  if (data.isBefore(normalizar(minima))) data = normalizar(minima);
+  if (data.isAfter(maxima)) data = normalizar(maxima);
 
   final confirmado = await showDialog<bool>(
     context: context,
@@ -250,9 +255,11 @@ Future<DateTime?> _perguntarData(
                 ],
                 SeletorDataEmBloco(
                   data: data,
+                  apenasMes: apenasMes,
                   aoTocar: () async {
-                    final selecionada = await selecionarData(
-                      context: contextoDoDialogo,
+                    final selecionada = await _abrirSeletor(
+                      contextoDoDialogo,
+                      apenasMes: apenasMes,
                       ajuda: ajuda,
                       inicial: data,
                       minima: minima,
@@ -279,6 +286,33 @@ Future<DateTime?> _perguntarData(
   );
 
   return confirmado == true ? data : null;
+}
+
+Future<DateTime?> _abrirSeletor(
+  BuildContext context, {
+  required bool apenasMes,
+  required String ajuda,
+  required DateTime inicial,
+  required DateTime minima,
+  required DateTime maxima,
+}) {
+  if (apenasMes) {
+    return selecionarMesAno(
+      context: context,
+      titulo: ajuda,
+      inicial: inicial,
+      minimo: minima,
+      maximo: maxima,
+    );
+  }
+
+  return selecionarData(
+    context: context,
+    ajuda: ajuda,
+    inicial: inicial,
+    minima: minima,
+    maxima: maxima,
+  );
 }
 
 Future<void> reativarSafraSelecionada(BuildContext context) async {

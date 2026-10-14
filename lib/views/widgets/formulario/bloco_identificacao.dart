@@ -75,11 +75,12 @@ class BlocoIdentificacao extends StatelessWidget {
           hintText: '00.000.000/0000-00',
         ),
         CustomTextField(
-          label: 'Inscrição Estadual (Opcional)',
+          label: 'Inscrição Estadual',
+          opcional: true,
           controller: controllerInscricaoEstadual,
           keyboardType: TextInputType.number,
           validator: Validator.validarInscEstadual,
-          hintText: 'Digite sua inscrição estadual (Opcional)',
+          hintText: 'Digite sua inscrição estadual',
         ),
       ],
     );

@@ -1,7 +1,7 @@
 import 'package:frond_end_cafeicultura_mobile/http/dtos/paginacao_dto.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/eventos/services_evento_base.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/eventos_agricolas/evento_agricola.dart';
-import 'package:http/http.dart' as http;
+import 'package:frond_end_cafeicultura_mobile/http/requisicao_http.dart';
 
 export 'package:frond_end_cafeicultura_mobile/http/services/eventos/services_evento_base.dart';
 
@@ -14,12 +14,11 @@ abstract class ServicesEventoAgricolaBase<T extends EventoAgricola>
     required StatusEvento status,
   }) {
     return executarRequisicao(
-      enviar: () => http.get(
+      requisicao: RequisicaoHttp.get(
         rota('propriedade/$idPropriedade/talhao/$idTalhao', {
           'pagina': '$pagina',
           'status': status.codigoApi,
         }),
-        headers: defaultHeaders,
       ),
       aoSucesso: (resposta) => ResultadoPaginadoDTO.deEnvelopePaginado(
         extrairDadosPaginados(resposta.bodyBytes),

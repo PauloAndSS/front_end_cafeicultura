@@ -27,6 +27,12 @@ class SemConexaoException extends ApiException {
   SemConexaoException(super.mensagem);
 }
 
+class TempoEsgotadoException extends SemConexaoException {
+  final bool podeTerSidoConcluida;
+
+  TempoEsgotadoException(super.mensagem, {required this.podeTerSidoConcluida});
+}
+
 class ErroDoServidorException extends ApiException {
   ErroDoServidorException(super.mensagem);
 }

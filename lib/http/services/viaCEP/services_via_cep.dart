@@ -1,6 +1,6 @@
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/viaCEP/endereco_ViaCEP.dart';
-import 'package:http/http.dart' as http;
+import 'package:frond_end_cafeicultura_mobile/http/requisicao_http.dart';
 
 class ServiceViaCep extends ServiceExterno {
   @override
@@ -13,7 +13,7 @@ class ServiceViaCep extends ServiceExterno {
     final digitos = _somenteDigitos(cep);
 
     return executarRequisicao(
-      enviar: () => http.get(rota('$digitos/json/'), headers: defaultHeaders),
+      requisicao: RequisicaoHttp.get(rota('$digitos/json/')),
       aoSucesso: (resposta) {
         final json = extrairDadosResposta(resposta.bodyBytes);
 

@@ -3,6 +3,8 @@ import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pe
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/carregar_pessoas_mixin.dart';
 import 'package:frond_end_cafeicultura_mobile/views/pessoas/acoes_pessoa.dart';
+import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
+import 'package:frond_end_cafeicultura_mobile/views/widgets/caixa_aviso.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/estados.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/modal_selecao.dart';
 
@@ -59,7 +61,11 @@ class _ListaPapelState extends State<ListaPapel>
         .toList();
   }
 
+  bool _cadastradaSemId = false;
+
   Future<void> _cadastrar() async {
+    setState(() => _cadastradaSemId = false);
+
     final resultado = await cadastrarPessoaDoPapel(
       context,
       widget.catalogo,
@@ -68,8 +74,13 @@ class _ListaPapelState extends State<ListaPapel>
 
     if (!mounted) return;
 
-    if (resultado case PessoaLocalizada(:final papel)) {
-      widget.aoCadastrar(papel);
+    switch (resultado) {
+      case PessoaCadastrada(:final papel):
+        widget.aoCadastrar(papel);
+      case CadastradaSemId():
+        setState(() => _cadastradaSemId = true);
+      case CadastroCancelado():
+        break;
     }
   }
 
@@ -99,6 +110,16 @@ class _ListaPapelState extends State<ListaPapel>
           rotulo: 'Cadastrar novo ${papel.rotulo}',
           aoTocar: _cadastrar,
         ),
+        if (_cadastradaSemId)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: CaixaAviso(
+              icone: Icons.info_outline,
+              cor: AppCores.aviso,
+              corDoTexto: AppCores.aviso,
+              mensagem: cadastradaSemIdMensagem(papel),
+            ),
+          ),
         if (mensagemErro != null)
           MensagemDeErro(
             mensagem: mensagemErro,

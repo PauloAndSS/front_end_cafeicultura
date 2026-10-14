@@ -1,11 +1,9 @@
-import 'dart:convert';
-
 import 'package:flutter/foundation.dart';
 import 'package:frond_end_cafeicultura_mobile/http/dtos/paginacao_dto.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/eventos/evento.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/datas.dart';
-import 'package:http/http.dart' as http;
+import 'package:frond_end_cafeicultura_mobile/http/requisicao_http.dart';
 
 abstract class ServicesEventoBase<T extends Evento> extends BaseService {
   @protected
@@ -28,11 +26,7 @@ abstract class ServicesEventoBase<T extends Evento> extends BaseService {
 
   Future<bool> cadastrar(T evento) {
     return executarRequisicao(
-      enviar: () => http.post(
-        url,
-        headers: defaultHeaders,
-        body: jsonEncode(evento.toJson()),
-      ),
+      requisicao: RequisicaoHttp.post(url, corpo: evento.toJson()),
       aoSucesso: (_) => true,
       erroMsg: 'Erro ao cadastrar $rotulo.',
       acao: 'cadastrar $rotulo',
@@ -41,7 +35,7 @@ abstract class ServicesEventoBase<T extends Evento> extends BaseService {
 
   Future<T> buscarPorId(int id) {
     return executarRequisicao(
-      enviar: () => http.get(rota('$id'), headers: defaultHeaders),
+      requisicao: RequisicaoHttp.get(rota('$id')),
       aoSucesso: (resposta) => extrairObjeto(resposta.bodyBytes, fromJson),
       erroMsg: 'Erro ao buscar o $rotulo.',
       acao: 'buscar o $rotulo',
@@ -50,11 +44,7 @@ abstract class ServicesEventoBase<T extends Evento> extends BaseService {
 
   Future<T> editar(int id, T evento) {
     return executarRequisicao(
-      enviar: () => http.put(
-        rota('$id'),
-        headers: defaultHeaders,
-        body: jsonEncode(evento.toJson()),
-      ),
+      requisicao: RequisicaoHttp.put(rota('$id'), corpo: evento.toJson()),
       aoSucesso: (resposta) => extrairObjeto(resposta.bodyBytes, fromJson),
       erroMsg: 'Erro ao alterar o $rotulo.',
       acao: 'alterar o $rotulo',
@@ -67,12 +57,11 @@ abstract class ServicesEventoBase<T extends Evento> extends BaseService {
     required DateTime fim,
   }) {
     return executarRequisicao(
-      enviar: () => http.get(
+      requisicao: RequisicaoHttp.get(
         rota('propriedade/$idPropriedade', {
           paramInicio: instanteParaJson(inicio),
           paramFim: instanteParaJson(fim),
         }),
-        headers: defaultHeaders,
       ),
       aoSucesso: (resposta) =>
           extrairListaNomeada(resposta.bodyBytes, chaveDaLista, fromJson),
@@ -88,12 +77,11 @@ abstract class ServicesEventoBase<T extends Evento> extends BaseService {
     required int pagina,
   }) {
     return executarRequisicao(
-      enviar: () => http.get(
+      requisicao: RequisicaoHttp.get(
         rota('propriedade/$idPropriedade', {
           'status': status.codigoApi,
           'pagina': '$pagina',
         }),
-        headers: defaultHeaders,
       ),
       aoSucesso: (resposta) => ResultadoPaginadoDTO.deEnvelopePaginado(
         extrairDadosPaginados(resposta.bodyBytes),
@@ -155,7 +143,7 @@ abstract class ServicesEventoBase<T extends Evento> extends BaseService {
 
   Future<bool> excluir(int id) {
     return executarRequisicao(
-      enviar: () => http.delete(rota('$id'), headers: defaultHeaders),
+      requisicao: RequisicaoHttp.delete(rota('$id')),
       aoSucesso: (_) => true,
       erroMsg: 'Erro ao excluir o $rotulo.',
       acao: 'excluir o $rotulo',
@@ -172,11 +160,7 @@ abstract class ServicesEventoBase<T extends Evento> extends BaseService {
     required String acao,
   }) {
     return executarRequisicao(
-      enviar: () => http.patch(
-        rota('$id/$subRota'),
-        headers: defaultHeaders,
-        body: jsonEncode(corpo),
-      ),
+      requisicao: RequisicaoHttp.patch(rota('$id/$subRota'), corpo: corpo),
       aoSucesso: (_) => true,
       erroMsg: erroMsg,
       acao: acao,

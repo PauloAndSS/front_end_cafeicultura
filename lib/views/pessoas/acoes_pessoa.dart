@@ -12,41 +12,38 @@ class CadastroCancelado extends ResultadoCadastroPessoa {
   const CadastroCancelado();
 }
 
-class PessoaLocalizada extends ResultadoCadastroPessoa {
+class PessoaCadastrada extends ResultadoCadastroPessoa {
   final PapelPessoa papel;
 
-  const PessoaLocalizada(this.papel);
+  const PessoaCadastrada(this.papel);
 }
 
-class SalvaSemLocalizar extends ResultadoCadastroPessoa {
-  final String mensagem;
-
-  const SalvaSemLocalizar(this.mensagem);
+class CadastradaSemId extends ResultadoCadastroPessoa {
+  const CadastradaSemId();
 }
+
+String cadastradaSemIdMensagem(TipoPapel papel) =>
+    '${papel.titulo} cadastrado, mas o servidor não informou o identificador. '
+    'Selecione-o na lista de ${papel.rotuloPlural}.';
 
 Future<ResultadoCadastroPessoa> cadastrarPessoaDoPapel(
   BuildContext context,
   CarregarPessoasMixin catalogoDePessoas,
   TipoPapel papel,
 ) async {
-  final montado = await Navigator.push<PapelPessoa>(
+  final cadastrado = await Navigator.push<PapelPessoa>(
     context,
     MaterialPageRoute(builder: (_) => CadastrarPessoaView(papel: papel)),
   );
 
-  if (montado == null) return const CadastroCancelado();
+  if (cadastrado == null) return const CadastroCancelado();
 
-  await catalogoDePessoas.carregarCategoria(papel, recarregar: true);
+  if (cadastrado.id == null) {
+    await catalogoDePessoas.carregarCategoria(papel, recarregar: true);
+    return const CadastradaSemId();
+  }
 
-  final localizado = catalogoDePessoas.localizarRecemCadastrada(
-    papel,
-    montado.pessoa,
-  );
+  catalogoDePessoas.incluirCadastrada(papel, cadastrado);
 
-  if (localizado != null) return PessoaLocalizada(localizado);
-
-  return SalvaSemLocalizar(
-    catalogoDePessoas.mensagemErroDe(papel) ??
-        'A lista de ${papel.rotuloPlural} não pôde ser atualizada.',
-  );
+  return PessoaCadastrada(cadastrado);
 }
