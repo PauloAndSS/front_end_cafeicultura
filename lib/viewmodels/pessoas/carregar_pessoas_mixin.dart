@@ -8,6 +8,7 @@ import 'package:frond_end_cafeicultura_mobile/viewmodels/notifica_se_vivo_mixin.
 
 const List<TipoPapel> categoriasDeResponsavel = [
   TipoPapel.funcionario,
+  TipoPapel.diarista,
   TipoPapel.meeiro,
   TipoPapel.prestador,
 ];

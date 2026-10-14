@@ -1,4 +1,5 @@
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/cliente.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/diarista.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/fornecedor.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/funcionario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/meeiro.dart';
@@ -14,6 +15,8 @@ class PapelPessoaFactory {
         return Meeiro.fromJson(json);
       case 'FUNCIONARIO':
         return Funcionario.fromJson(json);
+      case 'DIARISTA':
+        return Diarista.fromJson(json);
       case 'FORNECEDOR':
         return Fornecedor.fromJson(json);
       case 'CLIENTE':

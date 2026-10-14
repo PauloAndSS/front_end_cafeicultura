@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/cadastrar_pessoa_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
+import 'package:frond_end_cafeicultura_mobile/utils/validator.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/cliente.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/diarista.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/fornecedor.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/funcionario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/meeiro.dart';
@@ -43,6 +45,7 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
   final _inscricaoEstadualController = TextEditingController();
   final _salarioController = TextEditingController();
   final _ctpsController = TextEditingController();
+  final _valorHoraController = TextEditingController();
 
   TipoPapel get _papel => widget.papel;
 
@@ -55,6 +58,7 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
     _inscricaoEstadualController.dispose();
     _salarioController.dispose();
     _ctpsController.dispose();
+    _valorHoraController.dispose();
     _viewModel.dispose();
     super.dispose();
   }
@@ -66,7 +70,8 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
         _cnpjController.text.isNotEmpty ||
         _inscricaoEstadualController.text.isNotEmpty ||
         _salarioController.text.isNotEmpty ||
-        _ctpsController.text.isNotEmpty;
+        _ctpsController.text.isNotEmpty ||
+        _valorHoraController.text.isNotEmpty;
   }
 
   Future<bool> _mostrarDialogoConfirmacao() {
@@ -104,6 +109,10 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
         ctps: _ctpsController.text.isNotEmpty
             ? _ctpsController.text.trim()
             : null,
+      ),
+      TipoPapel.diarista => Diarista(
+        pessoa: pessoa,
+        valorHora: AppMasks.paraDouble(_valorHoraController.text),
       ),
       TipoPapel.meeiro => Meeiro(pessoa: pessoa),
       TipoPapel.fornecedor => Fornecedor(pessoa: pessoa),
@@ -217,6 +226,31 @@ class _CadastrarPessoaViewState extends State<CadastrarPessoaView> {
                           decimal: true,
                         ),
                         inputFormatters: [AppMasks.decimal],
+                      ),
+                    ],
+
+                    if (_papel == TipoPapel.diarista) ...[
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Dados do Diarista',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppCores.textoPrimario,
+                        ),
+                      ),
+                      const Divider(height: 32),
+
+                      CustomTextField(
+                        label: 'Valor/Hora (R\$)',
+                        opcional: true,
+                        controller: _valorHoraController,
+                        hintText: '0,00',
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        inputFormatters: [AppMasks.decimal],
+                        validator: Validator.valorPositivoOpcional,
                       ),
                     ],
 

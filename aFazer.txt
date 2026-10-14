@@ -1,7 +1,2 @@
 Ao cadastrar um insumo/despesa/atividade, e clicar em selecionar responsável/recebedor, e cadastrar um nesse momento, deve voltar como este um dos selecionados. Falhas encontradas: Após cadastrar um fornecedor dentro de insumos, não estou conseguindo colocá-lo no insumo. O botão não vai. O fluxo correto seria, ao cadastrar esse fornecedor dentro de insumos, ou qualquer papel de pessoa dentro de cadastro na atividade, voltar e já ter essa pessoa cadastrada como a selecionada.
     -> o front deve esperar o id da pessoa ao cadastrar um papel de pessoa
-
-- Definir proprietário como encarregado da atividade quando não há um responsável selecionado. Penso em fazer um diálogo após clicar em fazer cadastro da atividade explicando (Tem certeza que não há responsáveis para esse [Atividade]? Você então será o responsável por ela). O usuário pode se selecionar como responsável, estando o nome dele lá em cima como a primeira sugestão.
-Para isso, coletar na sessão o _nomeUsuario e mostrar [Nome] (você)
-
-- 

@@ -1,4 +1,5 @@
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/cliente.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/diarista.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/fornecedor.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/funcionario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/meeiro.dart';
@@ -9,7 +10,7 @@ import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
 import 'package:frond_end_cafeicultura_mobile/utils/formatacao.dart';
 
-enum TipoPapel { funcionario, meeiro, fornecedor, prestador, cliente }
+enum TipoPapel { funcionario, diarista, meeiro, fornecedor, prestador, cliente }
 class PessoaFactory {
   PessoaFactory._(); 
 
@@ -31,6 +32,7 @@ class PessoaFactory {
 
   static TipoPapel obterTipoPapel(PapelPessoa papel) {
     if (papel is Funcionario) return TipoPapel.funcionario;
+    if (papel is Diarista) return TipoPapel.diarista;
     if (papel is Fornecedor) return TipoPapel.fornecedor;
     if (papel is Cliente) return TipoPapel.cliente;
     if (papel is Meeiro) return TipoPapel.meeiro;
@@ -42,6 +44,7 @@ class PessoaFactory {
 extension RotulosDoPapel on TipoPapel {
   String get rotulo => switch (this) {
         TipoPapel.funcionario => 'funcionário',
+        TipoPapel.diarista => 'diarista',
         TipoPapel.meeiro => 'meeiro',
         TipoPapel.fornecedor => 'fornecedor',
         TipoPapel.prestador => 'prestador de serviço',
@@ -50,6 +53,7 @@ extension RotulosDoPapel on TipoPapel {
 
   String get rotuloPlural => switch (this) {
         TipoPapel.funcionario => 'funcionários',
+        TipoPapel.diarista => 'diaristas',
         TipoPapel.meeiro => 'meeiros',
         TipoPapel.fornecedor => 'fornecedores',
         TipoPapel.prestador => 'prestadores de serviço',
@@ -67,5 +71,7 @@ extension RotulosDoPapel on TipoPapel {
       };
 
   bool get aceitaPessoaJuridica =>
-      this != TipoPapel.funcionario && this != TipoPapel.meeiro;
+      this != TipoPapel.funcionario &&
+      this != TipoPapel.diarista &&
+      this != TipoPapel.meeiro;
 }

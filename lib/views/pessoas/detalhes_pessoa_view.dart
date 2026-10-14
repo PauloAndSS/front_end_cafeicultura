@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
 import 'package:flutter/services.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/diarista.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/funcionario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
@@ -254,6 +255,12 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
                             _buildInfoRow(
                               'Insc. Estadual :',
                               pessoaBase.inscricaoEstadual!,
+                            ),
+
+                          if (papelAtual is Diarista)
+                            _buildInfoRow(
+                              'Valor/Hora :',
+                              papelAtual.valorHoraParaExibicao,
                             ),
 
                           if (papelAtual is Funcionario) ...[

@@ -1,6 +1,7 @@
 import 'package:frond_end_cafeicultura_mobile/http/dtos/paginacao_dto.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/cliente.dart';
+import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/diarista.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/fornecedor.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/funcionario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/meeiro.dart';
@@ -109,6 +110,7 @@ abstract class ServicePapelPessoa<T extends PapelPessoa> extends BaseService {
 ServicePapelPessoa<PapelPessoa> servicoDoPapel(TipoPapel papel) =>
     switch (papel) {
       TipoPapel.funcionario => ServicesFuncionario(),
+      TipoPapel.diarista => ServicesDiarista(),
       TipoPapel.meeiro => ServicesMeeiro(),
       TipoPapel.fornecedor => ServicesFornecedor(),
       TipoPapel.prestador => ServicesPrestadorDeServico(),
@@ -150,6 +152,20 @@ class ServicesFuncionario extends ServicePapelPessoa<Funcionario> {
       acao: 'atualizar salário do funcionário',
     );
   }
+}
+
+class ServicesDiarista extends ServicePapelPessoa<Diarista> {
+  @override
+  String get recurso => 'diaristas';
+
+  @override
+  TipoPapel get tipoPapel => TipoPapel.diarista;
+
+  @override
+  Diarista Function(Map<String, dynamic>) get montar => Diarista.fromJson;
+
+  @override
+  String get conflitoDeCadastro => 'CPF já cadastrado no sistema.';
 }
 
 class ServicesCliente extends ServicePapelPessoa<Cliente> {

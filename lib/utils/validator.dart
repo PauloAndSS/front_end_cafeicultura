@@ -200,6 +200,12 @@ class Validator {
     return null;
   }
 
+  static String? valorPositivoOpcional(String? value) {
+    if (value == null || value.trim().isEmpty) return null;
+
+    return valorPositivo(value);
+  }
+
   static const int minimoCaracteresDescricao = 3;
 
   static const int maximoCaracteresDescricao = 255;
