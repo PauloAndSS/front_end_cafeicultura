@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:frond_end_cafeicultura_mobile/http/ambiente.dart';
 import 'package:frond_end_cafeicultura_mobile/http/exceptions/api_exceptions.dart';
+import 'package:frond_end_cafeicultura_mobile/http/mascara_de_log.dart';
 import 'package:frond_end_cafeicultura_mobile/http/requisicao_http.dart';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -65,9 +66,6 @@ abstract class BaseService {
   }
 
   static bool logarCorpoDeSucesso = false;
-
-  @protected
-  bool get corpoSensivel => false;
 
   Map<String, String> get defaultHeaders {
     final headers = {
@@ -203,7 +201,9 @@ abstract class BaseService {
     debugPrint('[API] ${requisicao?.method} ${requisicao?.url}');
     if (enviado != null) debugPrint('[API] enviado: $enviado');
     debugPrint('[API] falha ao $acao | status: ${response.statusCode}');
-    debugPrint('[API] corpo: ${corpo.isEmpty ? '<vazio>' : corpo}');
+    debugPrint(
+      '[API] corpo: ${corpo.isEmpty ? '<vazio>' : MascaraDeLog.aplicar(corpo)}',
+    );
   }
 
   void _logarListaVazia(http.Response response, String acao) {
@@ -228,11 +228,10 @@ abstract class BaseService {
 
   String? _corpoEnviado(http.BaseRequest? requisicao) {
     if (requisicao is! http.Request) return null;
-    if (corpoSensivel) return '<omitido>';
 
     final corpo = requisicao.body;
 
-    return corpo.isEmpty ? null : corpo;
+    return corpo.isEmpty ? null : MascaraDeLog.aplicar(corpo);
   }
 
   void _logarExcecao(

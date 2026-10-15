@@ -11,7 +11,6 @@ import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_estilos.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/propriedades/propriedades_usuario_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/corpo_com_estado.dart';
-import 'package:geolocator/geolocator.dart';
 
 class WeatherWidget extends StatefulWidget {
   const WeatherWidget({super.key});
@@ -35,6 +34,10 @@ class _WeatherWidgetState extends State<WeatherWidget> {
         .watch<PropriedadesUsuarioViewModel>()
         .propriedadeSelecionada;
 
+    if (!WeatherViewModel.temCidadeParaPrever(propriedade)) {
+      return _buildCard(child: _buildSemCidade(propriedade));
+    }
+
     if (vm.precisaCarregarPara(propriedade)) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _carregar(propriedade);
@@ -44,9 +47,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
     return CorpoComEstado(
       isLoading: vm.isLoading || vm.aindaNaoTentou,
       mensagemErro: vm.mensagemErro,
-      aoTentarNovamente: vm.permissaoDeLocalizacaoNegada
-          ? Geolocator.openAppSettings
-          : () => _carregar(propriedade, forcar: true),
+      aoTentarNovamente: () => _carregar(propriedade, forcar: true),
       vazio: vm.allWeatherTimeline.isEmpty,
       manterConteudoAoRecarregar: true,
       construirVazio: (_) => _buildCard(child: _buildIndisponivelGeral()),
@@ -119,7 +120,7 @@ class _WeatherWidgetState extends State<WeatherWidget> {
                 ),
               ),
               Text(
-                vm.localidade ?? 'Localização do aparelho',
+                vm.localidade ?? '',
                 style: const TextStyle(
                   fontSize: 12,
                   color: AppCores.textoSecundario,
@@ -129,21 +130,36 @@ class _WeatherWidgetState extends State<WeatherWidget> {
             ],
           ),
         ),
-        if (!vm.previsaoEhDaPropriedade)
-          const Tooltip(
-            message:
-                'Previsão do aparelho, não da propriedade. Cadastre a cidade '
-                'da propriedade para a previsão certa.',
-            triggerMode: TooltipTriggerMode.tap,
-            child: Padding(
-              padding: EdgeInsets.only(left: 8),
-              child: Icon(
-                Icons.my_location_outlined,
-                size: 18,
-                color: AppCores.aviso,
-              ),
-            ),
+      ],
+    );
+  }
+
+  Widget _buildSemCidade(Propriedade? propriedade) {
+    final mensagem = propriedade == null
+        ? 'Cadastre uma propriedade para ver a previsão da cidade dela.'
+        : 'Cadastre a cidade da propriedade para ver a previsão do tempo.';
+
+    return Column(
+      key: const ValueKey('sem-cidade'),
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Previsão do Tempo',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: AppCores.acao,
           ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          mensagem,
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppCores.textoSecundario,
+          ),
+        ),
       ],
     );
   }

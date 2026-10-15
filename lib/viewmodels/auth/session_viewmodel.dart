@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:frond_end_cafeicultura_mobile/http/cofre_da_sessao.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services.dart';
 import 'package:frond_end_cafeicultura_mobile/http/services/services_auth.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_fisica.dart';
+import 'package:frond_end_cafeicultura_mobile/viewmodels/notificacoes/registro_de_leituras.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SessionViewModel extends ChangeNotifier {
@@ -29,7 +31,7 @@ class SessionViewModel extends ChangeNotifier {
   Future<void> _verificarSessaoSalva() async {
     final prefs = await SharedPreferences.getInstance();
     final idSalvo = prefs.getInt('id_usuario');
-    final cookieSalvo = prefs.getString('cookie_sessao'); 
+    final cookieSalvo = await CofreDaSessao.lerCookie();
 
     if (idSalvo != null && cookieSalvo != null) {
       _isLoggedIn = true;
@@ -48,7 +50,7 @@ class SessionViewModel extends ChangeNotifier {
 
     await prefs.setInt('id_usuario', idUsuario);
     await prefs.setString('nome_usuario', nome);
-    await prefs.setString('cookie_sessao', cookie);
+    await CofreDaSessao.gravarCookie(cookie);
 
     _isLoggedIn = true;
     _nomeUsuario = nome;
@@ -67,7 +69,8 @@ class SessionViewModel extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('id_usuario');
     await prefs.remove('nome_usuario');
-    await prefs.remove('cookie_sessao'); 
+    await CofreDaSessao.apagarCookie();
+    await RegistroDeLeituras.apagarTodas();
 
     _isLoggedIn = false;
     _nomeUsuario = '';

@@ -1,2 +1,4 @@
 Ao cadastrar um insumo/despesa/atividade, e clicar em selecionar responsável/recebedor, e cadastrar um nesse momento, deve voltar como este um dos selecionados. Falhas encontradas: Após cadastrar um fornecedor dentro de insumos, não estou conseguindo colocá-lo no insumo. O botão não vai. O fluxo correto seria, ao cadastrar esse fornecedor dentro de insumos, ou qualquer papel de pessoa dentro de cadastro na atividade, voltar e já ter essa pessoa cadastrada como a selecionada.
     -> o front deve esperar o id da pessoa ao cadastrar um papel de pessoa
+
+- verificador de e-mail deve ser semelhante ao do backend.

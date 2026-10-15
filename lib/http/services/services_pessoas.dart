@@ -48,12 +48,6 @@ abstract class ServicePapelPessoa<T extends PapelPessoa> extends BaseService {
 
   String get rotulo => tipoPapel.rotulo;
 
-  String? get conflitoDeCadastro => null;
-
-  String get impedimentoDeExclusao =>
-      '${tipoPapel.titulo} possui atividades e/ou despesas cadastradas '
-      'e não pode ser excluído.';
-
   Future<List<T>> listar() {
     return executarRequisicao(
       requisicao: RequisicaoHttp.get(url),
@@ -68,7 +62,6 @@ abstract class ServicePapelPessoa<T extends PapelPessoa> extends BaseService {
     return executarRequisicao(
       requisicao: RequisicaoHttp.post(url, corpo: papel.toJson()),
       aoSucesso: (resposta) => _idDoCadastro(resposta.bodyBytes),
-      errosPorStatus: {409: ?conflitoDeCadastro},
       erroMsg: 'Erro ao cadastrar $rotulo.',
       acao: 'cadastrar $rotulo',
     );
@@ -100,7 +93,6 @@ abstract class ServicePapelPessoa<T extends PapelPessoa> extends BaseService {
     return executarRequisicao(
       requisicao: RequisicaoHttp.delete(rota('$id')),
       aoSucesso: (_) => true,
-      errosPorStatus: {403: impedimentoDeExclusao},
       erroMsg: 'Erro ao excluir $rotulo.',
       acao: 'excluir $rotulo',
     );
@@ -137,9 +129,6 @@ class ServicesFuncionario extends ServicePapelPessoa<Funcionario> {
 
   @override
   Funcionario Function(Map<String, dynamic>) get montar => Funcionario.fromJson;
-  @override
-  String get conflitoDeCadastro => 'CPF já cadastrado no sistema.';
-
 
   Future<bool> atualizarSalario(int id, double salario) {
     return executarRequisicao(
@@ -163,9 +152,6 @@ class ServicesDiarista extends ServicePapelPessoa<Diarista> {
 
   @override
   Diarista Function(Map<String, dynamic>) get montar => Diarista.fromJson;
-
-  @override
-  String get conflitoDeCadastro => 'CPF já cadastrado no sistema.';
 }
 
 class ServicesCliente extends ServicePapelPessoa<Cliente> {
@@ -189,10 +175,6 @@ class ServicesMeeiro extends ServicePapelPessoa<Meeiro> {
 
   @override
   Meeiro Function(Map<String, dynamic>) get montar => Meeiro.fromJson;
-
-  @override
-  String get conflitoDeCadastro => 'CPF já cadastrado no sistema.';
-
 }
 
 class ServicesPrestadorDeServico extends ServicePapelPessoa<PrestadorDeServico> {

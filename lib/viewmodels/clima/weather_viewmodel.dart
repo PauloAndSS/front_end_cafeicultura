@@ -6,10 +6,7 @@ import 'package:frond_end_cafeicultura_mobile/model/propriedade.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/estado_de_carga.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/notifica_se_vivo_mixin.dart';
 import 'package:http/http.dart' as http;
-import 'package:geolocator/geolocator.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
-
-enum OrigemDaPrevisao { propriedade, aparelho }
 
 const String _mensagemServicoIndisponivel =
     'Serviço meteorológico indisponível no momento.';
@@ -20,17 +17,13 @@ class WeatherViewModel extends ChangeNotifier
   List<WeatherModel> futureWeather = [];
 
   String? localidade;
-  OrigemDaPrevisao? origem;
-  bool permissaoDeLocalizacaoNegada = false;
 
   static const Duration validadeDaPrevisao = Duration(minutes: 30);
   static const Duration _tempoLimiteDaRequisicao = Duration(seconds: 15);
-  static const Duration _tempoLimiteDaLocalizacao = Duration(seconds: 10);
 
   String? _chaveDaUltimaTentativa;
   DateTime? _horaDaUltimaTentativa;
 
-  bool get previsaoEhDaPropriedade => origem == OrigemDaPrevisao.propriedade;
   bool get aindaNaoTentou => _horaDaUltimaTentativa == null;
 
   static final String _apiKey = dotenv.get('API_CLIMA_CHAVE');
@@ -43,6 +36,9 @@ class WeatherViewModel extends ChangeNotifier
     list.addAll(futureWeather);
     return list;
   }
+
+  static bool temCidadeParaPrever(Propriedade? propriedade) =>
+      propriedade != null && propriedade.endereco.cidade.trim().isNotEmpty;
 
   String? _chaveDe(Propriedade? propriedade) {
     if (propriedade == null) return null;
@@ -61,7 +57,7 @@ class WeatherViewModel extends ChangeNotifier
   }
 
   bool precisaCarregarPara(Propriedade? propriedade) {
-    if (isLoading) return false;
+    if (isLoading || !temCidadeParaPrever(propriedade)) return false;
     if (_chaveDe(propriedade) != _chaveDaUltimaTentativa) return true;
 
     return _tentativaExpirou();
@@ -71,54 +67,30 @@ class WeatherViewModel extends ChangeNotifier
     currentWeather = null;
     futureWeather = [];
     localidade = null;
-    origem = null;
   }
 
   Future<void> carregarPrevisao(
     Propriedade? propriedade, {
     bool forcar = false,
   }) async {
-    if (isLoading) return;
+    if (isLoading || !temCidadeParaPrever(propriedade)) return;
     if (!forcar && !precisaCarregarPara(propriedade)) return;
 
     final chave = _chaveDe(propriedade);
     if (chave != _chaveDaUltimaTentativa) _limparPrevisao();
     _chaveDaUltimaTentativa = chave;
-    permissaoDeLocalizacaoNegada = false;
 
     await cargaPrincipal.executar(
-      chamada: () => _buscarPrevisaoDe(propriedade),
+      chamada: () => _buscarPrevisaoDe(propriedade!),
       aoFalhar: () {},
       aoFinalizar: () => _horaDaUltimaTentativa = DateTime.now(),
     );
   }
 
-  Future<void> _buscarPrevisaoDe(Propriedade? propriedade) async {
-    if (propriedade == null || propriedade.endereco.cidade.trim().isEmpty) {
-      await _buscarPelaLocalizacaoDoAparelho(
-        semPropriedade: propriedade == null,
-      );
-      return;
-    }
-
-    origem = OrigemDaPrevisao.propriedade;
+  Future<void> _buscarPrevisaoDe(Propriedade propriedade) async {
     localidade = _nomeDaLocalidade(propriedade);
 
     final ponto = await _geocodificar(propriedade);
-    await _carregarPara(ponto);
-  }
-
-  Future<void> _buscarPelaLocalizacaoDoAparelho({
-    required bool semPropriedade,
-  }) async {
-    origem = OrigemDaPrevisao.aparelho;
-    localidade = null;
-
-    final ponto = await _coordenadasDoAparelho(semPropriedade: semPropriedade);
-    await _carregarPara(ponto);
-  }
-
-  Future<void> _carregarPara(_Coordenadas ponto) async {
     await _fetchCurrentWeather(ponto.latitude, ponto.longitude);
     await _fetchForecastWeather(ponto.latitude, ponto.longitude);
   }
@@ -132,7 +104,9 @@ class WeatherViewModel extends ChangeNotifier
     try {
       resposta = await http.get(url).timeout(_tempoLimiteDaRequisicao);
     } catch (e) {
-      debugPrint('Requisição meteorológica falhou em ${url.path}: $e');
+      final motivo = e is http.ClientException ? e.message : '$e';
+
+      debugPrint('Requisição meteorológica falhou em ${url.path}: $motivo');
       throw ApiException(_mensagemServicoIndisponivel);
     }
 
@@ -176,11 +150,6 @@ class WeatherViewModel extends ChangeNotifier
     );
 
     final data = await _obterJson(url) as Map<String, dynamic>;
-
-    final nome = data['name'] as String?;
-    if (origem == OrigemDaPrevisao.aparelho && nome != null && nome.isNotEmpty) {
-      localidade = nome;
-    }
 
     currentWeather = WeatherModel(
       date: DateTime.now(),
@@ -266,62 +235,6 @@ class WeatherViewModel extends ChangeNotifier
 
   double _media(List<double> valores) =>
       valores.reduce((a, b) => a + b) / valores.length;
-
-  String _saidaSugerida(bool semPropriedade) => semPropriedade
-      ? 'cadastre uma propriedade com cidade'
-      : 'cadastre a cidade da propriedade';
-
-  Future<_Coordenadas> _coordenadasDoAparelho({
-    required bool semPropriedade,
-  }) async {
-    final saida = _saidaSugerida(semPropriedade);
-
-    final servicoAtivo = await Geolocator.isLocationServiceEnabled();
-    if (!servicoAtivo) {
-      throw ApiException(
-        'A localização do aparelho está desligada. Ligue a localização ou '
-        '$saida.',
-      );
-    }
-
-    var permissao = await Geolocator.checkPermission();
-    if (permissao == LocationPermission.denied) {
-      permissao = await Geolocator.requestPermission();
-    }
-
-    if (permissao == LocationPermission.deniedForever) {
-      permissaoDeLocalizacaoNegada = true;
-      throw ApiException(
-        'Sem acesso à localização. Libere a permissão nas configurações ou '
-        '$saida.',
-      );
-    }
-
-    if (permissao == LocationPermission.denied) {
-      throw ApiException(
-        'Sem acesso à localização. Permita o acesso ou $saida.',
-      );
-    }
-
-    try {
-      final posicao =
-          await Geolocator.getLastKnownPosition() ??
-          await Geolocator.getCurrentPosition(
-            locationSettings: const LocationSettings(
-              accuracy: LocationAccuracy.low,
-              timeLimit: _tempoLimiteDaLocalizacao,
-            ),
-          );
-
-      return _Coordenadas(posicao.latitude, posicao.longitude);
-    } catch (e) {
-      debugPrint('Localização do aparelho falhou: $e');
-      throw ApiException(
-        'O aparelho não conseguiu obter a localização. Tente novamente ou '
-        '$saida.',
-      );
-    }
-  }
 }
 
 class _Coordenadas {

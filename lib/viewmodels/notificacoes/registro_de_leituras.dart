@@ -6,6 +6,18 @@ class RegistroDeLeituras {
 
   static String chaveDe(int idPropriedade) => '$prefixoDaChave$idPropriedade';
 
+  static Future<void> apagarTodas() async {
+    final prefs = await SharedPreferences.getInstance();
+    final chaves = prefs
+        .getKeys()
+        .where((chave) => chave.startsWith(prefixoDaChave))
+        .toList();
+
+    for (final chave in chaves) {
+      await prefs.remove(chave);
+    }
+  }
+
   final Set<int> _lidas = {};
 
   int? _idPropriedade;
