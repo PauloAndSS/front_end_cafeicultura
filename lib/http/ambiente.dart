@@ -4,7 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 enum AlvoDaApi { local, dev, producao }
 
 abstract final class Ambiente {
-  static const AlvoDaApi alvo = AlvoDaApi.local;
+  static const AlvoDaApi alvo = AlvoDaApi.dev;
 
   static const String urlProducao = 'https://api.sysgrano.app/api/v1';
   static const String urlDev = 'https://dev.sysgrano.app/api/v1';
