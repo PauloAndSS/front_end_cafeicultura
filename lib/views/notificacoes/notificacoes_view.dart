@@ -236,7 +236,11 @@ class _NotificacoesViewState extends State<NotificacoesView> {
             BarraDeAbas(
               abas: [
                 Tab(text: 'Não lidas (${viewModel.quantidadeNaoLidas})'),
-                Tab(text: 'Lidas (${viewModel.lidas.length})'),
+                Tab(
+                  text: viewModel.lidasProntas
+                      ? 'Lidas (${viewModel.lidas.length})'
+                      : 'Lidas',
+                ),
               ],
             ),
             Expanded(
@@ -248,12 +252,17 @@ class _NotificacoesViewState extends State<NotificacoesView> {
                 construirConteudo: (_) => TabBarView(
                   children: [
                     _construirAbaNaoLidas(viewModel),
-                    _construirAba(
-                      viewModel: viewModel,
-                      secoes: viewModel.secoesLidas,
-                      podeDispensar: false,
-                      mensagemVazia: 'Nenhuma notificação lida ainda.',
-                      iconeVazio: Icons.done_all,
+                    _AoAbrirAba(
+                      aoAbrir: viewModel.carregarAtividadesDasLidas,
+                      child: viewModel.lidasProntas
+                          ? _construirAba(
+                              viewModel: viewModel,
+                              secoes: viewModel.secoesLidas,
+                              podeDispensar: false,
+                              mensagemVazia: 'Nenhuma notificação lida ainda.',
+                              iconeVazio: Icons.done_all,
+                            )
+                          : const Center(child: CircularProgressIndicator()),
                     ),
                   ],
                 ),
@@ -372,6 +381,30 @@ class _NotificacoesViewState extends State<NotificacoesView> {
       child: observado,
     );
   }
+}
+
+class _AoAbrirAba extends StatefulWidget {
+  final VoidCallback aoAbrir;
+  final Widget child;
+
+  const _AoAbrirAba({required this.aoAbrir, required this.child});
+
+  @override
+  State<_AoAbrirAba> createState() => _AoAbrirAbaState();
+}
+
+class _AoAbrirAbaState extends State<_AoAbrirAba> {
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) widget.aoAbrir();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 class _CabecalhoDeSecao extends StatelessWidget {

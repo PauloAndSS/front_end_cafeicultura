@@ -39,6 +39,20 @@ class PessoasDaCategoriaViewModel extends ChangeNotifier
     );
   }
 
+  void substituir(PapelPessoa atualizada) {
+    final indice = _pessoas.indexWhere((pessoa) => pessoa.id == atualizada.id);
+
+    if (indice < 0) return;
+
+    _pessoas[indice] = atualizada;
+    notificarSeVivo();
+  }
+
+  void remover(int id) {
+    _pessoas.removeWhere((pessoa) => pessoa.id == id);
+    notificarSeVivo();
+  }
+
   List<PapelPessoa> _comIdentificacao(List<PapelPessoa> lista) =>
       lista.where((papel) => papel.id != null).toList();
 }

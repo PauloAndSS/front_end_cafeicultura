@@ -97,6 +97,10 @@ abstract class ListaAtividadesPaginadaViewModel<T extends EventoAgricola,
   Future<void>? prepararPrimeiraPagina(E escopo) => null;
 
   @protected
+  Future<void> aposReceberPagina(E escopo, List<T> recebidos) =>
+      Future.value();
+
+  @protected
   Future<void> carregarEscopo(E escopo, {bool forcar = false}) async {
     if (_escopo != escopo) {
       _escopo = escopo;
@@ -168,10 +172,12 @@ abstract class ListaAtividadesPaginadaViewModel<T extends EventoAgricola,
     final preparo = primeira ? prepararPrimeiraPagina(escopo) : null;
 
     final carga = primeira ? paginas.cargaPrimeira : paginas.cargaMais;
+    List<T> recebidos = const [];
 
     return carga.executar(
       chamada: () async {
         final resultado = await buscarPagina(escopo, statusAlvo, pagina);
+        recebidos = resultado.data;
 
         if (geracao == _geracao) {
           paginas.itens.addAll(resultado.data);
@@ -183,6 +189,7 @@ abstract class ListaAtividadesPaginadaViewModel<T extends EventoAgricola,
       aindaVale: () => geracao == _geracao,
       aoFinalizar: () async {
         if (preparo != null) await preparo;
+        await aposReceberPagina(escopo, recebidos);
       },
     );
   }
@@ -204,6 +211,13 @@ abstract class ListaAtividadesDaPropriedadePaginadaViewModel<
 
   @override
   Future<void>? prepararPrimeiraPagina(int escopo) => carregarTalhoes(escopo);
+
+  @override
+  Future<void> aposReceberPagina(int escopo, List<T> recebidos) =>
+      garantirTalhoesDe(
+        escopo,
+        recebidos.map((atividade) => atividade.idTalhao),
+      );
 }
 
 abstract class ListaAtividadesDoTalhaoPaginadaViewModel<

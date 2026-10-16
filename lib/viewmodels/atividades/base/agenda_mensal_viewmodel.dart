@@ -100,9 +100,10 @@ abstract class AgendaMensalViewModel<T extends EventoAgricola>
 
   Future<List<T>> _buscarMesInteiro(int idPropriedade, DateTime mes) async {
     final buscaTalhoes = carregarTalhoes(idPropriedade);
+    final List<T> atividades;
 
     try {
-      return await buscarNoPeriodo(
+      atividades = await buscarNoPeriodo(
         idPropriedade,
         _primeiroInstanteDoMes(mes),
         _ultimoInstanteDoMes(mes),
@@ -110,6 +111,13 @@ abstract class AgendaMensalViewModel<T extends EventoAgricola>
     } finally {
       await buscaTalhoes;
     }
+
+    await garantirTalhoesDe(
+      idPropriedade,
+      atividades.map((atividade) => atividade.idTalhao),
+    );
+
+    return atividades;
   }
 
   String _chave(int idPropriedade, DateTime mes) =>

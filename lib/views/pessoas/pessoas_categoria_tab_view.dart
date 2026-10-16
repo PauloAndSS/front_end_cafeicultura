@@ -36,14 +36,23 @@ class _PessoasCategoriaTabViewState extends State<PessoasCategoriaTabView>
   }
 
   Future<void> _abrirDetalhes(PapelPessoa papelPessoa) async {
-    final alterou = await Navigator.push<bool>(
+    final desfecho = await Navigator.push<DesfechoDetalhePessoa>(
       context,
       MaterialPageRoute(
         builder: (_) => DetalhesPessoaView(papelPessoa: papelPessoa),
       ),
     );
 
-    if (alterou == true && mounted) widget.viewModel.carregar();
+    if (!mounted) return;
+
+    switch (desfecho) {
+      case PessoaAlterada(:final papel):
+        widget.viewModel.substituir(papel);
+      case PessoaExcluida(:final id):
+        widget.viewModel.remover(id);
+      case null:
+        break;
+    }
   }
 
   @override

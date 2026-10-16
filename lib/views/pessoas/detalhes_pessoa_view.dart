@@ -12,6 +12,22 @@ import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dar
 import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
 import 'package:frond_end_cafeicultura_mobile/views/pessoas/widgets/editar_valor_painel.dart';
 
+sealed class DesfechoDetalhePessoa {
+  const DesfechoDetalhePessoa();
+}
+
+class PessoaAlterada extends DesfechoDetalhePessoa {
+  final PapelPessoa papel;
+
+  const PessoaAlterada(this.papel);
+}
+
+class PessoaExcluida extends DesfechoDetalhePessoa {
+  final int id;
+
+  const PessoaExcluida(this.id);
+}
+
 class DetalhesPessoaView extends StatefulWidget {
   final PapelPessoa papelPessoa;
 
@@ -25,10 +41,12 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
   final _viewModel = DetalhesPessoaViewModel();
   bool _houveAlteracao = false;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _recarregar());
+  DesfechoDetalhePessoa? get _desfecho {
+    final alterada = _viewModel.pessoaDetalhe;
+
+    if (!_houveAlteracao || alterada == null) return null;
+
+    return PessoaAlterada(alterada);
   }
 
   Future<void> _recarregar() {
@@ -51,7 +69,7 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
 
     if (sucesso) {
       mostrarSucesso(context, 'Pessoa excluída com sucesso.');
-      Navigator.pop(context, true);
+      Navigator.pop(context, PessoaExcluida(widget.papelPessoa.id!));
     } else if (_viewModel.mensagemErro != null) {
       mostrarErro(context, _viewModel.mensagemErro!);
     }
@@ -148,14 +166,14 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
       canPop: false,
       onPopInvoked: (didPop) {
         if (didPop) return;
-        Navigator.pop(context, _houveAlteracao);
+        Navigator.pop(context, _desfecho);
       },
       child: Scaffold(
         backgroundColor: AppCores.fundo,
         appBar: AppBarPadrao(
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () => Navigator.pop(context, _houveAlteracao),
+            onPressed: () => Navigator.pop(context, _desfecho),
           ),
         ),
         body: ListenableBuilder(

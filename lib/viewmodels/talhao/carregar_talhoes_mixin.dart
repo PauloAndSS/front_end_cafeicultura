@@ -21,6 +21,7 @@ mixin CarregarTalhoesMixin on NotificaSeVivoMixin {
       .toList();
 
   bool _talhoesCarregados = false;
+  int? _idPropriedadeDosTalhoes;
   bool get talhoesCarregados => _talhoesCarregados;
 
   bool get isCarregandoTalhoes => _cargaTalhoes.isLoading;
@@ -37,8 +38,15 @@ mixin CarregarTalhoesMixin on NotificaSeVivoMixin {
   String nomeDoTalhao(int idTalhao) =>
       talhaoPorId(idTalhao)?.nomeExibicao ?? 'Talhão #$idTalhao';
 
-  Future<void> carregarTalhoes(int idPropriedade) {
+  Future<void> garantirTalhoesDe(int idPropriedade, Iterable<int> idsTalhao) {
+    final faltaAlgum = idsTalhao.any((idTalhao) => talhaoPorId(idTalhao) == null);
+
+    return carregarTalhoes(idPropriedade, forcar: faltaAlgum);
+  }
+
+  Future<void> carregarTalhoes(int idPropriedade, {bool forcar = false}) {
     if (_cargaTalhoes.isLoading) return Future.value();
+    if (!forcar && _jaCarregouTalhoesDe(idPropriedade)) return Future.value();
 
     return _cargaTalhoes.executar(
       chamada: () async {
@@ -61,8 +69,12 @@ mixin CarregarTalhoesMixin on NotificaSeVivoMixin {
           ..clear()
           ..addAll(carregados);
         _talhoesCarregados = true;
+        _idPropriedadeDosTalhoes = idPropriedade;
       },
       aoFalhar: () {},
     );
   }
+
+  bool _jaCarregouTalhoesDe(int idPropriedade) =>
+      _talhoesCarregados && _idPropriedadeDosTalhoes == idPropriedade;
 }

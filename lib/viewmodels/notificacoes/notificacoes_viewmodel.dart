@@ -26,6 +26,10 @@ class NotificacoesViewModel extends ChangeNotifier
     aoMudar: notificarSeVivo,
   );
 
+  late final EstadoDeCarga _cargaLidas = EstadoDeCarga(
+    aoMudar: notificarSeVivo,
+  );
+
   late final EstadoDeCarga _cargaLeitura = EstadoDeCarga(
     aoMudar: notificarSeVivo,
   );
@@ -46,6 +50,7 @@ class NotificacoesViewModel extends ChangeNotifier
   int? _idPropriedadeAtual;
   int? _propriedadeJaTentada;
   int _geracaoDoCacheVista = 0;
+  bool _incluirLidas = false;
   String? _falhaDeLeitura;
 
   List<NotificacaoAgrupada> get grupos => List.unmodifiable(_grupos);
@@ -73,6 +78,8 @@ class NotificacoesViewModel extends ChangeNotifier
   bool get temLeituraPendente => naoLidasSemPendencia.isNotEmpty;
 
   bool get vazio => _visiveis.isEmpty;
+
+  bool get lidasProntas => _incluirLidas && !_cargaLidas.isLoading;
 
   bool get marcandoLeitura => _cargaLeitura.isLoading;
 
@@ -117,6 +124,7 @@ class NotificacoesViewModel extends ChangeNotifier
     if (trocouPropriedade) {
       _atividadesPorEvento.clear();
       _vistas.clear();
+      _incluirLidas = false;
       _notificacoes = [];
       _grupos = [];
     }
@@ -182,6 +190,7 @@ class NotificacoesViewModel extends ChangeNotifier
   Future<void> encerrarVisita() async {
     await _marcar(_gruposParaAutoLeitura());
     _vistas.clear();
+    _incluirLidas = false;
     await sincronizarLeituras();
   }
 
@@ -310,22 +319,37 @@ class NotificacoesViewModel extends ChangeNotifier
 
   void _reagrupar() => _grupos = NotificacaoAgrupada.agrupar(_notificacoes);
 
-  Future<void> _carregarAtividades() {
-    final pendentes = _grupos
-        .where(
-          (grupo) => grupo.tipoEvento == TipoEventoNotificado.tratosCulturais,
-        )
-        .map((grupo) => grupo.idEvento)
-        .where((idEvento) => !_atividadesPorEvento.containsKey(idEvento))
-        .toSet();
+  Future<void> carregarAtividadesDasLidas() {
+    if (_incluirLidas) return Future.value();
+
+    _incluirLidas = true;
+    notificarSeVivo();
+
+    return _buscarAtividades(_cargaLidas);
+  }
+
+  Future<void> _carregarAtividades() => _buscarAtividades(_cargaAtividades);
+
+  Future<void> _buscarAtividades(EstadoDeCarga carga) {
+    final pendentes = _eventosSemAtividade();
 
     if (pendentes.isEmpty) return Future.value();
 
-    return _cargaAtividades.executar<void>(
+    return carga.executar<void>(
       chamada: () => Future.wait(pendentes.map(_carregarAtividade)),
       aoFalhar: () {},
     );
   }
+
+  Set<int> _eventosSemAtividade() => _grupos
+      .where(_precisaDaAtividade)
+      .map((grupo) => grupo.idEvento)
+      .where((idEvento) => !_atividadesPorEvento.containsKey(idEvento))
+      .toSet();
+
+  bool _precisaDaAtividade(NotificacaoAgrupada grupo) =>
+      grupo.tipoEvento == TipoEventoNotificado.tratosCulturais &&
+      (_incluirLidas || !grupo.lida || grupo.ehConfirmacao);
 
   Future<void> _carregarAtividade(int idEvento) async {
     _atividadesPorEvento[idEvento] = await _tratoService.buscarPorId(idEvento);
