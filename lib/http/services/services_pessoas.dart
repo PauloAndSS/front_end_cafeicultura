@@ -152,6 +152,18 @@ class ServicesDiarista extends ServicePapelPessoa<Diarista> {
 
   @override
   Diarista Function(Map<String, dynamic>) get montar => Diarista.fromJson;
+
+  Future<bool> atualizarValorHora(int id, double valorHora) {
+    return executarRequisicao(
+      requisicao: RequisicaoHttp.patch(
+        rota('$id/valor-hora'),
+        corpo: {'valorHora': valorHora},
+      ),
+      aoSucesso: (_) => true,
+      erroMsg: 'Erro ao atualizar valor da hora do diarista.',
+      acao: 'atualizar valor da hora do diarista',
+    );
+  }
 }
 
 class ServicesCliente extends ServicePapelPessoa<Cliente> {

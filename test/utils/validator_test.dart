@@ -223,6 +223,13 @@ void main() {
       'joao@',
       '@teste.com',
       'joao teste@teste.com',
+      'joao@teste.123',
+      'joao@teste.c',
+      'joao@-teste.com',
+      'joao@teste-.com',
+      '${'a' * 65}@teste.com',
+      'joao@${'a' * 64}.com',
+      '${'a' * 64}@${'b' * 63}.${'c' * 63}.${'d' * 63}.com',
     ];
 
     for (final email in recusados) {
@@ -241,6 +248,9 @@ void main() {
       'a@b.co',
       'joao_silva@sub.teste.com',
       'financeiro.qa@sysgrano.dev',
+      'joao@teste.xn--p1ai',
+      '${'a' * 64}@teste.com',
+      'joao@${'a' * 63}.com',
     ];
 
     for (final email in aceitos) {
@@ -248,16 +258,6 @@ void main() {
         expect(Email.isValid(email), isTrue);
       });
     }
-
-    test('divergencia conhecida: TLD numerico o app aceita e o backend nao', () {
-      expect(
-        Email.isValid('joao@teste.123'),
-        isTrue,
-        reason: 'medido em 03/09/2026: POST /proprietarios devolve 400 para '
-            'este e-mail (allow_numeric_tld: false). Ninguem digita isso por '
-            'acidente, entao a divergencia fica registrada em vez de fechada',
-      );
-    });
 
     test('validarEmail devolve a mensagem em pt-BR', () {
       expect(Validator.validarEmail(''), 'O e-mail é obrigatório');

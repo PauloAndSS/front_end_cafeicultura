@@ -1,19 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/formulario/validacao_formulario.dart';
-import 'package:flutter/services.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/diarista.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/funcionario.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/papel_pessoa/papel_pessoa.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_juridica.dart';
 import 'package:frond_end_cafeicultura_mobile/model/pessoa/pessoa_factory.dart';
-import 'package:frond_end_cafeicultura_mobile/utils/masks.dart';
 import 'package:frond_end_cafeicultura_mobile/viewmodels/pessoas/detalhes_pessoa_viewmodel.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/botao_excluir.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/sessao_em_breve_widget.dart';
 import 'package:frond_end_cafeicultura_mobile/views/theme/app_cores.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/feedback_usuario.dart';
 import 'package:frond_end_cafeicultura_mobile/views/widgets/app_bar_padrao.dart';
-import 'package:frond_end_cafeicultura_mobile/views/widgets/dialogos.dart';
+import 'package:frond_end_cafeicultura_mobile/views/pessoas/widgets/editar_valor_painel.dart';
 
 class DetalhesPessoaView extends StatefulWidget {
   final PapelPessoa papelPessoa;
@@ -60,72 +57,57 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
     }
   }
 
-  Future<void> _editarSalario(Funcionario funcionario) async {
-    final salarioAtual =
-        funcionario.salario?.toStringAsFixed(2).replaceAll('.', ',') ?? '';
-    final controller = TextEditingController(text: salarioAtual);
-    final formKey = GlobalKey<FormState>();
-
-    final resultado = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('Atualizar Salário'),
-        content: Form(
-          key: formKey,
-          child: TextFormField(
-            controller: controller,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            inputFormatters: [AppMasks.decimal],
-            decoration: const InputDecoration(
-              labelText: 'Novo Salário (R\$)',
-              hintText: '0,00',
-            ),
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            validator: (value) {
-              if (value == null || value.trim().isEmpty) {
-                return 'Informe o valor';
-              }
-              final valorT = value.replaceAll('.', '').replaceAll(',', '.');
-              if (double.tryParse(valorT) == null) return 'Valor inválido';
-              return null;
-            },
-          ),
+  Future<void> _editarSalario(Funcionario funcionario) => _concluirEdicao(
+        mostrarEdicaoSalario(
+          context,
+          funcionario: funcionario,
+          viewModel: _viewModel,
         ),
-        actions: acoesDeDialogo(
-          context: context,
-          rotuloConfirmar: 'Salvar',
-          corConfirmar: AppCores.acao,
-          aoCancelar: () => Navigator.pop(context, false),
-          aoConfirmar: () {
-            if (validarRevelandoCampoInvalido(formKey)) {
-              Navigator.pop(context, true);
-            }
-          },
+        'Salário atualizado.',
+      );
+
+  Future<void> _editarValorHora(Diarista diarista) => _concluirEdicao(
+        mostrarEdicaoValorHora(
+          context,
+          diarista: diarista,
+          viewModel: _viewModel,
+        ),
+        'Valor por hora atualizado.',
+      );
+
+  Future<void> _concluirEdicao(Future<bool> edicao, String mensagem) async {
+    final salvou = await edicao;
+
+    if (salvou && mounted) {
+      _houveAlteracao = true;
+      mostrarSucesso(context, mensagem);
+    }
+  }
+
+  Widget _buildInfoRowEditavel(
+    String label,
+    String value, {
+    required VoidCallback aoTocar,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          onTap: aoTocar,
+          borderRadius: BorderRadius.circular(8),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Row(
+              children: [
+                Expanded(child: _buildInfoRow(label, value, bottom: 0)),
+                const Icon(Icons.edit, size: 22, color: AppCores.acao),
+              ],
+            ),
+          ),
         ),
       ),
     );
-
-    if (resultado == true && mounted) {
-      final valorFormatado = controller.text
-          .replaceAll('.', '')
-          .replaceAll(',', '.');
-      final novoSalario = double.parse(valorFormatado);
-
-      final sucesso = await _viewModel.atualizarSalario(
-        funcionario.id!,
-        novoSalario,
-      );
-
-      if (sucesso && mounted) {
-        _houveAlteracao = true;
-        mostrarSucesso(context, 'Salário atualizado com sucesso!');
-        final tipoPapel = PessoaFactory.obterTipoPapel(widget.papelPessoa);
-        await _viewModel.buscarPorId(funcionario.id!, tipoPapel);
-      } else if (mounted && _viewModel.mensagemErro != null) {
-        mostrarErro(context, _viewModel.mensagemErro!);
-      }
-    }
   }
 
   Widget _buildInfoRow(String label, String value, {double bottom = 14.0}) {
@@ -258,9 +240,10 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
                             ),
 
                           if (papelAtual is Diarista)
-                            _buildInfoRow(
+                            _buildInfoRowEditavel(
                               'Valor/Hora :',
                               papelAtual.valorHoraParaExibicao,
+                              aoTocar: () => _editarValorHora(papelAtual),
                             ),
 
                           if (papelAtual is Funcionario) ...[
@@ -272,43 +255,10 @@ class _DetalhesPessoaViewState extends State<DetalhesPessoaView> {
                                   : 'Não informado',
                             ),
 
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 4.0),
-                              child: Row(
-                                children: [
-                                  const SizedBox(
-                                    width: 130,
-                                    child: Text(
-                                      'Salário :',
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: AppCores.textoSecundario,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ),
-                                  Expanded(
-                                    child: Text(
-                                      'R\$ ${papelAtual.salario?.toStringAsFixed(2).replaceAll('.', ',') ?? '0,00'}',
-                                      style: const TextStyle(
-                                        fontSize: 16,
-                                        color: AppCores.textoPrimario,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(
-                                      Icons.edit,
-                                      size: 22,
-                                      color: AppCores.acao,
-                                    ),
-                                    padding: EdgeInsets.zero,
-                                    constraints: const BoxConstraints(),
-                                    onPressed: () => _editarSalario(papelAtual),
-                                  ),
-                                ],
-                              ),
+                            _buildInfoRowEditavel(
+                              'Salário :',
+                              papelAtual.salarioParaExibicao,
+                              aoTocar: () => _editarSalario(papelAtual),
                             ),
                           ],
                         ],

@@ -11,6 +11,14 @@ class DetalhesPessoaViewModel extends ChangeNotifier
   PapelPessoa? get pessoaDetalhe => _pessoaDetalhe;
 
   final ServicesFuncionario _servicoFuncionario = ServicesFuncionario();
+  final ServicesDiarista _servicoDiarista = ServicesDiarista();
+
+  late final EstadoDeCarga _cargaEdicaoDeValor = EstadoDeCarga(
+    aoMudar: notificarSeVivo,
+  );
+
+  bool get isSalvandoValor => _cargaEdicaoDeValor.isLoading;
+  String? get mensagemErroValor => _cargaEdicaoDeValor.mensagemErro;
 
   Future<void> buscarPorId(int id, TipoPapel tipoPapel) {
     _pessoaDetalhe = null;
@@ -31,12 +39,29 @@ class DetalhesPessoaViewModel extends ChangeNotifier
         aoFalhar: () => false,
       );
 
-  Future<bool> atualizarSalario(int id, double salario) =>
-      cargaPrincipal.executar(
-        chamada: () async {
-          await _servicoFuncionario.atualizarSalario(id, salario);
-          return true;
-        },
-        aoFalhar: () => false,
+  Future<bool> atualizarSalario(int id, double salario) => _salvarValor(
+        gravar: () => _servicoFuncionario.atualizarSalario(id, salario),
+        reler: () => _servicoFuncionario.buscarPorId(id),
       );
+
+  Future<bool> atualizarValorHora(int id, double valorHora) => _salvarValor(
+        gravar: () => _servicoDiarista.atualizarValorHora(id, valorHora),
+        reler: () => _servicoDiarista.buscarPorId(id),
+      );
+
+  Future<bool> _salvarValor({
+    required Future<void> Function() gravar,
+    required Future<PapelPessoa> Function() reler,
+  }) {
+    if (_cargaEdicaoDeValor.isLoading) return Future.value(false);
+
+    return _cargaEdicaoDeValor.executar(
+      chamada: () async {
+        await gravar();
+        _pessoaDetalhe = await reler();
+        return true;
+      },
+      aoFalhar: () => false,
+    );
+  }
 }

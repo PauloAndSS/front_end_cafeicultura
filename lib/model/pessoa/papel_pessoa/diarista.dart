@@ -24,6 +24,9 @@ class Diarista extends PapelPessoa {
   String get valorHoraParaExibicao =>
       valorHora == null ? 'Não informado' : formatarMoeda(valorHora!);
 
+  String get valorHoraParaEdicao =>
+      valorHora == null ? '' : formatarDecimalDuasCasas(valorHora!);
+
   @override
   Diarista comId(int id) =>
       Diarista(id: id, pessoa: pessoa, valorHora: valorHora);
