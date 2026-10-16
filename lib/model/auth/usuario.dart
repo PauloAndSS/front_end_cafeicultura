@@ -17,15 +17,40 @@ class Email {
     return Email._(emailNormalizado);
   }
 
+  static const _tamanhoMaximo = 254;
+  static const _tamanhoMaximoParteLocal = 64;
+  static const _tamanhoMaximoRotulo = 63;
+
+  static final _parteLocal = RegExp(
+    r"^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*$",
+  );
+  static final _rotulo = RegExp(r'^[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$');
+  static final _tld = RegExp(r'^(?:[a-zA-Z]{2,}|xn[a-zA-Z0-9-]{2,})$');
+
   static bool isValid(String valor) {
     final emailLimpo = valor.trim();
-    if (emailLimpo.isEmpty) return false;
+    if (emailLimpo.isEmpty || emailLimpo.length > _tamanhoMaximo) return false;
 
-    final regex = RegExp(
-      r"^[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*@[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?)+$",
+    final arroba = emailLimpo.lastIndexOf('@');
+    if (arroba <= 0) return false;
+
+    return _parteLocalValida(emailLimpo.substring(0, arroba)) &&
+        _dominioValido(emailLimpo.substring(arroba + 1));
+  }
+
+  static bool _parteLocalValida(String parteLocal) =>
+      parteLocal.length <= _tamanhoMaximoParteLocal &&
+      _parteLocal.hasMatch(parteLocal);
+
+  static bool _dominioValido(String dominio) {
+    final rotulos = dominio.split('.');
+    if (rotulos.length < 2) return false;
+
+    final rotulosValidos = rotulos.every(
+      (rotulo) =>
+          rotulo.length <= _tamanhoMaximoRotulo && _rotulo.hasMatch(rotulo),
     );
-
-    return regex.hasMatch(emailLimpo);
+    return rotulosValidos && _tld.hasMatch(rotulos.last);
   }
 }
 
